@@ -596,29 +596,36 @@ class ObjetoBase(MainClase):
 
     #Esta fucnión se encarga de comprobar a que ordenador(es) está conectado
     #en total, pasando por routers, hubs y switches.
-    def compcon(self, *args, first=None):
+    def compcon(self, *args):
         passedyet = []
         comps     = []
+        reself    = self
 
-        def subcompcon(self, *args, first=None):
+        def subcompcon(notself, *args):
             nonlocal passedyet
+            nonlocal reself
             subcomps = []
 
-            for con in self.connections:
-                if con not in passedyet:
+            iterc = notself.connections
+            print(notself, "connections:", iterc)
+            #next(iterc)
+
+            for con in iterc:
+                if con.uuid != reself.uuid and con.uuid not in [obj.uuid for obj in passedyet]:
+                    passedyet.append(con)
+                    print(con)
                     if con.objectype == "Computer":
                         subcomps.append(con)
                     elif con.objectype == "Switch":
-                        subcomps.extend(subcompcon(con, subcomps, passedyet))
-
-                    passedyet.append(con)
-                else:
-                    pass
+                        subcomps.extend(subcompcon(con))
+                    else:
+                        print("Saltado", con)
+                #passedyet.append(con)
 
             print("passedyet", passedyet)
             return subcomps
         
-        comps.extend(subcompcon(self, passedyet))
+        comps.extend(subcompcon(self))
 
         try:
             #comps.remove(self)
@@ -626,7 +633,7 @@ class ObjetoBase(MainClase):
         except:
             pass
 
-        print(comps)
+        print("comps",comps)
         for i in comps:
             print(self, "conected to", i)
         return comps
