@@ -200,7 +200,7 @@ class MainClase(Gtk.Window):
         "on_window1_key_press_event": nothing,
         "addbuttonclicked":           self.addbuttonclicked,
         "onRestartPress":             restart,
-        "grid_rclick-name_activate":  w_changethings.show,
+        
         }
         builder.connect_signals(handlers)
 
@@ -405,25 +405,11 @@ class Grid():
         #Button: 1== Lclick, 2== Mclick
         #Para comprobar si es doble o triple click: if event.type == gtk.gdk.BUTTON_PRESS, o gtk.gdk_2_BUTTON_PRESS
         if event.button == 3:
-            global rclick_Object
             rclick_Object = self.searchforobject(self.gridparser(event.x, self.wres), self.gridparser(event.y, self.hres))
             if rclick_Object != False:
-                print(rclick_Object)
-                lprint("rclick en", rclick_Object.x, rclick_Object.y, rclick_Object.objectype, "\nConnections: ", end="")
-                lprint(rclick_Object.connections)
-                self.rmenu = rclick_Object.menuemergente
-                if rclick_Object.objectype == "Computer" and len(rclick_Object.connections) > 0:
-                    rclick_Object.builder.get_object("grid_rclick-sendpkg").show()
-                else:
-                    rclick_Object.builder.get_object("grid_rclick-sendpkg").hide()
-                if len(rclick_Object.connections) > 0:
-                    rclick_Object.builder.get_object("grid_rclick-disconnect").show_all()
-                else:
-                    rclick_Object.builder.get_object("grid_rclick-disconnect").hide()
-                self.rmenu.popup(None, None, None, None, event.button, event.time)
-
+                rclick_Object.rclick(event)
             else:
-                lprint("Agua")
+                print("Agua")
 
         if areweputtingcable != 0:
             objeto = self.searchforobject(self.gridparser(event.x, self.wres), self.gridparser(event.y, self.hres))
@@ -493,7 +479,7 @@ cnt_rows = 2
 
 import uuid
 
-class ObjetoBase(MainClase):
+class ObjetoBase():
     allobjects = []
     def __init__(self, x, y, objtype, *args, name="Default", maxconnections=4, ip=None):
         global cnt_objects
@@ -509,14 +495,15 @@ class ObjetoBase(MainClase):
         self.builder = Gtk.Builder()
         self.builder.add_from_file(gladefile)
         self.menuemergente = self.builder.get_object("grid_rclick")
-        #self.builder.get_object("grid_rclick-disconnect").set_submenu(Gtk.Menu.new())
         self.builder.get_object("grid_rclick-disconnect_all").connect("activate", self.disconnect)
         self.builder.get_object("grid_rclick-delete").connect("activate", self.delete)
         self.builder.get_object("grid_rclick-debug").connect("activate", self.compcon)
 
+        self.window_changethings = w_changethings(self)
+        self.builder.get_object("grid_rclick-name").connect("activate", self.window_changethings.show)
+
         allobjects.append(self)
 
-        #MainClase.__init__(self)
         self.realx = x * TheGrid.sqres
         self.realy = y * TheGrid.sqres
         self.x = x -1
@@ -560,17 +547,29 @@ class ObjetoBase(MainClase):
         self.label.show()
         self.image.set_tooltip_text(self.name + " (" + str(len(self.connections)) + "/" + str(self.max_connections) + ")\n" + self.ipstr)
 
-        self.cnt = 0
-
-        #Acuerdate de quitar esto:
-        print('self.builder.get_object("grid_rclick-disconnect")', self.builder.get_object("grid_rclick-disconnect"))
+        self.cnt = 0 #Se me olvido que hace esta cosa
 
     #Esta funcion retorna una str cuando se usa el objeto. En lugar de <0xXXXXXXXX object>
     def __str__(self):
         return  "<Tipo: " + self.objectype +" | Name: " + self.name + " | Pos: " + str(self.x) + ", " + str(self.y) + ">"
 
-    def appendtoall(self):
-        pass
+    def rclick(self, event):
+        global rclick_Object
+        rclick_Object = self
+
+        print(self)
+        lprint("rclick en", self.x, self.y, self.objectype, "\nConnections: ", end="")
+        lprint(self.connections)
+        self.rmenu = self.menuemergente
+        if self.objectype == "Computer" and len(self.connections) > 0:
+            self.builder.get_object("grid_rclick-sendpkg").show()
+        else:
+            self.builder.get_object("grid_rclick-sendpkg").hide()
+        if len(self.connections) > 0:
+            self.builder.get_object("grid_rclick-disconnect").show_all()
+        else:
+            self.builder.get_object("grid_rclick-disconnect").hide()
+        self.rmenu.popup(None, None, None, None, event.button, event.time)
 
     def resizetogrid(self, image, *args):
         #Ver resizetogrid en Grid (clase)
@@ -596,6 +595,8 @@ class ObjetoBase(MainClase):
 
     #Esta fucnión se encarga de comprobar a que ordenador(es) está conectado
     #en total, pasando por routers, hubs y switches.
+
+    #Nota, hacer que compruebe que ordenadores tienen IP, y cuales no.
     def compcon(self, *args):
         passedyet = []
         comps     = []
@@ -624,7 +625,7 @@ class ObjetoBase(MainClase):
 
             print("passedyet", passedyet)
             return subcomps
-        
+
         comps.extend(subcompcon(self))
 
         try:
@@ -675,12 +676,22 @@ class ObjetoBase(MainClase):
         tmp.connect("activate", self.disconnect)
         #link es un objeto vinculado al widget
         tmp.link = objeto
+        tmp2 = Gtk.MenuItem.new_with_label(objeto.name)
+        self.builder.get_object("grid_rclick-sendpkg").get_submenu().append(tmp2)
+        tmp2.connect("activate", self.sendpkg)
+        tmp2.link = objeto
+        tmp2.show()
 
         tmp = Gtk.MenuItem.new_with_label(self.name)
         objeto.builder.get_object("grid_rclick-disconnect").get_submenu().append(tmp)
         tmp.show()
         tmp.connect("activate", objeto.disconnect)
         tmp.link = self
+        tmp2 = Gtk.MenuItem.new_with_label(self.name)
+        objeto.builder.get_object("grid_rclick-sendpkg").get_submenu().append(tmp2)
+        tmp2.show()
+        tmp2.connect("activate", objeto.sendpkg)
+        tmp2.link = self
 
         self.connections.append(objeto)
         self.cables.append(cable)
@@ -691,7 +702,6 @@ class ObjetoBase(MainClase):
         objeto.update()
 
     def disconnect(self, widget, *args, de=None):
-        global rclick_Object
         print("Cables:", self.cables)
         #QUICKFIX
         try:
@@ -701,37 +711,36 @@ class ObjetoBase(MainClase):
                 de = widget.link
         except:
             print("NO WIDGET AT DISCONNECT()")
-        if rclick_Object == self:
-            print(self, " <|> ",rclick_Object)
-            if de == "All":
-                ###NO FUNCIONA DEL TODO BIEN, NO USAR###
-                #Bug, el ultimo cable no se borra
-                print("Ahora a desconectar de todos")
-                for connection in self.connections:
-                    print("Connection:", connection)
-                    self.disconnect(widget, de=connection)
 
-            else:
-                print(self.connections)
-                print(de.__repr__())
-                de.connections.remove(self)
-                self.connections.remove(de)
+        if de == "All":
+            ###NO FUNCIONA DEL TODO BIEN, NO USAR###
+            #Bug, el ultimo cable no se borra
+            print("Ahora a desconectar de todos")
+            for connection in self.connections:
+                print("Connection:", connection)
+                self.disconnect(widget, de=connection)
 
-                iterc = iter(self.builder.get_object("grid_rclick-disconnect").get_submenu().get_children())
-                next(iterc)
-                print("\033[91mLinks\033[00m", [x.link for x in iterc])
+        else:
+            print(self.connections)
+            print(de.__repr__())
+            de.connections.remove(self)
+            self.connections.remove(de)
 
-                if de in [x.link for x in iterc]:
-                    print("\033[91mSelf in\033[00m", self)
+            iterc = iter(self.builder.get_object("grid_rclick-disconnect").get_submenu().get_children())
+            next(iterc)
+            print("\033[91mLinks\033[00m", [x.link for x in iterc])
 
-                for cable in self.cables:
-                    if cable.fromobj == self or cable.toobj == self:
-                        cable.delete()
-                        break
+            if de in [x.link for x in iterc]:
+                print("\033[91mSelf in\033[00m", self)
 
-                de.update()
+            for cable in self.cables:
+                if cable.fromobj == self or cable.toobj == self:
+                    cable.delete()
+                    break
 
-            self.update()
+            de.update()
+
+        self.update()
 
     def delete(self, *widget, conf=1):
         yonW = YesOrNoWindow("¿Estás seguro de que quieres eliminar " + self.name + " definitivamente? El objeto será imposible de recuperar y te hechará de menos.")
@@ -747,6 +756,9 @@ class ObjetoBase(MainClase):
             print("Piénsatelo dos veces")
         else:
             raise
+
+    def sendpkg(self, *widget, to):
+        pass
 
 class Router(ObjetoBase):
     obcnt = 1
@@ -1091,16 +1103,18 @@ class cfgWindow(MainClase):#MainClase):
 class w_changethings(): #Oie tú, pedazo de subnormal, que cada objeto debe tener una...
     #O tal vez no sea necesario... A la hora de llamar a la función, espera ¿Con quien estoy hablando?
     #Nota, ver notas escritas en la mesa
-    def __init__(self):
-        self.window = builder.get_object("changethings")
-        self.name_entry = builder.get_object("changethings_name-entry")
-        self.applybutton = builder.get_object("chg_apply")
+    def __init__(self, objeto):
+        self.window = objeto.builder.get_object("changethings")
+        self.name_entry = objeto.builder.get_object("changethings_name-entry")
+        self.applybutton = objeto.builder.get_object("chg_apply")
         self.applybutton.connect("clicked", self.apply)
-        self.cancelbutton = builder.get_object("chg_cancel")
+        self.cancelbutton = objeto.builder.get_object("chg_cancel")
         self.cancelbutton.connect("clicked", self.cancel)
         self.window.connect("delete-event", self.hidewindow)
         self.window.connect("key-press-event", self.on_key_press_event)
         self.window.connect("key-release-event", self.on_key_release_event)
+
+        self.link = objeto
 
         #Esto es un quick fix que hace que las entry sólo acepten números
         def filter_numsdec(widget):
@@ -1112,32 +1126,27 @@ class w_changethings(): #Oie tú, pedazo de subnormal, que cada objeto debe tene
             widget.set_text("".join([i for i in text if i in "0123456789ABCDEFabcdef"]))
 
         for i in ["changethings_entry-IP" + str(x) for x in range(1,5)]:
-            builder.get_object(i).connect("changed", filter_numsdec)
+            objeto.builder.get_object(i).connect("changed", filter_numsdec)
 
         for i in ["chg_MAC-entry" + str(x) for x in range(0,5)]:
-            builder.get_object(i).connect("changed", filter_numshex)
+            objeto.builder.get_object(i).connect("changed", filter_numshex)
 
         #self.applybutton.connect("clicked", self.apply)
         #self.cancelbutton.connect("clicked", self.cancel)
 
-    def show(self, *args):
-        global rclick_Object
-        lprint(self, *args)
-
-        self = window_changethings
-        self.obj = rclick_Object
+    def show(self, *widget):
         self.window.show_all()
-        self.name_entry.set_text(rclick_Object.name)
-        lprint(rclick_Object.macdir[1])
-        tmplst = rclick_Object.macdir[1].split(":")
+        self.name_entry.set_text(self.link.name)
+        lprint(self.link.macdir[1])
+        tmplst = self.link.macdir[1].split(":")
         for i in tmplst:
             tmpentry = builder.get_object("chg_MAC-entry" + str(tmplst.index(i)))
             tmpentry.set_text(i)
 
         #Hacer que muestre/oculte los campos de "IP"
-        if self.obj.objectype == "Computer":
+        if self.link.objectype == "Computer":
             try:
-                tmplst = rclick_Object.ip.str.split(".")
+                tmplst = self.link.ip.str.split(".")
                 for i in tmplst:
                     tmpentry = builder.get_object("changethings_entry-IP" + str(tmplst.index(i+1)))
                     tmpentry.set_text(i)
@@ -1153,17 +1162,17 @@ class w_changethings(): #Oie tú, pedazo de subnormal, que cada objeto debe tene
         #Nota: Hacer que compruebe nombres de una banlist, por ejemplo "TODOS"
         lprint(npi)
         self.window.hide()
-        self.obj.name = self.name_entry.get_text()
+        self.link.name = self.name_entry.get_text()
         lprint([ builder.get_object(y).get_text() for y in ["chg_MAC-entry" + str(x) for x in range(0,5)] ])
-        self.obj.macdir[1] = ":".join( [ builder.get_object(y).get_text() for y in ["chg_MAC-entry" + str(x) for x in range(5)] ])
-        lprint(self.obj.macdir)
-        self.obj.ip.set_str(".".join( [ builder.get_object(y).get_text() for y in ["changethings_entry-IP" + str(x) for x in range(1,5)] ]))
-        print(self.obj.ip.str, self.obj.ip.bins, self.obj.ip.bin)
+        self.link.macdir[1] = ":".join( [ builder.get_object(y).get_text() for y in ["chg_MAC-entry" + str(x) for x in range(5)] ])
+        lprint(self.link.macdir)
+        self.link.ip.set_str(".".join( [ builder.get_object(y).get_text() for y in ["changethings_entry-IP" + str(x) for x in range(1,5)] ]))
+        print(self.link.ip.str, self.link.ip.bins, self.link.ip.bin)
 
-        lprint("self.obj.name", self.obj.name)
+        lprint("self.link.name", self.link.name)
 
-        #self.obj.image.set_tooltip_text(self.obj.name + " (" + str(self.obj.connections) + "/" + str(self.obj.max_connections) + ")")
-        self.obj.update()
+        #self.link.image.set_tooltip_text(self.link.name + " (" + str(self.link.connections) + "/" + str(self.link.max_connections) + ")")
+        self.link.update()
 
     def cancel(self, *npi):
         lprint(npi)
@@ -1187,7 +1196,6 @@ class w_changethings(): #Oie tú, pedazo de subnormal, que cada objeto debe tene
     def on_key_release_event(self, widget, event):
         MainClase.on_key_release_event(self, widget, event)
 
-window_changethings = w_changethings()
 
 #Esta clase te permitirá deshacer acciones, algún día de un futuro lejano.
 class Undo():
