@@ -634,10 +634,18 @@ class ObjetoBase(MainClase):
             pass
 
         print("comps",comps)
+        print("N pcs", len(comps))
         for i in comps:
             print(self, "conected to", i)
         return comps
 
+    #Comprueba si un objeto está conectado a otro.
+    def isconnected(self, objeto):
+        cons = compcon(self)
+        if objeto in cons:
+            return True
+        else:
+            return False
 
     #TODO: Actualizar la info de la barra de la izquierda
     #TODO: Para no tener que actualizar todo, que compruebe el que cambió
