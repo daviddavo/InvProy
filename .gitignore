@@ -1,0 +1,7 @@
+.atomignore
+cmd.exe
+logfiles/
+*.log
+*~
+__pycache__/
+*.inv

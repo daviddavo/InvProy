@@ -1,13 +1,17 @@
  # -*- coding: utf-8 -*-
  #!/usr/bin/env python3
+
+ #https://github.com/daviddavo/InvProy
+ #David Davó - david@ddavo.me
+
 import configparser, os, csv, sys, time
 import xml.etree.ElementTree as xmltree
 from datetime import datetime
 from copy import copy, deepcopy
 startTime = datetime.now()
 
-#Para cualquier duda: david@ddavo.me
 os.system("clear")
+print("\033[91m##############################\033[00m")
 
 try: #Intenta importar los modulos necesarios
     sys.path.append("Modules/")
@@ -19,6 +23,7 @@ except:
 #Aqui importamos los modulos del programa que necesitamos...
 
 from logmod import *
+import save
 
 def lprint(*objects, sep=" ", end="\n", file=sys.stdout, flush=False):
     print(*objects, sep=sep, end=end, file=file, flush=flush)
@@ -28,8 +33,9 @@ def lprint(*objects, sep=" ", end="\n", file=sys.stdout, flush=False):
     writeonlog(thing)
 
 lprint("Start loading time: " + time.strftime("%H:%M:%S"))
+
 try:
-    #Importando las cosicas de la interfaz
+    #Importando las dependencias de la interfaz
     import gi
     gi.require_version('Gtk', '3.0')
     from gi.repository import Gtk, GObject, Gdk, GdkPixbuf
@@ -50,6 +56,13 @@ except:
     lprint("Para instalar eso necesitas tener python3-pip")
     sys.exit()
 
+try:
+    import cairo
+except:
+    print("También necesitas cairo")
+    print("Como es lógico, pon 'pacman -S python-cairo' en Archlinux")
+    sys.exit()
+
 #Definiendo un par de cosillas necesarias
 
 gtk = Gtk
@@ -66,7 +79,7 @@ def digitsnumber(number, digits):
     else:
         return "-1"
 
-#Convierte hezadesimal a RGBA tal y como Gdk lo quiere
+#Convierte hexadecimal a RGBA tal y como Gdk lo requiere
 def hex_to_rgba(value):
     value = value.lstrip('#')
     if len(value) == 3:
@@ -110,18 +123,13 @@ def push_elemento(texto):
 
 #Imprime cosas al log. Movido a Modules/logmod.py 190216
 
-#Prueba. Get la  version de Gtk necesaria.
 gladefile = "Interface2.glade"
 
 try:
     builder = Gtk.Builder()
     builder.add_from_file(gladefile)
     writeonlog("Cargando interfaz")
-    count = 0
-    for i in builder.get_objects():
-        count += 1
-        writeonlog("  " + digitsnumber(count, 2) +  str(i))
-    lprint("Interfaz cargada\nCargados un total de " + str(count) + " objetos")
+    lprint("Interfaz cargada\nCargados un total de " + str(len(builder.get_objects())) + " objetos")
     xmlroot = xmltree.parse(gladefile).getroot()
     lprint("Necesario Gtk+ "+ xmlroot[0].attrib["version"]+".0", end="")
     lprint(" | Usando Gtk+ "+str(Gtk.get_major_version())+"."+str(Gtk.get_minor_version())+"."+str(Gtk.get_micro_version()))
@@ -140,8 +148,7 @@ createlogfile()
 
 #CONFIGS
 
-WRES        = int(config.get("GRAPHICS", "WRES"))
-HRES        = int(config.get("GRAPHICS", "HRES"))
+WRES, HRES  = int(config.get("GRAPHICS", "WRES")), int(config.get("GRAPHICS", "HRES"))
 resdir      = config.get("DIRS", "respack")
 
 lprint(resdir)
@@ -151,7 +158,7 @@ lprint(resdir)
 allkeys = set()
 allobjects = []
 cables = []
-clickedobjects = set() #Creamos una cosa para meter los ultimos 10 objetos clickados
+clickedobjects = set() #Creamos una cosa para meter los ultimos 10 objetos clickados. (EN DESUSO)
 clicked = 0
 bttnclicked = 0
 areweputtingcable = 0
@@ -171,7 +178,6 @@ class MainClase(Gtk.Window):
         self.ventana = builder.get_object("window1")
         self.ventana.connect("key-press-event", self.on_key_press_event)
         self.ventana.connect("key-release-event", self.on_key_release_event)
-        #self.ventana.connect("drag-drop", self.drag_drop)
         self.ventana.set_default_size(WRES, HRES)
         self.ventana.set_keep_above(bool(config.get("GRAPHICS", "window-set-keep-above")))
 
@@ -191,8 +197,10 @@ class MainClase(Gtk.Window):
         #configWindow = cfgWindow()
 
         builder.get_object("imagemenuitem9").connect("activate", self.showcfgwindow)
+        builder.get_object("imagemenuitem3").connect("activate", save.save)
+        builder.get_object("imagemenuitem2").connect("activate", save.load)
 
-        ### EVENT HANDLERS & show ventana###
+        ### EVENT HANDLERS###
 
         handlers = {
         "onDeleteWindow":             exiting,
@@ -218,6 +226,7 @@ class MainClase(Gtk.Window):
 
     ##### TODAS LAS FUNCIONES DE LA BOTONERA ####
 
+    #Función inútil
     def addbuttonclicked(self, *args):
         global testelement
         global allobjects
@@ -226,8 +235,7 @@ class MainClase(Gtk.Window):
         for i in range(len(allobjects)):
             lprint(allobjects[i])
 
-    #Esta va a ser la función definitiva creada para manejarlos a todos
-    #Fue bastante más fácil de lo que pensaba.
+    #Una función para gobernarlos a todos.
     def toolbutton_clicked(self, objeto):
         global clicked
         global bttnclicked
@@ -266,6 +274,10 @@ class MainClase(Gtk.Window):
             print(allobjects)
             for obj in allobjects:
                 obj.update()
+
+        if ("Control_L" in allkeys) and ("s" in allkeys):
+            global allobjects
+            save.save(allobjects)
 
         #Para no tener que hacer click continuamente
         if ("q" in allkeys):
@@ -434,7 +446,6 @@ class Grid():
                     push_elemento("Número máximo de conexiones alcanzado")
 
     #Te pasa las cordenadas int que retorna Gtk a coordenadas del Grid, bastante sencillito. Tienes que llamarlo 2 veces, una por coordenada
-    #Asumiendo que el grid esta formado por cuadrados
     def gridparser(self, coord, cuadrados, mode=0):
         if mode == 0:
             partcoord = coord / self.sqres
@@ -452,6 +463,7 @@ class Grid():
         pixbuf = pixbuf.scale_simple(self.sqres, self.sqres, GdkPixbuf.InterpType.BILINEAR)
         image.set_from_pixbuf(pixbuf)
 
+    #Una función para encontrarlos,
     def searchforobject(self, x, y):
         global allobjects
         localvar = False
@@ -461,7 +473,6 @@ class Grid():
                     localvar = True
                     objeto = allobjects[i]
                     break
-                    #lprint("Objeto encontrado: " + str(objeto))
         if localvar == True:
             return objeto
         else:
@@ -481,6 +492,7 @@ import uuid
 
 class ObjetoBase():
     allobjects = []
+    #Una función para atraerlos a todos y atarlos en las tinieblas
     def __init__(self, x, y, objtype, *args, name="Default", maxconnections=4, ip=None):
         global cnt_objects
         global cnt_rows
@@ -891,31 +903,46 @@ class Cable():
         self.fromy = TheGrid.gridparser(fromo.y, TheGrid.hres,1)
         self.tox = TheGrid.gridparser(to.x, TheGrid.wres,1)
         self.toy = TheGrid.gridparser(to.y, TheGrid.hres,1)
+        self.w   = max(abs(fromo.realx - to.realx),3)
+        self.h   = max(abs(fromo.realy - to.realy),3)
 
-        #Lo del maximo del absoluto es una forma simple de decirle que si el ancho es 0, ponga el ancho como 3.
-        drawing = svgwrite.Drawing(size=( str( max(abs(fromo.realx - to.realx),3)) + "px", str( max(abs(fromo.realy - to.realy),3) ) + "px"), debug=True)
-        #Esto es para DEBUG, acuérdate de comentarlo cuando no sea necesario
-        drawing.add(drawing.rect(insert=(0, 0), size=('100%', '100%'), rx=None, ry=None, fill="#3399FF", fill_opacity="0.1"))
+        ###INICIO DE LO DE CAIRO
 
-        #Bueno, lo importante es que funciona xd
+        width, height = max(abs(fromo.realx - to.realx),3), max(abs(fromo.realy - to.realy),3)
+        surface = cairo.ImageSurface(cairo.FORMAT_ARGB32, width, height)
+        ctx = cairo.Context(surface)
+
+        #ctx.scale(width, height)
+
+        ctx.close_path ()
+
+        if config.getboolean("DEBUG", "show-cable-rectangle") == True:
+            ctx.set_source_rgba(0, 0, 1, 0.1) # Solid color
+            ctx.rectangle(0,0,width,height)
+            ctx.fill()
+        
+
+        ctx.set_line_width(2)
+        ctx.set_source_rgb(1,0,0)
         if (fromo.x < to.x and fromo.y < to.y) or (fromo.x > to.x and fromo.y > to.y):
-            line = drawing.line(start=(0,0), end=('100%','100%'), stroke=config.get("GRAPHICS", "cable-color"), stroke_width=1.5)
+            ctx.move_to(0, 0)
+            ctx.line_to(width, height)
         elif fromo.x == to.x:
-            line = drawing.line(start=('50%',0), end=('50%','100%'), stroke=config.get("GRAPHICS", "cable-color"), stroke_width=1.5)
+            ctx.move_to(width/2, 0)
+            ctx.line_to(width/2, height)
         elif fromo.y == to.y:
-            line = drawing.line(start=(0,'50%'), end=('100%','50%'), stroke=config.get("GRAPHICS", "cable-color"), stroke_width=1.5)
+            ctx.move_to(0, height/2)
+            ctx.line_to(width, height/2)
         else:
-            line = drawing.line(start=(0,'100%'), end=('100%',0), stroke=config.get("GRAPHICS", "cable-color"), stroke_width=1.5)
+            ctx.move_to(0, height)
+            ctx.line_to(width, 0)
 
-        drawing.add(line)
+        ctx.stroke()
 
-        loader = GdkPixbuf.PixbufLoader()
-        loader.write(drawing.tostring().encode())
-        loader.close()
-        self.pixbuf = loader.get_pixbuf()
+        self.image = gtk.Image.new_from_surface(surface)
 
-        self.image = gtk.Image.new_from_pixbuf(self.pixbuf)
-
+        ###FIN DE LO DE CAIRO
+        
         TheGrid.moveto(self.image, min(fromo.x, to.x)-0.5, min(fromo.y, to.y)-0.5)
         #Esto es para que las imagenes esten por encima del cable, no te olvides de descomentarlo
 
@@ -957,8 +984,19 @@ class packet():
         self.pixbuf = loader.get_pixbuf()
 
         self.image = gtk.Image.new_from_pixbuf(self.pixbuf)
-        TheGrid.moveto(self.image, 7, 7)
-        self.image.show()
+        
+        #builder.get_object("fixed1").put(self.image, x, y)
+
+    #Composición de movimientos lineales en eje x e y
+    #Siendo t=fps/s, v=px/s
+    def animation(self, cable, fps=60, v=20):
+        from math import sqrt
+        #Long del cable
+        w, h = cable.w, cable.h
+        r = sqrt(cable.w**2+cable.h**2)
+        sen = h/r
+        cos = w/h
+
 
 pckt = packet(1,2,3)
 
@@ -1166,8 +1204,9 @@ class w_changethings(): #Oie tú, pedazo de subnormal, que cada objeto debe tene
         lprint([ builder.get_object(y).get_text() for y in ["chg_MAC-entry" + str(x) for x in range(0,5)] ])
         self.link.macdir[1] = ":".join( [ builder.get_object(y).get_text() for y in ["chg_MAC-entry" + str(x) for x in range(5)] ])
         lprint(self.link.macdir)
-        self.link.ip.set_str(".".join( [ builder.get_object(y).get_text() for y in ["changethings_entry-IP" + str(x) for x in range(1,5)] ]))
-        print(self.link.ip.str, self.link.ip.bins, self.link.ip.bin)
+        if self.link.objectype == "Computer":
+            self.link.ip.set_str(".".join( [ builder.get_object(y).get_text() for y in ["changethings_entry-IP" + str(x) for x in range(1,5)] ]))
+            print(self.link.ip.str, self.link.ip.bins, self.link.ip.bin)
 
         lprint("self.link.name", self.link.name)
 
