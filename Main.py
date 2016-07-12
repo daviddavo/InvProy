@@ -43,23 +43,10 @@ except:
     lprint("Por favor, instala PyGObject en tu ordenador. \n  En ubuntu suele ser 'apt-get install python3-gi'\n  En Archlinux es 'pacman -S python-gobject'")
     sys.exit()
 
-sys.path.append("Modules/svgwrite")
-import __init__ as svgwrite
-
-try: #Intenta importar una libreria que puede no estar instalada
-	#import svgwrite #Esto es para cuando el paquete lo distrubuya un administrador de paquetes...
-    sys.path.append("Modules/svgwrite")
-    import __init__ as svgwrite
-    pass
-except:
-    lprint("Necesitas tener instalado svgwrite \nTan solo pon 'sudo pip3 install svgwrite'")
-    lprint("Para instalar eso necesitas tener python3-pip")
-    sys.exit()
-
 try:
     import cairo
 except:
-    print("También necesitas cairo")
+    print("Necesitas tener instalado cairo")
     print("Como es lógico, pon 'pacman -S python-cairo' en Archlinux")
     sys.exit()
 
@@ -358,22 +345,27 @@ class Grid():
         self.sqres = config.getint("GRAPHICS", "viewport-sqres")
         self.mainport.set_size_request(self.wres * self.sqres, self.hres * self.sqres)
 
-        #03/05/16 Ahora esto va por svgwrite, bieeeen.
-        drawing = svgwrite.Drawing(size=( str(self.wres * self.sqres)+"px", str(self.hres * self.sqres)+"px"))
-        for i in range(self.wres):
-            linex = drawing.line(start=(i*self.sqres,0), end=(i*self.sqres,self.hres*self.sqres), stroke="black", stroke_width="1")
-            drawing.add(linex)
-        for i in range(self.hres):
-            liney = drawing.line(start=(0, i*self.sqres), end=(self.wres*self.sqres, i*self.sqres), stroke="black")
-            drawing.add(liney)
+        #13/07/16 Ahora esto va por cairo, mejooor.
+        ### INICIO CAIRO
 
-        encoded = drawing.tostring().encode()
-        loader = GdkPixbuf.PixbufLoader()
-        loader.write(encoded)
-        loader.close()
-        self.pixbuf = loader.get_pixbuf()
-        #self.pixbufback0 = self.pixbuf.scale_simple(self.sqres, self.sqres, GdkPixbuf.InterpType.BILINEAR)
-        self.image = gtk.Image.new_from_pixbuf(self.pixbuf)
+        width, height, sq = self.wres*self.sqres, self.hres*self.sqres, self.sqres
+        surface = cairo.ImageSurface(cairo.FORMAT_ARGB32, width, height)
+        ctx = cairo.Context(surface)
+        ctx.close_path ()
+        ctx.set_source_rgba(0,0,0,1)
+        ctx.set_line_width(1)
+
+        for i in range(self.wres):
+            ctx.move_to(i*sq, 0)
+            ctx.line_to(i*sq, height)
+        for i in range(self.hres):
+            ctx.move_to(0, i*sq)
+            ctx.line_to(width, i*sq)
+
+
+        ctx.stroke()
+        self.image = Gtk.Image.new_from_surface(surface)
+        ### FINAL DE LO DE CAIRO
 
         self.mainport.put(self.image, 0, 0)
 
@@ -975,15 +967,7 @@ class packet():
         self.payload = payload
         self.trailer = trailer
 
-        drawing = svgwrite.Drawing(size=("50px", "50px"), debug=True)
-        circle = drawing.circle(center=(25,25), r=5)
-        drawing.add(circle)
-        loader = GdkPixbuf.PixbufLoader()
-        loader.write(drawing.tostring().encode())
-        loader.close()
-        self.pixbuf = loader.get_pixbuf()
-
-        self.image = gtk.Image.new_from_pixbuf(self.pixbuf)
+        #self.image = gtk.Image.new_from_surface(surface)
         
         #builder.get_object("fixed1").put(self.image, x, y)
 
@@ -996,9 +980,6 @@ class packet():
         r = sqrt(cable.w**2+cable.h**2)
         sen = h/r
         cos = w/h
-
-
-pckt = packet(1,2,3)
 
 class icmp(packet):
     def __init__(self):
