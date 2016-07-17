@@ -1,13 +1,13 @@
- # -*- coding: utf-8 -*-
- #!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+#!/usr/bin/env python3
 
- #https://github.com/daviddavo/InvProy
- #David Davó - david@ddavo.me
+#https://github.com/daviddavo/InvProy
+#David Davó - david@ddavo.me
+#Unlicensed yet
 
 import configparser, os, csv, sys, time
 import xml.etree.ElementTree as xmltree
 from datetime import datetime
-from copy import copy, deepcopy
 startTime = datetime.now()
 
 os.system("clear")
@@ -15,7 +15,7 @@ print("\033[91m##############################\033[00m")
 
 try: #Intenta importar los modulos necesarios
     sys.path.append("Modules/")
-    import Test
+    import Modules.Test
 except:
     print("Error: No se han podido importar los modulos...")
     sys.exit()
@@ -332,9 +332,20 @@ objetocable1 = None
 #Esto es el Grid donde van las cosicas. A partir de aqui es donde esta lo divertido.
 class Grid():
     def __init__(self):
-        self.mainport = builder.get_object("fixed1")
-        self.viewport = builder.get_object("viewport1")
-        self.eventbox = builder.get_object("eventbox1")
+        #16/06/16 MAINPORT PASA A SER VARIAS LAYERS
+        self.overlay    = builder.get_object("overlay1")
+        self.mainport   = Gtk.Layout.new()
+        self.cables_lay = Gtk.Layout.new()
+        self.backgr_lay = Gtk.Layout.new()
+        self.overlay.add_overlay(self.mainport)
+        self.overlay.add_overlay(self.cables_lay)
+        self.overlay.add_overlay(self.backgr_lay)
+        self.overlay.reorder_overlay(self.mainport, -1)
+        self.overlay.reorder_overlay(self.cables_lay, 1)
+        self.overlay.reorder_overlay(self.backgr_lay, 0)
+
+        self.viewport   = builder.get_object("viewport1")
+        self.eventbox   = builder.get_object("eventbox1")
         self.eventbox.connect("button-press-event", self.clicked_on_grid)
         #self.viewport.get_hadjustment()
         self.viewport.get_hadjustment().set_value(800)
@@ -367,13 +378,22 @@ class Grid():
         self.image = Gtk.Image.new_from_surface(surface)
         ### FINAL DE LO DE CAIRO
 
-        self.mainport.put(self.image, 0, 0)
+        self.backgr_lay.put(self.image, 0, 0)
 
         self.contadorback = 0
 
-    def moveto(self, image, x, y):
+    def moveto(self, image, x, y, *args, layout=None):
+        if layout == None:
+            layout = self.mainport
+        else:
+            print("layout.__class__", layout.__class__)
+            #print("layout.props.index", layout.props.index)
         #image.destroy()
-        self.mainport.put(image, x*self.sqres, y*self.sqres)
+        #self.mainport.move(image, x*self.sqres, y*self.sqres)
+        if image in layout.get_children():
+            layout.move(image, x*self.sqres, y*self.sqres)
+        else:
+            layout.put(image, x*self.sqres, y*self.sqres)
 
     def clicked_on_grid(self, widget, event, *args):
         global clicked
@@ -884,6 +904,10 @@ class Computador(ObjetoBase):
         self.image.set_tooltip_text(self.name + " (" + str(len(self.connections)) + "/" + str(self.max_connections) + ")\n" + self.ip.str)
         self.label.set_text(self.name)
 
+    def send_pck(self, widget):
+        print("fnc send_pck", self, widget)
+        raise
+
 #La clase para los objetos cable
 class Cable():
     def __init__(self, fromo, to, *color):
@@ -914,7 +938,7 @@ class Cable():
             ctx.fill()
         
 
-        ctx.set_line_width(2)
+        ctx.set_line_width(1.5)
         ctx.set_source_rgb(1,0,0)
         if (fromo.x < to.x and fromo.y < to.y) or (fromo.x > to.x and fromo.y > to.y):
             ctx.move_to(0, 0)
@@ -935,11 +959,11 @@ class Cable():
 
         ###FIN DE LO DE CAIRO
         
-        TheGrid.moveto(self.image, min(fromo.x, to.x)-0.5, min(fromo.y, to.y)-0.5)
+        TheGrid.moveto(self.image, min(fromo.x, to.x)-0.5, min(fromo.y, to.y)-0.5, layout=TheGrid.cables_lay)
         #Esto es para que las imagenes esten por encima del cable, no te olvides de descomentarlo
 
-        TheGrid.moveto(fromo.image, fromo.x-1, fromo.y-1)
-        TheGrid.moveto(to.image, to.x-1, to.y-1)
+        #TheGrid.moveto(fromo.image, fromo.x-1, fromo.y-1)
+        #TheGrid.moveto(to.image, to.x-1, to.y-1)
         lprint("Puesto cable en: ", min(fromo.x, to.x), "; ", min(fromo.y, to.y))
 
         self.image.show()
@@ -973,14 +997,37 @@ class packet():
 
     #Composición de movimientos lineales en eje x e y
     #Siendo t=fps/s, v=px/s
-    def animation(self, cable, fps=60, v=20):
+    def animation(self, cable, fps=60, v=120):
         from math import sqrt
+        from time import sleep
         #Long del cable
         w, h = cable.w, cable.h
         r = sqrt(cable.w**2+cable.h**2)
         sen = h/r
         cos = w/h
+        t=r/v #Tiempo en segundos que durara la animacion
+        tf = fps*t #Fotogramas totales
+        spf = 1/fps
+        f = 0
+        while f < tf:
+            print(f, end="\r")
+            sleep(spf)
+            f += 1
+            #move(cos*v,sen*v)
+            pass
 
+        return True
+
+class tmp():
+    def __init__(self):
+        pass
+'''
+cabel = tmp()
+cabel.w = 500
+cabel.h = 500
+
+packet.animation(1,cabel)
+'''
 class icmp(packet):
     def __init__(self):
         pass
@@ -1186,8 +1233,11 @@ class w_changethings(): #Oie tú, pedazo de subnormal, que cada objeto debe tene
         self.link.macdir[1] = ":".join( [ builder.get_object(y).get_text() for y in ["chg_MAC-entry" + str(x) for x in range(5)] ])
         lprint(self.link.macdir)
         if self.link.objectype == "Computer":
-            self.link.ip.set_str(".".join( [ builder.get_object(y).get_text() for y in ["changethings_entry-IP" + str(x) for x in range(1,5)] ]))
-            print(self.link.ip.str, self.link.ip.bins, self.link.ip.bin)
+            try:
+                self.link.ip.set_str(".".join( [ builder.get_object(y).get_text() for y in ["changethings_entry-IP" + str(x) for x in range(1,5)] ]))
+                print(self.link.ip.str, self.link.ip.bins, self.link.ip.bin)
+            except:
+                print(Exception)
 
         lprint("self.link.name", self.link.name)
 
