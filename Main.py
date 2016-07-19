@@ -265,6 +265,8 @@ class MainClase(Gtk.Window):
         if ("Control_L" in allkeys) and ("s" in allkeys):
             global allobjects
             save.save(allobjects)
+        if ("Control_L" in allkeys) and ("d" in allkeys):
+            theend()
 
         #Para no tener que hacer click continuamente
         if ("q" in allkeys):
@@ -337,10 +339,14 @@ class Grid():
         self.mainport   = Gtk.Layout.new()
         self.cables_lay = Gtk.Layout.new()
         self.backgr_lay = Gtk.Layout.new()
+        self.select_lay = Gtk.Layout.new() #Aparecer un fondo naranja en la cuadricula cuando se selcciona un objeto
+        self.animat_lay = Gtk.Layout.new() #La capa de las animaciones de los cables
         self.overlay.add_overlay(self.mainport)
         self.overlay.add_overlay(self.cables_lay)
         self.overlay.add_overlay(self.backgr_lay)
         self.overlay.reorder_overlay(self.mainport, -1)
+        self.overlay.reorder_overlay(self.select_lay, 3)
+        self.overlay.reorder_overlay(self.animat_lay, 2)
         self.overlay.reorder_overlay(self.cables_lay, 1)
         self.overlay.reorder_overlay(self.backgr_lay, 0)
 
@@ -385,11 +391,10 @@ class Grid():
     def moveto(self, image, x, y, *args, layout=None):
         if layout == None:
             layout = self.mainport
+        elif str(layout.__class__.__name__) == "Layout":
+            layout = layout
         else:
-            print("layout.__class__", layout.__class__)
-            #print("layout.props.index", layout.props.index)
-        #image.destroy()
-        #self.mainport.move(image, x*self.sqres, y*self.sqres)
+            print("layout.__class__.__name__", layout.__class__.__name__)
         if image in layout.get_children():
             layout.move(image, x*self.sqres, y*self.sqres)
         else:
@@ -834,7 +839,7 @@ class Hub(ObjetoBase):
 
 class Computador(ObjetoBase):
     obcnt = 1
-    def __init__(self, x, y, *args, name="Default", maxconnections=4, ip=None):
+    def __init__(self, x, y, *args, name="Default", maxconnections=1, ip=None):
         self.objectype = "Computer"
 
         push_elemento("Creado objeto Hub")
@@ -842,7 +847,7 @@ class Computador(ObjetoBase):
         ObjetoBase.__init__(self, x, y, self.objectype, name=name)
         self.x = x
         self.y = y
-        self.max_connections = 1
+        self.max_connections = maxconnections
         self.ip = self.ip()
 
     class ip():
@@ -985,7 +990,7 @@ class Cable():
 
 #De momento sólo soportará el protocolo IPv4
 class packet():
-    def __init__(self, header, payload, trailer):
+    def __init__(self, header, payload, trailer, cabel=None):
         lprint("Creado paquete de res")
         self.header = header
         self.payload = payload
@@ -998,7 +1003,8 @@ class packet():
     #Composición de movimientos lineales en eje x e y
     #Siendo t=fps/s, v=px/s
     def animation(self, cable, fps=60, v=120):
-        from math import sqrt
+        print("Animatronics")
+        from math import sqrt, pi
         from time import sleep
         #Long del cable
         w, h = cable.w, cable.h
@@ -1009,25 +1015,48 @@ class packet():
         tf = fps*t #Fotogramas totales
         spf = 1/fps
         f = 0
+        sq = 12
+        surface = cairo.ImageSurface(cairo.FORMAT_ARGB32, sq, sq)
+        ctx = cairo.Context(surface)
+        ctx.close_path()
+        ctx.set_source_rgba(0,1,1,1)
+        ctx.arc(sq/2,sq/2,sq/2,0,2*pi)
+        ctx.fill()
+        ctx.stroke()
+
+        image = gtk.Image.new_from_surface(surface)
+
+        TheGrid.moveto(image, 3.5, 4.2)
+        '''
         while f < tf:
             print(f, end="\r")
             sleep(spf)
             f += 1
             #move(cos*v,sen*v)
             pass
-
+        '''
         return True
+        
+
+from time import sleep
+
+def theend():
+    #Comp1 = Computador(5, 7, name="Comp1")
+    #Comp2 = Computador(9, 10, name="Comp2")
+    #cab   = Cable(Comp1, Comp2)
+    pass
 
 class tmp():
     def __init__(self):
         pass
-'''
+
 cabel = tmp()
 cabel.w = 500
 cabel.h = 500
 
+pack = packet(1,2,3)
 packet.animation(1,cabel)
-'''
+    
 class icmp(packet):
     def __init__(self):
         pass

@@ -1064,6 +1064,8 @@
                             <property name="name">overlay1</property>
                             <property name="visible">True</property>
                             <property name="can_focus">False</property>
+                            <property name="hexpand">True</property>
+                            <property name="vexpand">True</property>
                             <child>
                               <placeholder/>
                             </child>
