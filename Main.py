@@ -166,7 +166,8 @@ class MainClase(Gtk.Window):
         self.ventana.connect("key-press-event", self.on_key_press_event)
         self.ventana.connect("key-release-event", self.on_key_release_event)
         self.ventana.set_default_size(WRES, HRES)
-        self.ventana.set_keep_above(bool(config.get("GRAPHICS", "window-set-keep-above")))
+        self.ventana.set_keep_above(bool(config.getboolean("GRAPHICS", "window-set-keep-above")))
+        #self.ventana.set_keep_above(false)
 
         i = int(config.get('GRAPHICS', 'toolbutton-size'))
 
@@ -360,7 +361,8 @@ class Grid():
         self.wres = config.getint("GRAPHICS", "viewport-wres")
         self.hres = config.getint("GRAPHICS", "viewport-hres")
         self.sqres = config.getint("GRAPHICS", "viewport-sqres")
-        self.mainport.set_size_request(self.wres * self.sqres, self.hres * self.sqres)
+        self.overlay.set_size_request(self.wres*self.sqres, self.hres*self.sqres)
+        #self.mainport.set_size_request(self.wres * self.sqres, self.hres * self.sqres)
 
         #13/07/16 Ahora esto va por cairo, mejooor.
         ### INICIO CAIRO
@@ -637,22 +639,23 @@ class ObjetoBase():
             subcomps = []
 
             iterc = notself.connections
-            print(notself, "connections:", iterc)
+            #print(notself, "connections:", iterc)
             #next(iterc)
 
             for con in iterc:
                 if con.uuid != reself.uuid and con.uuid not in [obj.uuid for obj in passedyet]:
                     passedyet.append(con)
-                    print(con)
+                    #print(con)
                     if con.objectype == "Computer":
                         subcomps.append(con)
                     elif con.objectype == "Switch":
                         subcomps.extend(subcompcon(con))
                     else:
-                        print("Saltado", con)
+                        #print("Saltado", con)
+                        pass
                 #passedyet.append(con)
 
-            print("passedyet", passedyet)
+            #print("passedyet", passedyet)
             return subcomps
 
         comps.extend(subcompcon(self))
@@ -663,10 +666,14 @@ class ObjetoBase():
         except:
             pass
 
+        '''
         print("comps",comps)
         print("N pcs", len(comps))
         for i in comps:
             print(self, "conected to", i)
+        '''
+        if args == 1:
+            print(comps)
         return comps
 
     #Comprueba si un objeto está conectado a otro.
@@ -677,7 +684,6 @@ class ObjetoBase():
         else:
             return False
 
-    #TODO: Actualizar la info de la barra de la izquierda
     #TODO: Para no tener que actualizar todo, que compruebe el que cambió
     #TODO: !! Hacer que modifique el menu_emergente (Hecho a medias xds)
     #Nota !!: No puedes buscar un objeto en una lista, debes buscar sus atr.
@@ -908,6 +914,26 @@ class Computador(ObjetoBase):
         ObjetoBase.update(self)
         self.image.set_tooltip_text(self.name + " (" + str(len(self.connections)) + "/" + str(self.max_connections) + ")\n" + self.ip.str)
         self.label.set_text(self.name)
+        submenu1 = self.builder.get_object("grid_rclick-sendpkg").get_submenu()
+        print("Compcon: ", [x.name for x in self.compcon()])
+
+        for child in submenu1.get_children():
+            if child.link.__class__.__name__ == "Switch":
+                child.hide()
+                for con in self.compcon():
+                    if con.uuid not in [x.link.uuid for x in submenu1.get_children()]:
+                        print("Not yet")
+                        MeIt = Gtk.MenuItem.new_with_label(con.name)
+                        MeIt.link = con
+                        MeIt.connect("activate", self.sendpkg)
+                        submenu1.append(MeIt)
+                        con.update()
+                        MeIt.show()
+                    else:
+                        print("\033[91m",con, "ya está en submenu1\033[0m")
+                        pass
+
+                print("self.connections", self.connections)
 
     def send_pck(self, widget):
         print("fnc send_pck", self, widget)
@@ -1246,6 +1272,8 @@ class w_changethings(): #Oie tú, pedazo de subnormal, que cada objeto debe tene
                     tmpentry = builder.get_object("changethings_entry-IP" + str(tmplst.index(i+1)))
                     tmpentry.set_text(i)
             except AttributeError: #Cuando no tiene una str definida
+                pass
+            except TypeError:
                 pass
             except:
                 raise
