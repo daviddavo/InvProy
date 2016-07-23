@@ -76,6 +76,8 @@ def hex_to_rgba(value):
 
     return (r1,g1,b1,a1)
 
+print("#42FF37", hex_to_rgba("#42FF37"))
+
 #Comprueba la integridad del pack de recursos
 def checkres(recurdir):
     files = ["Cable.png", "Router.png", "Switch.png", "Computer.png"]
@@ -168,6 +170,10 @@ class MainClase(Gtk.Window):
         self.ventana.set_default_size(WRES, HRES)
         self.ventana.set_keep_above(bool(config.getboolean("GRAPHICS", "window-set-keep-above")))
         #self.ventana.set_keep_above(false)
+
+        #Modifica el color de fondo del viewport
+        clr = hex_to_rgba(config.get("GRAPHICS", "viewport-background-color"))
+        builder.get_object("viewport1").override_background_color(Gtk.StateFlags.NORMAL, Gdk.RGBA(clr[0], clr[1], clr[2], clr[3]))
 
         i = int(config.get('GRAPHICS', 'toolbutton-size'))
 
@@ -672,8 +678,10 @@ class ObjetoBase():
         for i in comps:
             print(self, "conected to", i)
         '''
-        if args == 1:
-            print(comps)
+        if args == 1 or "Gtk" in str(args):
+            print("Comps:", comps)
+            print("\nCompsname:", [x.name for x in comps])
+
         return comps
 
     #Comprueba si un objeto está conectado a otro.
@@ -730,10 +738,11 @@ class ObjetoBase():
 
         self.connections.append(objeto)
         self.cables.append(cable)
-        self.update()
 
         objeto.connections.append(self)
         objeto.cables.append(cable)
+
+        self.update()
         objeto.update()
 
     def disconnect(self, widget, *args, de=None):
@@ -925,10 +934,10 @@ class Computador(ObjetoBase):
                         print("Not yet")
                         MeIt = Gtk.MenuItem.new_with_label(con.name)
                         MeIt.link = con
-                        MeIt.connect("activate", self.sendpkg)
+                        MeIt.connect("activate", self.send_pck)
                         submenu1.append(MeIt)
-                        con.update()
                         MeIt.show()
+                        con.update()
                     else:
                         print("\033[91m",con, "ya está en submenu1\033[0m")
                         pass
@@ -991,10 +1000,6 @@ class Cable():
         ###FIN DE LO DE CAIRO
         
         TheGrid.moveto(self.image, min(fromo.x, to.x)-0.5, min(fromo.y, to.y)-0.5, layout=TheGrid.cables_lay)
-        #Esto es para que las imagenes esten por encima del cable, no te olvides de descomentarlo
-
-        #TheGrid.moveto(fromo.image, fromo.x-1, fromo.y-1)
-        #TheGrid.moveto(to.image, to.x-1, to.y-1)
         lprint("Puesto cable en: ", min(fromo.x, to.x), "; ", min(fromo.y, to.y))
 
         self.image.show()
@@ -1021,10 +1026,6 @@ class packet():
         self.header = header
         self.payload = payload
         self.trailer = trailer
-
-        #self.image = gtk.Image.new_from_surface(surface)
-        
-        #builder.get_object("fixed1").put(self.image, x, y)
 
     #Composición de movimientos lineales en eje x e y
     #Siendo t=fps/s, v=px/s

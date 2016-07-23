@@ -605,7 +605,7 @@
       <object class="GtkMenuItem" id="grid_rclick-sendpkg">
         <property name="visible">True</property>
         <property name="can_focus">False</property>
-        <property name="label" translatable="yes">Enviar paquete a...</property>
+        <property name="label" translatable="yes">Ping...</property>
         <property name="use_underline">True</property>
         <child type="submenu">
           <object class="GtkMenu" id="grid_rclick-sendpkg-submenu">
@@ -712,7 +712,7 @@
   </object>
   <object class="GtkWindow" id="window1">
     <property name="can_focus">False</property>
-    <property name="title" translatable="yes">Simulador de redes</property>
+    <property name="title" translatable="yes">InvProy</property>
     <property name="window_position">mouse</property>
     <property name="icon_name">network-wireless</property>
     <property name="gravity">static</property>
