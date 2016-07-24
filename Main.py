@@ -5,7 +5,7 @@
 #David Davó - david@ddavo.me
 #Unlicensed yet
 
-import configparser, os, csv, sys, time
+import configparser, os, csv, sys, time, random
 import xml.etree.ElementTree as xmltree
 from datetime import datetime
 startTime = datetime.now()
@@ -200,7 +200,7 @@ class MainClase(Gtk.Window):
         "onDeleteWindow":             exiting,
         "onExitPress":                exiting,
         "on_window1_key_press_event": nothing,
-        "addbuttonclicked":           self.addbuttonclicked,
+        "addbuttonclicked":           self.togglegrid,
         "onRestartPress":             restart,
         
         }
@@ -221,13 +221,15 @@ class MainClase(Gtk.Window):
     ##### TODAS LAS FUNCIONES DE LA BOTONERA ####
 
     #Función inútil
-    def addbuttonclicked(self, *args):
-        global testelement
-        global allobjects
-        #testelement = Router(3, 1, 0)
-        lprint("TODOS LOS OBJETOS:")
-        for i in range(len(allobjects)):
-            lprint(allobjects[i])
+    def togglegrid(self, *args):
+        global TheGrid
+        obj = TheGrid.backgr_lay
+        print("Toggle back")
+        print(obj.is_visible())
+        if obj.is_visible():
+            obj.hide()
+        else:
+            obj.show()
 
     #Una función para gobernarlos a todos.
     def toolbutton_clicked(self, objeto):
@@ -299,7 +301,7 @@ class MainClase(Gtk.Window):
 
     #Comprueba si el objeto tiene una ip asignada
     def has_ip(self):
-        if self.ip != None:
+        if self.IP != None:
             return True
         else:
             return False
@@ -598,7 +600,7 @@ class ObjetoBase():
         lprint("rclick en", self.x, self.y, self.objectype, "\nConnections: ", end="")
         lprint(self.connections)
         self.rmenu = self.menuemergente
-        if self.objectype == "Computer" and len(self.connections) > 0:
+        if self.objectype == "Computer" and len(self.compcon()) > 0:
             self.builder.get_object("grid_rclick-sendpkg").show()
         else:
             self.builder.get_object("grid_rclick-sendpkg").hide()
@@ -619,7 +621,6 @@ class ObjetoBase():
     def genmac(self, *args, bits=48, mode=None):
         #Por defecto se usa mac 48, o lo que es lo mismo, la de toa la vida
         #Nota, falta un comprobador de que la mac no se repita
-        import random
         realmac = random.getrandbits(bits)
         readmac = str(hex(realmac)).upper().replace("0X", "")
         readmac = ":".join([readmac[i * 2:i * 2 + 2] for i,bl in enumerate(readmac[::2])])
@@ -721,9 +722,10 @@ class ObjetoBase():
         tmp.link = objeto
         tmp2 = Gtk.MenuItem.new_with_label(objeto.name)
         self.builder.get_object("grid_rclick-sendpkg").get_submenu().append(tmp2)
-        tmp2.connect("activate", self.sendpkg)
+        if self.__class__.__name__ != "Switch":
+            tmp2.connect("activate", self.send_pck)
+            tmp2.show()
         tmp2.link = objeto
-        tmp2.show()
 
         tmp = Gtk.MenuItem.new_with_label(self.name)
         objeto.builder.get_object("grid_rclick-disconnect").get_submenu().append(tmp)
@@ -732,8 +734,9 @@ class ObjetoBase():
         tmp.link = self
         tmp2 = Gtk.MenuItem.new_with_label(self.name)
         objeto.builder.get_object("grid_rclick-sendpkg").get_submenu().append(tmp2)
-        tmp2.show()
-        tmp2.connect("activate", objeto.sendpkg)
+        if objeto.__class__.__name__ != "Switch":
+            tmp2.show()
+            tmp2.connect("activate", objeto.send_pck)
         tmp2.link = self
 
         self.connections.append(objeto)
@@ -801,9 +804,6 @@ class ObjetoBase():
         else:
             raise
 
-    def sendpkg(self, *widget, to):
-        pass
-
 class Router(ObjetoBase):
     obcnt = 1
     def __init__(self, x, y, *args, name="Default"):
@@ -857,13 +857,13 @@ class Computador(ObjetoBase):
     def __init__(self, x, y, *args, name="Default", maxconnections=1, ip=None):
         self.objectype = "Computer"
 
-        push_elemento("Creado objeto Hub")
+        push_elemento("Creado objeto Computador")
         self.img = resdir + "Comp.*"
         ObjetoBase.__init__(self, x, y, self.objectype, name=name)
         self.x = x
         self.y = y
         self.max_connections = maxconnections
-        self.ip = self.ip()
+        self.IP = self.ip()
 
     class ip():
         def __init__(self, *args, ipstr="None"):
@@ -877,12 +877,12 @@ class Computador(ObjetoBase):
             self.parser(str, 0)
 
         def set_bin(self, binar):
-            t = bin(binar)
-            print(t)
+            t = binar
+            print(bin(t))
             if "0b" not in str(t) and "." in str(t):
                 print("Type is str")
                 self.bins = t
-            elif "0b" in str(t) and "." not in str(t):
+            elif "0b" in str(bin(t)) and "." not in str(bin(t)):
                 print("Type is binar")
                 self.bin = t
             else:
@@ -899,7 +899,7 @@ class Computador(ObjetoBase):
                     i = int(i)
                     toreturn.append("{0:08b}".format(i))
                 self.bins = ".".join(toreturn)
-                self.bin = bin(int(self.bins.replace(".", ""), base=2))
+                self.bin = int(self.bins.replace(".", ""), base=2)
                 return self.bins
 
             #mode 1: b2str
@@ -921,7 +921,7 @@ class Computador(ObjetoBase):
 
     def update(self):
         ObjetoBase.update(self)
-        self.image.set_tooltip_text(self.name + " (" + str(len(self.connections)) + "/" + str(self.max_connections) + ")\n" + self.ip.str)
+        self.image.set_tooltip_text(self.name + " (" + str(len(self.connections)) + "/" + str(self.max_connections) + ")\n" + self.IP.str)
         self.label.set_text(self.name)
         submenu1 = self.builder.get_object("grid_rclick-sendpkg").get_submenu()
         print("Compcon: ", [x.name for x in self.compcon()])
@@ -944,9 +944,58 @@ class Computador(ObjetoBase):
 
                 print("self.connections", self.connections)
 
+    #Ahora es cuando viene la parte de haber estudiado.
+    #SÓLO ENVÍA PINGS, (ICMP)
+    sub_N = 0
     def send_pck(self, widget):
-        print("fnc send_pck", self, widget)
-        raise
+        #nonlocal sub_N
+        print("fnc send_pck from {} to {}".format(self.name, widget.link.name))
+        de = self
+        to = widget.link
+        if MainClase.has_ip(self) and MainClase.has_ip(to):
+            print("Continuando")
+        else:
+            print("Un objeto no tiene IP")
+            raise
+        #Ambos deben tener direccion ip
+        #def __init__(self, header, payload, trailer, cabel=None):
+        payload = int(4.3*10**19)
+
+        vihltos = 0b0100010100000000
+        lenght  = 28 + int(math.log(payload, 2)) + 1
+        flags   = 0b010
+        frag_off= 0b0000000000000
+        ttl     = 64
+        protocol= 1
+        checksum= 0 #No es necesario porque no hay cables
+        sourceip= self.IP
+        desti_ip= widget.IP
+
+        Type = 8
+        Code = 0
+        identifier = 1*2**15 + 42 * 2**8 + 42
+        icmp_header_checksum = random.getrandbits(16)
+        icmp_header = ((((((((Type << 8) | Code)<< 16) | header_checksum) << 16) | identifier) << 16) | Sub_N)
+        pck = icmp(ip_header, icmp_header, payload)
+        sub_N += 1
+
+def end():
+    TestC = Computador(5,8)
+    Computador.IP = Computador.ip()
+    Computador.IP.set_str("192.168.1.38")
+    print("{0:031b}".format(0 >> 64 | Computador.IP.bin))
+
+class Servidor(Computador):
+    def __init__(self, x, y, *args, name="Default", maxconnections=1, ip=None):
+        self.objectype = "Servidor"
+
+        push_elemento("Creado objeto {}".format(self.objectype))
+        self.img = resdir + "Server.*"
+        ObjetoBase.__init__(self, x, y, self.objectype, name=name)
+        self.x = x
+        self.y = y
+        self.max_connections = maxconnections
+        self.IP = self.ip()
 
 #La clase para los objetos cable
 class Cable():
@@ -1021,11 +1070,15 @@ class Cable():
 
 #De momento sólo soportará el protocolo IPv4
 class packet():
-    def __init__(self, header, payload, trailer, cabel=None):
+    def __init__(self, header, trailer, payload, cabel=None):
         lprint("Creado paquete de res")
         self.header = header
         self.payload = payload
         self.trailer = trailer
+        #self.packet = header + payload + trailer
+
+    def new_from_total(self, packet):
+        self.packet = packet
 
     #Composición de movimientos lineales en eje x e y
     #Siendo t=fps/s, v=px/s
@@ -1064,28 +1117,11 @@ class packet():
         '''
         return True
         
-
-from time import sleep
-
-def theend():
-    #Comp1 = Computador(5, 7, name="Comp1")
-    #Comp2 = Computador(9, 10, name="Comp2")
-    #cab   = Cable(Comp1, Comp2)
-    pass
-
-class tmp():
-    def __init__(self):
-        pass
-
-cabel = tmp()
-cabel.w = 500
-cabel.h = 500
-
-pack = packet(1,2,3)
-packet.animation(1,cabel)
+    def __str__(self):
+        return "<" + str(packet) + ">"
     
 class icmp(packet):
-    def __init__(self):
+    def __init__(self, ipheader, icmpheader, payload):
         pass
 
 #Estos paquetes pueden ser Request o Reply.
@@ -1360,6 +1396,8 @@ def leppard():
 writeonlog("Esto ha llegado al final del codigo al parecer sin errores")
 writeonlog("O tal vez no")
 MainClase()
+
+end()
 
 lprint("Actual time: " + time.strftime("%H:%M:%S"))
 lprint("Complete load time: " + str(datetime.now() - startTime))
