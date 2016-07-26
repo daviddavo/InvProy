@@ -5,7 +5,7 @@
 #David Davó - david@ddavo.me
 #Unlicensed yet
 
-import configparser, os, csv, sys, time, random
+import configparser, os, csv, sys, time, random, math
 import xml.etree.ElementTree as xmltree
 from datetime import datetime
 startTime = datetime.now()
@@ -173,7 +173,7 @@ class MainClase(Gtk.Window):
 
         #Modifica el color de fondo del viewport
         clr = hex_to_rgba(config.get("GRAPHICS", "viewport-background-color"))
-        builder.get_object("viewport1").override_background_color(Gtk.StateFlags.NORMAL, Gdk.RGBA(clr[0], clr[1], clr[2], clr[3]))
+        builder.get_object("viewport1").override_background_color(Gtk.StateFlags.NORMAL, Gdk.RGBA(*clr))#clr[0], clr[1], clr[2], clr[3]))
 
         i = int(config.get('GRAPHICS', 'toolbutton-size'))
 
@@ -353,6 +353,8 @@ class Grid():
         self.overlay.add_overlay(self.mainport)
         self.overlay.add_overlay(self.cables_lay)
         self.overlay.add_overlay(self.backgr_lay)
+        self.overlay.add_overlay(self.select_lay)
+        self.overlay.add_overlay(self.animat_lay)
         self.overlay.reorder_overlay(self.mainport, -1)
         self.overlay.reorder_overlay(self.select_lay, 3)
         self.overlay.reorder_overlay(self.animat_lay, 2)
@@ -399,16 +401,20 @@ class Grid():
         self.contadorback = 0
 
     def moveto(self, image, x, y, *args, layout=None):
-        if layout == None:
-            layout = self.mainport
-        elif str(layout.__class__.__name__) == "Layout":
-            layout = layout
+        if x < self.wres and y < self.hres:
+            if layout == None:
+                layout = self.mainport
+            elif str(layout.__class__.__name__) == "Layout":
+                layout = layout
+            else:
+                print("layout.__class__.__name__", layout.__class__.__name__)
+            if image in layout.get_children():
+                layout.move(image, x*self.sqres, y*self.sqres)
+            else:
+                layout.put(image, x*self.sqres, y*self.sqres)
         else:
-            print("layout.__class__.__name__", layout.__class__.__name__)
-        if image in layout.get_children():
-            layout.move(image, x*self.sqres, y*self.sqres)
-        else:
-            layout.put(image, x*self.sqres, y*self.sqres)
+            print("\033[31mError: Las coordenadas se salen del grid\033[00m")
+            #raise
 
     def clicked_on_grid(self, widget, event, *args):
         global clicked
@@ -804,6 +810,8 @@ class ObjetoBase():
         else:
             raise
 
+npack = 0
+
 class Router(ObjetoBase):
     obcnt = 1
     def __init__(self, x, y, *args, name="Default"):
@@ -947,11 +955,16 @@ class Computador(ObjetoBase):
     #Ahora es cuando viene la parte de haber estudiado.
     #SÓLO ENVÍA PINGS, (ICMP)
     sub_N = 0
-    def send_pck(self, widget):
+    def send_pck(self, *widget, to=None):
+        global npack
+        Sub_N = Computador.sub_N
         #nonlocal sub_N
-        print("fnc send_pck from {} to {}".format(self.name, widget.link.name))
         de = self
-        to = widget.link
+        if to == None:
+            to = widget.link
+
+        print("fnc send_pck from {} to {}".format(self.name, to.name))
+
         if MainClase.has_ip(self) and MainClase.has_ip(to):
             print("Continuando")
         else:
@@ -961,29 +974,52 @@ class Computador(ObjetoBase):
         #def __init__(self, header, payload, trailer, cabel=None):
         payload = int(4.3*10**19)
 
-        vihltos = 0b0100010100000000
-        lenght  = 28 + int(math.log(payload, 2)) + 1
-        flags   = 0b010
-        frag_off= 0b0000000000000
-        ttl     = 64
-        protocol= 1
-        checksum= 0 #No es necesario porque no hay cables
-        sourceip= self.IP
-        desti_ip= widget.IP
+        vihltos   = 0b0100010100000000
+        lenght    = 28 + int(math.log(payload, 2)) + 1
+        flags     = 0b010
+        frag_off  = 0b0000000000000
+        ttl       = 64
+        protocol  = 1
+        checksum  = 0 #No es necesario porque no hay cables
+        sourceip  = self.IP.bin
+        desti_ip  = to.IP.bin
+
+        ip_header = ((((((((vihltos << 16 | lenght) << 3 | flags) << 13 | frag_off) << 8 | ttl) << 8 | protocol) << 16 | checksum) << 32 | sourceip) << 32 | desti_ip)
 
         Type = 8
         Code = 0
         identifier = 1*2**15 + 42 * 2**8 + 42
         icmp_header_checksum = random.getrandbits(16)
-        icmp_header = ((((((((Type << 8) | Code)<< 16) | header_checksum) << 16) | identifier) << 16) | Sub_N)
+        icmp_header = ((((((((Type << 8) | Code)<< 16) | checksum) << 16) | identifier) << 16) | Sub_N)
         pck = icmp(ip_header, icmp_header, payload)
-        sub_N += 1
+        Sub_N += 1
+        npack += 1
 
-def end():
-    TestC = Computador(5,8)
-    Computador.IP = Computador.ip()
-    Computador.IP.set_str("192.168.1.38")
-    print("{0:031b}".format(0 >> 64 | Computador.IP.bin))
+        pck.animate(self.cables[0]) #FIX: No funcionara si hay mas cables
+
+#Función debug
+tmpvar = 0
+def theend():
+    global tmpvar
+    global TestC
+    global TestD
+    if tmpvar:
+        TestC.send_pck(to=TestD)
+    else:
+        TestC = Computador(5,5)
+        TestC.IP = Computador.ip()
+        TestC.IP.set_str("192.168.1.38")
+        print("{0:031b}".format(0 >> 32 | TestC.IP.bin))
+
+        TestD = Computador(7,8)
+        TestD.IP.set_str("192.168.1.42")
+        print("{0:031b}".format(TestD.IP.bin))
+
+        cable = Cable(TestC, TestD)
+        TestC.connect(TestD, cable)
+
+        tmpvar = 1
+    
 
 class Servidor(Computador):
     def __init__(self, x, y, *args, name="Default", maxconnections=1, ip=None):
@@ -1047,9 +1083,11 @@ class Cable():
         self.image = gtk.Image.new_from_surface(surface)
 
         ###FIN DE LO DE CAIRO
+
+        self.x, self.y = min(fromo.x, to.x)-0.5, min(fromo.y, to.y)-0.5
         
-        TheGrid.moveto(self.image, min(fromo.x, to.x)-0.5, min(fromo.y, to.y)-0.5, layout=TheGrid.cables_lay)
-        lprint("Puesto cable en: ", min(fromo.x, to.x), "; ", min(fromo.y, to.y))
+        TheGrid.moveto(self.image, self.x, self.y, layout=TheGrid.cables_lay)
+        lprint("Puesto cable en: ", self.x, "; ", self.y)
 
         self.image.show()
 
@@ -1081,20 +1119,20 @@ class packet():
         self.packet = packet
 
     #Composición de movimientos lineales en eje x e y
-    #Siendo t=fps/s, v=px/s
-    def animation(self, cable, fps=60, v=120):
-        print("Animatronics")
+    #Siendo t=fps/s, v=px/s, v default = 20
+    def animate(self, cable, fps=60, v=42):
+        print("Animation started")
         from math import sqrt, pi
         from time import sleep
         #Long del cable
         w, h = cable.w, cable.h
-        r = sqrt(cable.w**2+cable.h**2)
-        sen = h/r
-        cos = w/h
+        x, y = cable.x*TheGrid.sqres, cable.y*TheGrid.sqres
+        xf, yf = x+w, y+h
+        r = sqrt(cable.w**2+cable.h**2) #Pixeles totales
         t=r/v #Tiempo en segundos que durara la animacion
         tf = fps*t #Fotogramas totales
-        spf = 1/fps
-        f = 0
+        spf = 1/fps #Segundos por fotograma
+
         sq = 12
         surface = cairo.ImageSurface(cairo.FORMAT_ARGB32, sq, sq)
         ctx = cairo.Context(surface)
@@ -1105,16 +1143,32 @@ class packet():
         ctx.stroke()
 
         image = gtk.Image.new_from_surface(surface)
+        drawing = gtk.DrawingArea.new()
+        drawing.draw(ctx)
+        TheGrid.animat_lay.put(image,x,y)
+        TheGrid.animat_lay.show_all()
 
-        TheGrid.moveto(image, 3.5, 4.2)
-        '''
-        while f < tf:
-            print(f, end="\r")
-            sleep(spf)
-            f += 1
-            #move(cos*v,sen*v)
-            pass
-        '''
+        print("x: {}, y: {}".format(x,y))
+        f = 0
+        def iteration():
+            nonlocal f
+            nonlocal x
+            nonlocal y
+            if f <= tf and x <= xf and y <= yf:
+                #Do things
+                print("Current f: {}; x,y: {}, {}".format(f, x,y))
+                x += xf/tf
+                y += yf/tf
+                TheGrid.animat_lay.move(image, x, y)
+                f += 1
+                return True
+            else:
+                #image.destroy()
+                return False
+        
+        print(GObject.timeout_add(spf*1000, iteration))
+        
+        print("Animacion terminada?")
         return True
         
     def __str__(self):
@@ -1122,7 +1176,9 @@ class packet():
     
 class icmp(packet):
     def __init__(self, ipheader, icmpheader, payload):
-        pass
+        bits = (ipheader << 8 | icmpheader) << int(bin(ipheader)[18:33],2)#BITS 16a31 - 28
+        print(bin(bits))
+        
 
 #Estos paquetes pueden ser Request o Reply.
 #El header es de 20 bytes, la payload es de 8 + datos opcionales, pero el estándar es 64 bits.
@@ -1397,7 +1453,7 @@ writeonlog("Esto ha llegado al final del codigo al parecer sin errores")
 writeonlog("O tal vez no")
 MainClase()
 
-end()
+#end()
 
 lprint("Actual time: " + time.strftime("%H:%M:%S"))
 lprint("Complete load time: " + str(datetime.now() - startTime))

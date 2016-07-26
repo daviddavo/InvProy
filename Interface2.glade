@@ -12,13 +12,13 @@
     <property name="skip_taskbar_hint">True</property>
     <property name="urgency_hint">True</property>
     <child internal-child="vbox">
-      <object class="GtkBox">
+      <object class="GtkBox" id="__noname__">
         <property name="width_request">120</property>
         <property name="can_focus">False</property>
         <property name="orientation">vertical</property>
         <property name="spacing">2</property>
         <child internal-child="action_area">
-          <object class="GtkButtonBox">
+          <object class="GtkButtonBox" id="__noname1">
             <property name="can_focus">False</property>
             <property name="layout_style">end</property>
             <child>
@@ -622,7 +622,7 @@
         <property name="label" translatable="yes">Desconectar de...</property>
         <property name="use_underline">True</property>
         <child type="submenu">
-          <object class="GtkMenu">
+          <object class="GtkMenu" id="__noname6">
             <property name="visible">True</property>
             <property name="can_focus">False</property>
             <child>
@@ -663,16 +663,16 @@
     <property name="do_overwrite_confirmation">True</property>
     <property name="preview_widget_active">False</property>
     <child internal-child="vbox">
-      <object class="GtkBox">
+      <object class="GtkBox" id="__noname">
         <property name="can_focus">False</property>
         <property name="orientation">vertical</property>
         <property name="spacing">2</property>
         <child internal-child="action_area">
-          <object class="GtkButtonBox">
+          <object class="GtkButtonBox" id="__noname2">
             <property name="can_focus">False</property>
             <property name="layout_style">end</property>
             <child>
-              <object class="GtkButton">
+              <object class="GtkButton" id="__noname3">
                 <property name="label" translatable="yes">Guardar</property>
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
@@ -685,7 +685,7 @@
               </packing>
             </child>
             <child>
-              <object class="GtkButton">
+              <object class="GtkButton" id="__noname4">
                 <property name="label" translatable="yes">Cancelar</property>
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>

@@ -33,7 +33,12 @@ def createlogfile():
             #Aqui pones que borre el archivo mas viejo
             nlogfiles -= 1
             log.append("Borrado: " + str(min(os.listdir("logfiles/")))+ "\n")
-            os.remove("logfiles/" + min(os.listdir("logfiles/")))
+            try:
+                os.remove("logfiles/" + min(os.listdir("logfiles/")))
+            except OSError:
+                print("\033[31mError de I/O en {}, borrar la carpeta de logfiles\033[00m".format(str(OSError.filename)))
+            except:
+                raise
     try:
         newlogfilename = "logfiles/" + time.strftime("%y%m%d%H%M%S") + " " +  config.get("DIRS", "Log")
         try:
