@@ -995,7 +995,7 @@ class Computador(ObjetoBase):
         Sub_N += 1
         npack += 1
 
-        pck.animate(self.cables[0]) #FIX: No funcionara si hay mas cables
+        pck.animate(de, to)
 
 #Función debug
 tmpvar = 0
@@ -1120,11 +1120,11 @@ class packet():
 
     #Composición de movimientos lineales en eje x e y
     #Siendo t=fps/s, v=px/s, v default = 20
-    def animate(self, cable, fps=60, v=42):
+    def animate(self, start, end, fps=60, v=42):
         print("Animation started")
         from math import sqrt, pi
-        from time import sleep
         #Long del cable
+        cable = start.cables[0]
         w, h = cable.w, cable.h
         x, y = cable.x*TheGrid.sqres, cable.y*TheGrid.sqres
         xf, yf = x+w, y+h
@@ -1134,32 +1134,44 @@ class packet():
         spf = 1/fps #Segundos por fotograma
 
         sq = 12
-        surface = cairo.ImageSurface(cairo.FORMAT_ARGB32, sq, sq)
+        surface = cairo.ImageSurface(cairo.FORMAT_ARGB32, cable.w, cable.h)
         ctx = cairo.Context(surface)
         ctx.close_path()
         ctx.set_source_rgba(0,1,1,1)
         ctx.arc(sq/2,sq/2,sq/2,0,2*pi)
         ctx.fill()
         ctx.stroke()
+        ctx.close_path()
 
         image = gtk.Image.new_from_surface(surface)
         drawing = gtk.DrawingArea.new()
-        drawing.draw(ctx)
+        drawing.set_size_request(50, 50)
+        #drawing.draw(ctx)
         TheGrid.animat_lay.put(image,x,y)
         TheGrid.animat_lay.show_all()
 
-        print("x: {}, y: {}".format(x,y))
+        print("x: {}, y: {}".format(x/TheGrid.sqres,y/TheGrid.sqres))
         f = 0
+        x,y = 0,0
         def iteration():
             nonlocal f
             nonlocal x
             nonlocal y
-            if f <= tf and x <= xf and y <= yf:
+            nonlocal ctx
+            if f <= tf:
                 #Do things
                 print("Current f: {}; x,y: {}, {}".format(f, x,y))
-                x += xf/tf
-                y += yf/tf
-                TheGrid.animat_lay.move(image, x, y)
+                x += w/tf
+                y += h/tf
+
+                del ctx
+                surface = cairo.ImageSurface(cairo.FORMAT_ARGB32, cable.w, cable.h)
+                ctx=cairo.Context(surface)
+                ctx.set_source_rgba(*hex_to_rgba("#673AB7"))
+                ctx.arc(x,y,sq/2,0,2*pi)
+                ctx.fill()
+                image.set_from_surface(surface)
+
                 f += 1
                 return True
             else:
