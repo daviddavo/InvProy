@@ -24,6 +24,8 @@ def savelog():
         log = []
 
 def createlogfile():
+    if not os.path.exists("logfiles/"):
+        os.makedirs("logfiles/")
     nlogfiles = int(len(os.listdir("logfiles/")))
     if nlogfiles >= int(config.get("DIRS", "Maxlogs")):
         #print(nlogfiles)
