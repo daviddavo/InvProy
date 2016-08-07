@@ -4,11 +4,19 @@
 #https://github.com/daviddavo/InvProy
 #David Davó - david@ddavo.me
 #Unlicensed yet
+from datetime import datetime
+startTime = datetime.now()
 
 import configparser, os, csv, sys, time, random, math
 import xml.etree.ElementTree as xmltree
-from datetime import datetime
-startTime = datetime.now()
+from ipaddress import ip_address
+
+#Esto hace que el programa se pueda ejecutar fuera de la carpeta.
+startcwd = os.getcwd()
+try:
+    os.chdir(os.path.dirname(sys.argv[0]))
+except:
+    pass
 
 os.system("clear")
 print("\033[91m##############################\033[00m")
@@ -109,6 +117,10 @@ def push_elemento(texto):
     contador = contador + 1
     varra1.push(data, testo)
     writeonlog(texto)
+
+#Retorna un entero en formato de bin fixed
+def bformat(num, fix):
+    return str(("{0:0" + str(fix) + "b}").format(num))
 
 #Imprime cosas al log. Movido a Modules/logmod.py 190216
 
@@ -302,7 +314,7 @@ class MainClase(Gtk.Window):
     #Comprueba si el objeto tiene una ip asignada
     def has_ip(self):
         try:
-            if self.IP.bin != None:
+            if self.IP != None:
                 return True
             else:
                 return False
@@ -632,7 +644,7 @@ class ObjetoBase():
     def genmac(self, *args, bits=48, mode=None):
         #Por defecto se usa mac 48, o lo que es lo mismo, la de toa la vida
         #Nota, falta un comprobador de que la mac no se repita
-        realmac = int("1" + bin(random.getrandbits(bits-1)).strip("0b"),2)
+        realmac = int("11" + str("{0:0"+ str(bits-2) +"b}").format(random.getrandbits(bits-2)),2)
         readmac = str(hex(realmac)).upper().replace("0X", "")
         readmac = ":".join([readmac[i * 2:i * 2 + 2] for i,bl in enumerate(readmac[::2])])
         if mode == 0:
@@ -684,12 +696,6 @@ class ObjetoBase():
         except:
             pass
 
-        '''
-        print("comps",comps)
-        print("N pcs", len(comps))
-        for i in comps:
-            print(self, "conected to", i)
-        '''
         if args == 1 or "Gtk" in str(args):
             print("Comps:", comps)
             print("\nCompsname:", [x.name for x in comps])
@@ -822,12 +828,12 @@ class ObjetoBase():
             if pck.frame != None:
                 print("\033[91m>>Atributos del paquete\033[00m")
                 totalen = pck.lenght + 14*8
-                wfr = bin(pck.frame).replace("0b","").zfill(totalen)
+                wfr = bformat(pck.frame, (totalen+14)*8)
                 print(">Wfr:",wfr)
-                mac1 = wfr[0:6*8]
+                mac1 = "{0:0111b}".format(pck.frame)[0:6*8]
                 print(">Mac:", int(mac1,2))
                 readmac = str(hex(int(mac1,2))).strip("0x")
-                print(":".join([readmac[i * 2:i * 2 + 2] for i,bl in enumerate(readmac[::2])]))
+                print(":".join([readmac[i * 2:i * 2 + 2] for i,bl in enumerate(readmac[::2])]).upper())
 
                 print("<<Fin de los atributos")
 
@@ -894,7 +900,8 @@ class Computador(ObjetoBase):
         self.x = x
         self.y = y
         self.max_connections = maxconnections
-        self.IP = self.ip()
+        #self.IP = self.ip()
+        self.IP = None
 
     class ip():
         def __init__(self, *args, ipstr="None"):
@@ -952,7 +959,7 @@ class Computador(ObjetoBase):
 
     def update(self):
         ObjetoBase.update(self)
-        self.image.set_tooltip_text(self.name + " (" + str(len(self.connections)) + "/" + str(self.max_connections) + ")\n" + self.IP.str)
+        self.image.set_tooltip_text(self.name + " (" + str(len(self.connections)) + "/" + str(self.max_connections) + ")\n" + str(self.IP))
         self.label.set_text(self.name)
         submenu1 = self.builder.get_object("grid_rclick-sendpkg").get_submenu()
         print("Compcon: ", [x.name for x in self.compcon()])
@@ -996,19 +1003,22 @@ class Computador(ObjetoBase):
             raise Exception("Un objeto no tiene IP")
         #Ambos deben tener direccion ip
         #def __init__(self, header, payload, trailer, cabel=None):
-        payload = int(4.3*10**19)
+        payload = int( 4.3*10**19 ) << 6 | 42
 
         vihltos   = 0b0100010100000000
-        lenght    = 28 + int(math.log(payload, 2)) + 1
+        #20 Ipheader + 8 ICMPHEader + Payload
+        lenght    = int( 20 + 8 + ( int(math.log(payload, 2))+1)/8 ) #In Bytes
         flags     = 0b010
         frag_off  = 0b0000000000000
         ttl       = 64
         protocol  = 1
         checksum  = 0 #No es necesario porque no hay cables
-        sourceip  = self.IP.bin
-        desti_ip  = to.IP.bin
+        sourceip  = int(self.IP)
+        desti_ip  = int(to.IP)
+        identific = Sub_N
 
-        ip_header = ((((((((vihltos << 16 | lenght) << 3 | flags) << 13 | frag_off) << 8 | ttl) << 8 | protocol) << 16 | checksum) << 32 | sourceip) << 32 | desti_ip)
+        ip_header = (((((((((vihltos << 16 | lenght)<<16 | identific) << 3 | flags) << 13 | frag_off) \
+            << 8 | ttl) << 8 | protocol) << 16 | checksum) << 32 | sourceip) << 32 | desti_ip)
 
         Type = 8
         Code = 0
@@ -1019,14 +1029,43 @@ class Computador(ObjetoBase):
         Sub_N += 1
         npack += 1
 
-        print("lenght:", lenght)
+        print("PCK ICMP HEADER:", "{0:063b}".format(icmp_header))
+        print("PCK IPHEADER:", "{0:0159b}".format(ip_header))
 
-        print("MAC's:", self.macdir[0], to.macdir)
+        print("lenght (bytes):", lenght)
+
+        print("MAC's:", self.macdir, to.macdir)
         frame = eth(self.macdir[0], to.macdir[0], pck)
         frame.applytopack(pck)
         print("Pck frame:", pck.frame)
 
         pck.animate(self, to)
+
+    def packet_received(self, pck):
+        print("Hola, soy {} y he recibido un paquete, tal vez tenga que responder".format(self.name))
+        #Si el tipo de ping es x, responder, si es y imprimir info
+        if config.getboolean("DEBUG", "packet-received"):
+            print(">Pck:",pck)
+            if pck.frame != None:
+                frame="{0:011b}".format(pck.frame)
+                print("\033[91m>>Atributos del paquete\033[00m")
+                totalen = pck.lenght + 14*8
+                print("Frame:", bin(pck.frame))
+                mac1 = "{0:0111b}".format(pck.frame)[0:6*8]
+                readmac = str(hex(int(mac1,2))).strip("0x")
+                print(">Mac1:", ":".join([readmac[i * 2:i * 2 + 2] for i,bl in enumerate(readmac[::2])]).upper())
+                readmac = str(hex(int( "{0:011b}".format(pck.frame)[6*8+1:6*16+1] ,2))).strip("0x")
+                print(">Mac2:", ":".join([readmac[i * 2:i * 2 + 2] for i,bl in enumerate(readmac[::2])]).upper())
+                print("EtherType:", int(frame[12*8+1:8*14+1],2))
+                print("Resto==Bits:", int(frame[8*14+1::],2)==pck.bits)
+                print(pck.str)
+                
+                n, tmp = 8, pck.str[96:128]
+                print("IPs:", ".".join([str(int(tmp[i * n:i * n+n], base=2)) for i,blah in enumerate(tmp[::n])]))
+                tmp = pck.str[128:160]
+                print("IPd:", ".".join([str(int(tmp[i * n:i * n+n], base=2)) for i,blah in enumerate(tmp[::n])]))
+
+                print("<<Fin de los atributos")
 
 class Servidor(Computador):
     def __init__(self, x, y, *args, name="Default", maxconnections=1, ip=None):
@@ -1124,13 +1163,14 @@ def theend():
         TestC.send_pck(to=TestD)
     else:
         TestC = Computador(randrange(1,13,2),randrange(1,13,2), name="From")
-        TestC.IP = Computador.ip()
-        TestC.IP.set_str("192.168.1.38")
-        print("{0:031b}".format(0 >> 32 | TestC.IP.bin))
+        TestC.IP = ip_address("192.168.1.38")
+        #TestC.IP.set_str("192.168.1.38")
+        print("{0:031b}".format(int(TestC.IP)))
 
         TestD = Computador(randrange(2,14,2),randrange(2,14,2), name="To")
-        TestD.IP.set_str("192.168.1.42")
-        print("{0:031b}".format(TestD.IP.bin))
+        #TestD.IP.set_str("192.168.1.42")
+        TestD.IP = ip_address("192.168.1.42")
+        print("{0:031b}".format(int(TestD.IP)))
 
         cable = Cable(TestC, TestD)
         TestC.connect(TestD, cable)
@@ -1147,11 +1187,12 @@ class packet():
         #self.packet = header + payload + trailer
 
     def new_from_total(self, bits):
-        print("Length:",int(bin(bits)[18:33],2))
+        print("Length (bits):", int(bin(bits)[18:33],2)*8)
+        print("Real length:", int(len(bin(bits))-2 ))
         self.bits = bits
         self.lenght = int(bin(bits)[18:33],2)
-        print(str("{0:0"+str(int(bin(bits)[18:33],2))+"b}").format(self.bits))
-        self.str = str("{0:0"+str(int(bin(bits)[18:33],2))+"b}").format(self.bits)
+        self.str = str("{0:0"+str(int(int(bin(bits)[18:33],2)*8 ))+"b}").format(self.bits)
+        print(self.str)
 
     def send(self, de):
         ##SIN TERMINAR##
@@ -1162,7 +1203,7 @@ class packet():
 
     #Composición de movimientos lineales en eje x e y
     #Siendo t=fps/s, v=px/s, v default = 84
-    def animate(self, start, end, fps=30, v=84, color="#673AB7"):
+    def animate(self, start, end, fps=120, v=500, color="#673AB7"):
         print("Animation started")
         from math import sqrt, pi
         #Long del cable
@@ -1198,7 +1239,7 @@ class packet():
         if start.x > end.x:
             sx = -sx
         if start.y > end.y:
-            sy  = -sy
+            sy = -sy
 
         def iteration():
             nonlocal f
@@ -1238,6 +1279,7 @@ class packet():
 # ETHERNET LAYER #
 #Usando DIX, más comun en IP
 #Al ser emulado no es necesario CRC Checksum
+#SIEMPRE 112 longitud (48*2+16)
 class eth(packet):
     #Se crea el header
     def __init__(self, destmac, sourcemac, *pack, EtherType=0x0800):
@@ -1254,22 +1296,23 @@ class eth(packet):
 
         destmac = corrector(destmac)
         sourcemac = corrector(sourcemac)
-        print("Destmac", destmac)
+        print("Destmac", "{0:047b}".format(destmac))
 
         self.macheader = (destmac << (6*8+1) | sourcemac) << 16 | EtherType
-        print(int(bin(self.macheader).strip("0b")[0:6*8],2))
+        print(int("{0:0111b}".format(self.macheader)[0:6*8],2))
 
     #Se le añade la payload al frame
     def applytopack(self, pack):
         self.pack = pack
-        print(">Mac:", bin(self.macheader).replace("0b", ""))
+        print(">Mach:", bin(self.macheader).replace("0b", ""))
         print(">Pck:", pack)
         print(pack.lenght)
-        ret = (self.macheader << pack.lenght) | pack.bits
+        ret = (self.macheader << pack.lenght*8) | pack.bits
         pack.frame = ret
         pack.framesrt = None
+        print("pack.len: {}, bits len: {}".format(pack.lenght*8, len(bin(pack.bits).strip("0b"))))
         print(">Ret:", bin(ret).replace("0b",""))
-        print(int(bin(ret).strip("0b")[0:6*8],2))
+        print(int("{0:0111b}".format(self.macheader)[0:6*8],2))
         return ret
 
     def __str__(self):
@@ -1278,7 +1321,8 @@ class eth(packet):
 #Internet Layer
 class icmp(packet):
     def __init__(self, ipheader, icmpheader, payload):
-        self.bits = (ipheader << 8 | icmpheader) << (int(bin(ipheader)[18:33],2)-28) | payload#BITS 16a31 - 28
+        print("Len:", int(bin(ipheader)[18:33],2)-28)
+        self.bits = (ipheader << 8*8 | icmpheader) << ( (int(bin(ipheader)[18:33],2) -28) * 8) | payload #BITS 16a31 - 28
         packet.new_from_total(self, self.bits)
         
     def __str__(self):
@@ -1446,7 +1490,7 @@ class w_changethings(): #Oie tú, pedazo de subnormal, que cada objeto debe tene
             text = widget.get_text().strip()
             widget.set_text("".join([i for i in text if i in "0123456789ABCDEFabcdef"]))
 
-        for i in ["changethings_entry-IP" + str(x) for x in range(1,5)]:
+        for i in ["changethings_entry-IP" + str(x) for x in range(4)]:
             objeto.builder.get_object(i).connect("changed", filter_numsdec)
 
         for i in ["chg_MAC-entry" + str(x) for x in range(0,5)]:
@@ -1468,13 +1512,16 @@ class w_changethings(): #Oie tú, pedazo de subnormal, que cada objeto debe tene
         #Hacer que muestre/oculte los campos de "IP"
         if self.link.objectype == "Computer":
             try:
-                tmplst = self.link.ip.str.split(".")
+                tmplst = str(self.link.IP).split(".")
+                print("TMPLST:", tmplst)
                 for i in tmplst:
-                    tmpentry = builder.get_object("changethings_entry-IP" + str(tmplst.index(i+1)))
+                    tmpentry = self.link.builder.get_object("changethings_entry-IP" + str( tmplst.index(i) ))
                     tmpentry.set_text(i)
             except AttributeError: #Cuando no tiene una str definida
+                raise
                 pass
             except TypeError:
+                raise
                 pass
             except:
                 raise
@@ -1492,8 +1539,7 @@ class w_changethings(): #Oie tú, pedazo de subnormal, que cada objeto debe tene
         lprint(self.link.macdir)
         if self.link.objectype == "Computer":
             try:
-                self.link.IP.set_str(".".join( [ self.link.builder.get_object(y).get_text() for y in ["changethings_entry-IP" + str(x) for x in range(1,5)] ]))
-                print(self.link.IP.str, self.link.IP.bins, bin(self.link.IP.bin))
+                self.link.IP = ip_address(".".join( [ self.link.builder.get_object(y).get_text() for y in ["changethings_entry-IP" + str(x) for x in range(4)] ]))
             except:
                 print(Exception)
                 raise
@@ -1546,6 +1592,7 @@ def restart(*args):
     lprint("End time: " + time.strftime("%H:%M%S"))
     lprint("Restarting program")
     print("\033[92m##############################\033[00m")
+    os.chdir(startcwd)
     os.execl(sys.executable, sys.executable, *sys.argv)
 
 def returnTrue(*lala):

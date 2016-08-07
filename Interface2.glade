@@ -296,7 +296,7 @@
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="max_length">2</property>
-                <property name="width_chars">2</property>
+                <property name="width_chars">3</property>
                 <property name="max_width_chars">2</property>
               </object>
               <packing>
@@ -322,7 +322,7 @@
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="max_length">2</property>
-                <property name="width_chars">2</property>
+                <property name="width_chars">3</property>
                 <property name="max_width_chars">2</property>
               </object>
               <packing>
@@ -348,7 +348,7 @@
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="max_length">2</property>
-                <property name="width_chars">2</property>
+                <property name="width_chars">3</property>
                 <property name="max_width_chars">2</property>
               </object>
               <packing>
@@ -374,7 +374,7 @@
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="max_length">2</property>
-                <property name="width_chars">2</property>
+                <property name="width_chars">3</property>
                 <property name="max_width_chars">2</property>
               </object>
               <packing>
@@ -400,7 +400,7 @@
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="max_length">2</property>
-                <property name="width_chars">2</property>
+                <property name="width_chars">3</property>
                 <property name="max_width_chars">2</property>
               </object>
               <packing>
@@ -426,7 +426,7 @@
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="max_length">2</property>
-                <property name="width_chars">2</property>
+                <property name="width_chars">3</property>
                 <property name="max_width_chars">2</property>
               </object>
               <packing>
@@ -447,7 +447,7 @@
             <property name="can_focus">False</property>
             <property name="halign">end</property>
             <child>
-              <object class="GtkEntry" id="changethings_entry-IP1">
+              <object class="GtkEntry" id="changethings_entry-IP0">
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="max_length">3</property>
@@ -474,7 +474,7 @@
               </packing>
             </child>
             <child>
-              <object class="GtkEntry" id="changethings_entry-IP2">
+              <object class="GtkEntry" id="changethings_entry-IP1">
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="max_length">3</property>
@@ -501,7 +501,7 @@
               </packing>
             </child>
             <child>
-              <object class="GtkEntry" id="changethings_entry-IP3">
+              <object class="GtkEntry" id="changethings_entry-IP2">
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="max_length">3</property>
@@ -528,11 +528,11 @@
               </packing>
             </child>
             <child>
-              <object class="GtkEntry" id="changethings_entry-IP4">
+              <object class="GtkEntry" id="changethings_entry-IP3">
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
-                <property name="max_length">3</property>
-                <property name="width_chars">3</property>
+                <property name="max_length">4</property>
+                <property name="width_chars">4</property>
                 <property name="max_width_chars">3</property>
                 <property name="input_purpose">number</property>
               </object>

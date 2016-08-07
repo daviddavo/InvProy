@@ -2,6 +2,8 @@
 
 Mi proyecto de investigación de 1º de Bachillerato de Excelencia, aún WIP y sin licencia.
 
+Por favor, documentar bugs e incidencias en issues.
+
 ### USO DEL PROGRAMA ###
 
 1. Descargar las dependencias
@@ -19,6 +21,8 @@ Mi proyecto de investigación de 1º de Bachillerato de Excelencia, aún WIP y s
 - [x] Subirlo a GitHub
 - [ ] Conseguir una licencia
 - [ ] Terminarlo
+- [ ] Crear `branches` de Git
+- [ ] Instalador pip
 - [ ] Crear paquetes de distribución para AUR
 - [ ] También para Ubuntu/MAX/Debian
 - [ ] Guardar/Abrir configs de red
@@ -26,6 +30,7 @@ Mi proyecto de investigación de 1º de Bachillerato de Excelencia, aún WIP y s
 - [ ] Compatibilidad con MUCHOS más protocolos
 - [ ] Editor de paquetes
 - [ ] Visor de paquetes
+- [ ] Port a Windows
 - [ ] Simulador de tarjeta de red
 - [ ] WiFi
 - [ ] Simulador de red física (Comunicacion con Arduino/RPi)
