@@ -3,6 +3,7 @@
 
 '''
     InvProy - Simulador de Redes / Proyecto de Investigación
+    https://github.com/daviddavo/InvProy
     Copyright (C) 2016  David Davó Laviña  david@ddavo.me
 
     This program is free software: you can redistribute it and/or modify
@@ -1598,7 +1599,7 @@ class about(Gtk.AboutDialog):
         self.win = builder.get_object("AboutWindow")
         self.win.connect("delete-event", self.destroy)
         self.win.connect("response", self.destroy)
-        self.win.add_credit_section("Tutores", ["Julio"])
+        self.win.add_credit_section("Tutores", ["Julio Sánchez"])
         self = self.win
     def show(self, *args):
         print("Showing")

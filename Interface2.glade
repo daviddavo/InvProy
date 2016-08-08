@@ -41,13 +41,13 @@ Author: David Davó Laviña
     <property name="focus_on_map">False</property>
     <property name="gravity">center</property>
     <property name="program_name">InvProy</property>
-    <property name="version">Not Released</property>
-    <property name="copyright" translatable="yes">InvProy   Copyright ©   2016   David Davó Laviña</property>
+    <property name="version">Pre Alpha</property>
+    <property name="copyright" translatable="yes">Copyright ©   2016   David Davó Laviña</property>
     <property name="comments" translatable="yes">Desarrollado como proyecto de investigación del programa de Bachillerato de Excelencia de la Comunidad de Madrid en el IES Palas Atenea por David Davó.</property>
     <property name="website">https://daviddavo.github.io/InvProy/</property>
     <property name="authors">David Davó Laviña - david@ddavo.me
 http://https://github.com/daviddavo/InvProy</property>
-    <property name="logo">resources/Testpack/Computer.png</property>
+    <property name="logo">resources/Logo.png</property>
     <property name="license_type">gpl-3-0</property>
     <child internal-child="vbox">
       <object class="GtkBox">
