@@ -1,8 +1,76 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- Generated with glade 3.20.0 -->
-<interface>
+<!-- Generated with glade 3.20.0 
+
+Copyright (C) 2016   David Davó Laviña
+
+This file is part of InvProy.
+
+InvProy is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+InvProy is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with InvProy.  If not, see <http://www.gnu.org/licenses/>.
+
+Author: David Davó Laviña
+
+-->
+<interface domain="">
   <requires lib="gtk+" version="3.8"/>
   <!-- interface-local-resource-path resources -->
+  <!-- interface-license-type gplv3 -->
+  <!-- interface-name InvProy -->
+  <!-- interface-description Simulador de Redes / Proyecto de Investigaci\303\263n -->
+  <!-- interface-copyright 2016   David Dav\303\263 Lavi\303\261a -->
+  <!-- interface-authors David Dav\303\263 Lavi\303\261a -->
+  <object class="GtkAboutDialog" id="AboutWindow">
+    <property name="can_focus">False</property>
+    <property name="title" translatable="yes">Acerca de...</property>
+    <property name="resizable">False</property>
+    <property name="window_position">center</property>
+    <property name="destroy_with_parent">True</property>
+    <property name="icon_name">help-about</property>
+    <property name="type_hint">dialog</property>
+    <property name="skip_taskbar_hint">True</property>
+    <property name="focus_on_map">False</property>
+    <property name="gravity">center</property>
+    <property name="program_name">InvProy</property>
+    <property name="version">Not Released</property>
+    <property name="copyright" translatable="yes">InvProy   Copyright ©   2016   David Davó Laviña</property>
+    <property name="comments" translatable="yes">Desarrollado como proyecto de investigación del programa de Bachillerato de Excelencia de la Comunidad de Madrid en el IES Palas Atenea por David Davó.</property>
+    <property name="website">https://daviddavo.github.io/InvProy/</property>
+    <property name="authors">David Davó Laviña - david@ddavo.me
+http://https://github.com/daviddavo/InvProy</property>
+    <property name="logo">resources/Testpack/Computer.png</property>
+    <property name="license_type">gpl-3-0</property>
+    <child internal-child="vbox">
+      <object class="GtkBox">
+        <property name="can_focus">False</property>
+        <property name="orientation">vertical</property>
+        <property name="spacing">2</property>
+        <child internal-child="action_area">
+          <object class="GtkButtonBox">
+            <property name="can_focus">False</property>
+            <property name="layout_style">end</property>
+          </object>
+          <packing>
+            <property name="expand">False</property>
+            <property name="fill">False</property>
+            <property name="position">0</property>
+          </packing>
+        </child>
+        <child>
+          <placeholder/>
+        </child>
+      </object>
+    </child>
+  </object>
   <object class="GtkDialog" id="YesOrNoWindow">
     <property name="can_focus">False</property>
     <property name="modal">True</property>

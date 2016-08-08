@@ -1,9 +1,23 @@
 # -*- coding: utf-8 -*-
 #!/usr/bin/env python3
 
-#https://github.com/daviddavo/InvProy
-#David Davó - david@ddavo.me
-#Unlicensed yet
+'''
+    InvProy - Simulador de Redes / Proyecto de Investigación
+    Copyright (C) 2016  David Davó Laviña  david@ddavo.me
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+'''
 from datetime import datetime
 startTime = datetime.now()
 
@@ -20,6 +34,11 @@ except:
 
 os.system("clear")
 print("\033[91m##############################\033[00m")
+
+print("InvProy  Copyright (C) 2016  David Davó Laviña\n\
+This program comes with ABSOLUTELY NO WARRANTY; for details go to 'Ayuda > Acerca de'\n\
+This is free software, and you are welcome to redistribute it\n\
+under certain conditions\n")
 
 try: #Intenta importar los modulos necesarios
     sys.path.append("Modules/")
@@ -183,6 +202,8 @@ class MainClase(Gtk.Window):
         self.ventana.set_keep_above(bool(config.getboolean("GRAPHICS", "window-set-keep-above")))
         #self.ventana.set_keep_above(false)
 
+
+
         #Modifica el color de fondo del viewport
         clr = hex_to_rgba(config.get("GRAPHICS", "viewport-background-color"))
         builder.get_object("viewport1").override_background_color(Gtk.StateFlags.NORMAL, Gdk.RGBA(*clr))#clr[0], clr[1], clr[2], clr[3]))
@@ -205,6 +226,7 @@ class MainClase(Gtk.Window):
         builder.get_object("imagemenuitem9").connect("activate", self.showcfgwindow)
         builder.get_object("imagemenuitem3").connect("activate", save.save)
         builder.get_object("imagemenuitem2").connect("activate", save.load)
+        builder.get_object("imagemenuitem10").connect("activate", about().show)
 
         ### EVENT HANDLERS###
 
@@ -1570,6 +1592,20 @@ class w_changethings(): #Oie tú, pedazo de subnormal, que cada objeto debe tene
 
     def on_key_release_event(self, widget, event):
         MainClase.on_key_release_event(self, widget, event)
+
+class about(Gtk.AboutDialog):
+    def __init__(self):
+        self.win = builder.get_object("AboutWindow")
+        self.win.connect("delete-event", self.destroy)
+        self.win.connect("response", self.destroy)
+        self.win.add_credit_section("Tutores", ["Julio"])
+        self = self.win
+    def show(self, *args):
+        print("Showing")
+        self.win.show()
+    def destroy(self, *args):
+        self.win.hide()
+        return True
 
 
 #Esta clase te permitirá deshacer acciones, algún día de un futuro lejano.
