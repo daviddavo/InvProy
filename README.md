@@ -21,6 +21,8 @@ Por favor, documentar bugs e incidencias en issues.
 - [x] Subirlo a GitHub
 - [ ] Conseguir una licencia
 - [ ] Terminarlo (v 0.1)
+- [ ] Aplicar el protocolo TCP
+- [ ] Utilizar el router (Conectar redes, puertas de enlace)
 - [ ] Crear `branches` de Git
 - [ ] Instalador pip
 - [ ] Crear paquetes de distribución para AUR
@@ -42,6 +44,8 @@ Por favor, documentar bugs e incidencias en issues.
 - [x] Añadir los ethernet frames
 - [x] Arreglar lo de la MAC
 - [ ] Enrutamiento de paquetes
+- [ ] Máscaras de red para las ip.
+- [ ] ARP
 - [ ] Regenerar dirección MAC en las opciones
 - [ ] Comprobar duplicados (de ip, mac) en la ventana de las opciones y avisar al usuario
 - [ ] Mover con teclado o ratón el grid

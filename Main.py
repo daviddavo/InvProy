@@ -4,7 +4,7 @@
 '''
     InvProy - Simulador de Redes / Proyecto de Investigación
     https://github.com/daviddavo/InvProy
-    Copyright (C) 2016  David Davó Laviña  david@ddavo.me
+    Copyright (C) 2016  David Davó Laviña  david@ddavo.me  http://ddavo.me
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -25,9 +25,11 @@ startTime = datetime.now()
 import configparser, os, csv, sys, time, random, math
 import xml.etree.ElementTree as xmltree
 from ipaddress import ip_address
+from random import choice
 
 #Esto hace que el programa se pueda ejecutar fuera de la carpeta.
 startcwd = os.getcwd()
+
 try:
     os.chdir(os.path.dirname(sys.argv[0]))
 except:
@@ -36,7 +38,7 @@ except:
 os.system("clear")
 print("\033[91m##############################\033[00m")
 
-print("InvProy  Copyright (C) 2016  David Davó Laviña\n\
+print("InvProy  Copyright (C) 2016  David Davó Laviña\ndavid@ddavo.me   http://ddavo.me\n\
 This program comes with ABSOLUTELY NO WARRANTY; for details go to 'Ayuda > Acerca de'\n\
 This is free software, and you are welcome to redistribute it\n\
 under certain conditions\n")
@@ -140,7 +142,10 @@ def push_elemento(texto):
 
 #Retorna un entero en formato de bin fixed
 def bformat(num, fix):
-    return str(("{0:0" + str(fix) + "b}").format(num))
+    if type(num) == int:
+        return str(("{0:0" + str(fix) + "b}").format(num))
+    else:
+        return "ERR0R"
 
 #Imprime cosas al log. Movido a Modules/logmod.py 190216
 
@@ -228,6 +233,7 @@ class MainClase(Gtk.Window):
         builder.get_object("imagemenuitem3").connect("activate", save.save)
         builder.get_object("imagemenuitem2").connect("activate", save.load)
         builder.get_object("imagemenuitem10").connect("activate", about().show)
+        builder.get_object("show_grid").connect("toggled", self.togglegrid)
 
         ### EVENT HANDLERS###
 
@@ -235,7 +241,6 @@ class MainClase(Gtk.Window):
         "onDeleteWindow":             exiting,
         "onExitPress":                exiting,
         "on_window1_key_press_event": nothing,
-        "addbuttonclicked":           self.togglegrid,
         "onRestartPress":             restart,
         
         }
@@ -256,12 +261,11 @@ class MainClase(Gtk.Window):
     ##### TODAS LAS FUNCIONES DE LA BOTONERA ####
 
     #Función inútil
-    def togglegrid(self, *args):
+    def togglegrid(self, *widget):
+        widget = widget[0]
         global TheGrid
         obj = TheGrid.backgr_lay
-        print("Toggle back")
-        print(obj.is_visible())
-        if obj.is_visible():
+        if widget.get_active() != True and obj.is_visible():
             obj.hide()
         else:
             obj.show()
@@ -287,18 +291,18 @@ class MainClase(Gtk.Window):
 
     #Al pulsar una tecla registrada por la ventana, hace todo esto.
     def on_key_press_event(self, widget, event):
-        keyname = Gdk.keyval_name(event.keyval)
+        keyname = Gdk.keyval_name(event.keyval).upper() #El upper es por si está BLOQ MAYUS activado.
         global allkeys #Esta es una lista que almacena todas las teclas que están siendo pulsadas
         if config.getboolean("BOOLEANS", "print-key-pressed") == True:
             lprint("Key %s (%d) pulsada" % (keyname, event.keyval))
             lprint("Todas las teclas: ", allkeys)
         if not keyname in allkeys:
             allkeys.add(keyname)
-        if ("Control_L" in allkeys) and ("q" in allkeys):
+        if ("CONTROL_L" in allkeys) and ("Q" in allkeys):
             exiting(1)
-        if ("Control_L" in allkeys) and ("r" in allkeys):
+        if ("CONTROL_L" in allkeys) and ("R" in allkeys):
             restart()
-        if ("Control_L" in allkeys) and ("u" in allkeys):
+        if ("CONTROL_L" in allkeys) and ("U" in allkeys):
             #HARD UPDATE: DEBUG
             global allobjects
             print("HARD UPDATE")
@@ -306,26 +310,26 @@ class MainClase(Gtk.Window):
             for obj in allobjects:
                 obj.update()
 
-        if ("Control_L" in allkeys) and ("s" in allkeys):
+        if ("CONTROL_L" in allkeys) and ("S" in allkeys):
             global allobjects
             save.save(allobjects)
-        if ("Control_L" in allkeys) and ("d" in allkeys):
+        if ("CONTROL_L" in allkeys) and ("D" in allkeys):
             theend()
 
         #Para no tener que hacer click continuamente
-        if ("q" in allkeys):
+        if ("Q" in allkeys):
             self.toolbutton_clicked(builder.get_object("toolbutton3"))
-        if "w" in allkeys:
+        if "W" in allkeys:
             self.toolbutton_clicked(builder.get_object("toolbutton4"))
-        if "e" in allkeys:
+        if "E" in allkeys:
             self.toolbutton_clicked(builder.get_object("toolbutton5"))
-        if "r" in allkeys:
+        if "R" in allkeys:
             self.toolbutton_clicked(builder.get_object("toolbutton6"))
         return keyname
 
     #Al dejar de pulsar la tecla deshace lo anterior.
     def on_key_release_event(self, widget, event):
-        keynameb = Gdk.keyval_name(event.keyval)
+        keynameb = Gdk.keyval_name(event.keyval).upper()
         if config.getboolean("BOOLEANS", "print-key-pressed") == True:
             lprint("Key %s (%d) released" % (keynameb, event.keyval))
         global allkeys
@@ -388,16 +392,11 @@ class Grid():
         self.backgr_lay = Gtk.Layout.new()
         self.select_lay = Gtk.Layout.new() #Aparecer un fondo naranja en la cuadricula cuando se selcciona un objeto
         self.animat_lay = Gtk.Layout.new() #La capa de las animaciones de los cables
-        self.overlay.add_overlay(self.mainport)
-        self.overlay.add_overlay(self.cables_lay)
         self.overlay.add_overlay(self.backgr_lay)
         self.overlay.add_overlay(self.select_lay)
+        self.overlay.add_overlay(self.cables_lay)
         self.overlay.add_overlay(self.animat_lay)
-        self.overlay.reorder_overlay(self.mainport, -1)
-        self.overlay.reorder_overlay(self.select_lay, 3)
-        self.overlay.reorder_overlay(self.animat_lay, 2)
-        self.overlay.reorder_overlay(self.cables_lay, 1)
-        self.overlay.reorder_overlay(self.backgr_lay, 0)
+        self.overlay.add_overlay(self.mainport)
 
         self.viewport   = builder.get_object("viewport1")
         self.eventbox   = builder.get_object("eventbox1")
@@ -892,6 +891,11 @@ class Switch(ObjetoBase):
         ObjetoBase.__init__(self, x, y, self.objectype, name=name)
         self.x = x
         self.y = y
+        self.timeout = 900 #Segundos
+
+        self.table = [
+        #[Puerto, MAC, expiration]
+        ] #Ya se usará
 
     def deleteobject(self, *jhafg):
         self.image.destroy()
@@ -899,7 +903,51 @@ class Switch(ObjetoBase):
         self.__del__()
 
     def packet_received(self, pck):
-        print("Recibido:", pck)
+        ObjetoBase.packet_received(self, pck)
+        
+        macd = "{0:0112b}".format(pck.frame)[0:6*8]
+        macs = "{0:0112b}".format(pck.frame)[6*8+1:6*16+1]
+        ttl  = int(pck.str[64:72],2)
+        ttlnew = "{0:08b}".format(ttl-1)
+        pck.str = "".join(( pck.str[:64], ttlnew, pck.str[72:] ))
+        macsnew = "{0:047b}".format(self.macdir[0])
+        print("IPd:", int(pck.str[128:160],2))
+        ipd = int(pck.str[128:160],2)
+
+        print("self.macdir",self.macdir[0], int("{0:0112b}".format(pck.frame)[6*8+1:6*16+1],2))
+        print("TTL:", int(pck.str[64:72],2), pck.str[64:72])
+
+        print("Soy un switch y mi deber es entregar el paquete a {}".format(int(macd,2)))
+        ipdic = {int(x.IP):x for x in self.connections if x.objectype == "Computer"}
+        print("IPDIC:", ipdic)
+        dic = {}
+        for i in self.connections:
+            dic[i.macdir[0]] = i
+        print("Connections MAC's:", dic)
+
+        #Cambiamos los bits de macs
+        #Si macd en conn, enviarle el paquete
+        #Si existe una tabla de enrutamiento que contiene una ruta para macd, enviar por ahi
+        #Si no, enviar al siguiente, y así
+        if (int(macd,2) in dic or ipd in ipdic) and int(pck.str[64:72],2) > 0:
+            pck.animate(self, ipdic[ipd])
+        elif "Switch" in [x.objectype for x in self.connections] and int(pck.str[64:72],2) >= 0:
+            print("Ahora lo enviamos al siguiente router")
+            tmplst = self.connections[:] #Crea una nueva copia de la lista
+            print(tmplst)
+            for i in tmplst:
+                if int(macs,2) == i.macdir[0]:
+                    print("REMOVING", i)
+                    tmplst.remove(i)
+            try:
+                tmplst.remove(*[x for x in tmplst if x.objectype == "Computer"])
+            except TypeError:
+                pass
+            print("Tmplst:", tmplst)
+            obj = choice(tmplst)
+            print("Sending to:", obj)
+            pck.frame = int("".join(( pck.str[:6*8+2], macsnew ,pck.str[6*16+1:] )),2)
+            pck.animate(self, obj)
 
 #¿Tengo permisos de escritura?, no se si tendré permisos
 #Update: Si los tenía
@@ -1023,6 +1071,9 @@ class Computador(ObjetoBase):
             print("Continuando")
         else:
             print("Un objeto no tiene IP")
+            yonW = YesOrNoWindow("Uno o los dos objetos no tienen dirección IP", Yest="OK", Not="Ok también")
+            yonR = yonW.run()
+            yonW.destroy()
             raise Exception("Un objeto no tiene IP")
         #Ambos deben tener direccion ip
         #def __init__(self, header, payload, trailer, cabel=None):
@@ -1033,7 +1084,7 @@ class Computador(ObjetoBase):
         lenght    = int( 20 + 8 + ( int(math.log(payload, 2))+1)/8 ) #In Bytes
         flags     = 0b010
         frag_off  = 0b0000000000000
-        ttl       = 64
+        ttl       = 32 #Reducido a 32 al solo pasar por una red local
         protocol  = 1
         checksum  = 0 #No es necesario porque no hay cables
         sourceip  = int(self.IP)
@@ -1058,19 +1109,20 @@ class Computador(ObjetoBase):
         print("lenght (bytes):", lenght)
 
         print("MAC's:", self.macdir, to.macdir)
-        frame = eth(self.macdir[0], to.macdir[0], pck)
+        frame = eth(to.macdir[0], self.macdir[0], pck)
         frame.applytopack(pck)
         print("Pck frame:", pck.frame)
 
-        pck.animate(self, to)
+        pck.animate(self, self.connections[0])
 
+    #Ver routing: https://en.wikipedia.org/wiki/IP_forwarding
     def packet_received(self, pck):
         print("Hola, soy {} y he recibido un paquete, tal vez tenga que responder".format(self.name))
         #Si el tipo de ping es x, responder, si es y imprimir info
         if config.getboolean("DEBUG", "packet-received"):
             print(">Pck:",pck)
             if pck.frame != None:
-                frame="{0:011b}".format(pck.frame)
+                frame="{0:0111b}".format(pck.frame)
                 print("\033[91m>>Atributos del paquete\033[00m")
                 totalen = pck.lenght + 14*8
                 print("Frame:", bin(pck.frame))
@@ -1182,8 +1234,11 @@ def theend():
     global tmpvar
     global TestC
     global TestD
-    if tmpvar:
+    if tmpvar>0:
         TestC.send_pck(to=TestD)
+        tmpvar += 1
+        if tmpvar > 4:
+            tmpvar = 0
     else:
         TestC = Computador(randrange(1,13,2),randrange(1,13,2), name="From")
         TestC.IP = ip_address("192.168.1.38")
@@ -1195,10 +1250,14 @@ def theend():
         TestD.IP = ip_address("192.168.1.42")
         print("{0:031b}".format(int(TestD.IP)))
 
-        cable = Cable(TestC, TestD)
-        TestC.connect(TestD, cable)
+        bridge = Switch(randrange(1,14), randrange(1,14), name="Bridge")
 
-        tmpvar = 1
+        cable = Cable(TestC, bridge)
+        cable2= Cable(bridge, TestD)
+        TestC.connect(bridge, cable)
+        TestD.connect(bridge, cable2)
+
+        tmpvar += 1
 
 #De momento sólo soportará el protocolo IPv4
 class packet():
@@ -1226,11 +1285,14 @@ class packet():
 
     #Composición de movimientos lineales en eje x e y
     #Siendo t=fps/s, v=px/s, v default = 84
-    def animate(self, start, end, fps=120, v=500, color="#673AB7"):
+    def animate(self, start, end, fps=120, v=84, color="#673AB7"):
         print("Animation started")
         from math import sqrt, pi
         #Long del cable
-        cable = start.cables[0]
+        try:
+            cable = start.cables[[x.toobj for x in start.cables].index(end)]
+        except ValueError:
+            cable = start.cables[[x.fromobj for x in start.cables].index(end)]
         w, h = cable.w + TheGrid.sqres, cable.h + TheGrid.sqres
         x, y = cable.x*TheGrid.sqres-TheGrid.sqres/2, cable.y*TheGrid.sqres-TheGrid.sqres/2
         xi, yi = (start.x-0.5)*TheGrid.sqres-x, (start.y-0.5)*TheGrid.sqres-y
@@ -1269,6 +1331,7 @@ class packet():
             nonlocal x
             nonlocal y
             nonlocal ctx
+            nonlocal surface
             if f <= tf:
                 #Do things
                 #print("Current f: {}; x,y: {}, {}".format(f, x,y))
@@ -1288,11 +1351,13 @@ class packet():
             else:
                 del ctx
                 image.destroy()
-                end.packet_received(self)
+                del surface
                 #print("Paquete enviado a {}".format(end))
+                end.packet_received(self)
                 return False
 
         print("GOB:",GObject.timeout_add(spf*1000, iteration))
+
         
         return True
         
@@ -1438,11 +1503,11 @@ class cfgWindow(MainClase):#MainClase):
     def on_key_press_event(self, widget, event):
         #global allkeys
         MainClase.on_key_press_event(self,widget,event)
-        if "Escape" in allkeys:
+        if "ESCAPE" in allkeys:
             push_elemento("Cerrada ventana de Configuracion")
             self.cfgventana.hide()
 
-        if ("Control_L" in allkeys) and ("s" in allkeys):
+        if ("CONTROL_L" in allkeys) and ("S" in allkeys):
             self.save()
         lprint(MainClase.on_key_press_event(self,widget,event))
 
@@ -1519,6 +1584,10 @@ class w_changethings(): #Oie tú, pedazo de subnormal, que cada objeto debe tene
         for i in ["chg_MAC-entry" + str(x) for x in range(0,5)]:
             objeto.builder.get_object(i).connect("changed", filter_numshex)
 
+        if objeto.objectype != "Computer":
+            objeto.builder.get_object("changethings_box-IP").destroy()
+            objeto.builder.get_object("grid_label-IP").destroy()
+
         #self.applybutton.connect("clicked", self.apply)
         #self.cancelbutton.connect("clicked", self.cancel)
 
@@ -1554,8 +1623,9 @@ class w_changethings(): #Oie tú, pedazo de subnormal, que cada objeto debe tene
     def apply(self, *npi):
         #acuerdate tambien de terminar esto
         #Nota: Hacer que compruebe nombres de una banlist, por ejemplo "TODOS"
+        yonR = None
         lprint(npi)
-        self.window.hide()
+        
         self.link.name = self.name_entry.get_text()
         lprint([ self.link.builder.get_object(y).get_text() for y in ["chg_MAC-entry" + str(x) for x in range(0,5)] ])
         self.link.macdir[1] = ":".join( [ self.link.builder.get_object(y).get_text() for y in ["chg_MAC-entry" + str(x) for x in range(5)] ])
@@ -1563,6 +1633,13 @@ class w_changethings(): #Oie tú, pedazo de subnormal, que cada objeto debe tene
         if self.link.objectype == "Computer":
             try:
                 self.link.IP = ip_address(".".join( [ self.link.builder.get_object(y).get_text() for y in ["changethings_entry-IP" + str(x) for x in range(4)] ]))
+            except ValueError:
+                ip = ".".join( [ self.link.builder.get_object(y).get_text() for y in ["changethings_entry-IP" + str(x) for x in range(4)] ]) 
+                if ip != "...":
+                    print("No parece ser una IP válida:", ip)
+                    yonW = YesOrNoWindow("{} no es una IP válida, por favor, introduzca una IP válida".format(ip), Yest="OK", Not="Ok también")
+                    yonR = yonW.run()
+                    yonW.destroy()
             except:
                 print(Exception)
                 raise
@@ -1571,6 +1648,9 @@ class w_changethings(): #Oie tú, pedazo de subnormal, que cada objeto debe tene
 
         #self.link.image.set_tooltip_text(self.link.name + " (" + str(self.link.connections) + "/" + str(self.link.max_connections) + ")")
         self.link.update()
+        self.window.hide()
+        if yonR!=None:
+            self.show()
 
     def cancel(self, *npi):
         lprint(npi)
@@ -1583,11 +1663,11 @@ class w_changethings(): #Oie tú, pedazo de subnormal, que cada objeto debe tene
     def on_key_press_event(self, widget, event):
         #global allkeys
         MainClase.on_key_press_event(self,widget,event)
-        if "Escape" in allkeys:
+        if "ESCAPE" in allkeys:
             push_elemento("Cerrada ventana de Configuracion")
             self.window.hide()
 
-        if ("period" in allkeys) or ("KP_Decimal" in allkeys):
+        if ("PERIOD" in allkeys) or ("KP_DECIMAL" in allkeys):
             widget.get_toplevel().child_focus(0)
 
 
@@ -1600,6 +1680,7 @@ class about(Gtk.AboutDialog):
         self.win.connect("delete-event", self.destroy)
         self.win.connect("response", self.destroy)
         self.win.add_credit_section("Tutores", ["Julio Sánchez"])
+        #self.win.add_credit_section("Contribuidores", [""])
         self = self.win
     def show(self, *args):
         print("Showing")

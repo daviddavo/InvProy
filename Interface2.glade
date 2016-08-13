@@ -22,7 +22,7 @@ Author: David Davó Laviña
 
 -->
 <interface domain="">
-  <requires lib="gtk+" version="3.8"/>
+  <requires lib="gtk+" version="3.14"/>
   <!-- interface-local-resource-path resources -->
   <!-- interface-license-type gplv3 -->
   <!-- interface-name InvProy -->
@@ -45,17 +45,18 @@ Author: David Davó Laviña
     <property name="copyright" translatable="yes">Copyright ©   2016   David Davó Laviña</property>
     <property name="comments" translatable="yes">Desarrollado como proyecto de investigación del programa de Bachillerato de Excelencia de la Comunidad de Madrid en el IES Palas Atenea por David Davó.</property>
     <property name="website">https://daviddavo.github.io/InvProy/</property>
+    <property name="website_label" translatable="yes">GitHub</property>
     <property name="authors">David Davó Laviña - david@ddavo.me
-http://https://github.com/daviddavo/InvProy</property>
+http://ddavo.me</property>
     <property name="logo">resources/Logo.png</property>
     <property name="license_type">gpl-3-0</property>
     <child internal-child="vbox">
-      <object class="GtkBox">
+      <object class="GtkBox" id="AboutWindow-GtkBox">
         <property name="can_focus">False</property>
         <property name="orientation">vertical</property>
         <property name="spacing">2</property>
         <child internal-child="action_area">
-          <object class="GtkButtonBox">
+          <object class="GtkButtonBox" id="AboutWindow-ButtonBox">
             <property name="can_focus">False</property>
             <property name="layout_style">end</property>
           </object>
@@ -299,7 +300,7 @@ http://https://github.com/daviddavo/InvProy</property>
   <object class="GtkApplicationWindow" id="changethings">
     <property name="can_focus">False</property>
     <property name="resizable">False</property>
-    <property name="window_position">center-on-parent</property>
+    <property name="window_position">mouse</property>
     <property name="destroy_with_parent">True</property>
     <property name="type_hint">utility</property>
     <child>
@@ -933,6 +934,21 @@ http://https://github.com/daviddavo/InvProy</property>
                 <property name="can_focus">False</property>
                 <property name="label" translatable="yes">_Ver</property>
                 <property name="use_underline">True</property>
+                <child type="submenu">
+                  <object class="GtkMenu" id="menu56">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <child>
+                      <object class="GtkCheckMenuItem" id="show_grid">
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="label" translatable="yes">Grid</property>
+                        <property name="use_underline">True</property>
+                        <property name="active">True</property>
+                      </object>
+                    </child>
+                  </object>
+                </child>
               </object>
             </child>
             <child>
@@ -979,7 +995,6 @@ http://https://github.com/daviddavo/InvProy</property>
                 <property name="label" translatable="yes">Añadir elemento</property>
                 <property name="use_underline">True</property>
                 <property name="stock_id">gtk-add</property>
-                <signal name="clicked" handler="addbuttonclicked" swapped="no"/>
               </object>
               <packing>
                 <property name="expand">False</property>
