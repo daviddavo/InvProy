@@ -110,7 +110,7 @@ print("#42FF37", hex_to_rgba("#42FF37"))
 
 #Comprueba la integridad del pack de recursos
 def checkres(recurdir):
-    files = ["Cable.png", "Router.png", "Switch.png", "Computer.png"]
+    files = ["Cable.png", "Router.png", "Switch.png", "Computer.png", "Hub.png"]
     cnt = 0
     ss = []
     for i in files:
@@ -218,8 +218,8 @@ class MainClase(Gtk.Window):
 
         #Probablemente estas dos variables se puedan coger del builder de alguna manera, pero no se cómo.
         start = 3
-        end   = 7
-        jlist = ["Router.png", "Switch.png", "Cable.png", "Computer.png"]
+        end   = 8
+        jlist = ["Router.png", "Switch.png", "Cable.png", "Computer.png", "Hub.png"]
         for j in range(start, end):
             objtmp = builder.get_object("toolbutton" + str(j))
             objtmp.connect("clicked", self.toolbutton_clicked)
@@ -258,9 +258,6 @@ class MainClase(Gtk.Window):
 
     #24/06 Eliminada startCable(), incluida en toolbutton_clicked
 
-    ##### TODAS LAS FUNCIONES DE LA BOTONERA ####
-
-    #Función inútil
     def togglegrid(self, *widget):
         widget = widget[0]
         global TheGrid
@@ -325,6 +322,8 @@ class MainClase(Gtk.Window):
             self.toolbutton_clicked(builder.get_object("toolbutton5"))
         if "R" in allkeys:
             self.toolbutton_clicked(builder.get_object("toolbutton6"))
+        if "T" in allkeys:
+            self.toolbutton_clicked(builder.get_object("toolbutton7"))
         return keyname
 
     #Al dejar de pulsar la tecla deshace lo anterior.
@@ -401,15 +400,12 @@ class Grid():
         self.viewport   = builder.get_object("viewport1")
         self.eventbox   = builder.get_object("eventbox1")
         self.eventbox.connect("button-press-event", self.clicked_on_grid)
-        #self.viewport.get_hadjustment()
         self.viewport.get_hadjustment().set_value(800)
 
-        self.image0 = gtk.Image.new_from_file("resources/Back.png")
         self.wres = config.getint("GRAPHICS", "viewport-wres")
         self.hres = config.getint("GRAPHICS", "viewport-hres")
         self.sqres = config.getint("GRAPHICS", "viewport-sqres")
         self.overlay.set_size_request(self.wres*self.sqres, self.hres*self.sqres)
-        #self.mainport.set_size_request(self.wres * self.sqres, self.hres * self.sqres)
 
         #13/07/16 Ahora esto va por cairo, mejooor.
         ### INICIO CAIRO
@@ -475,6 +471,9 @@ class Grid():
                 elif bttnclicked == "toolbutton6":
                     Computador(self.gridparser(event.x, self.wres), self.gridparser(event.y, self.hres))
                     push_elemento("Creado objeto Computador")
+                elif bttnclicked == "toolbutton7":
+                    Hub(self.gridparser(event.x, self.wres), self.gridparser(event.y, self.hres))
+                    push_elemento("Creado objeto Hub")
 
         elif self.searchforobject(self.gridparser(event.x, self.wres), self.gridparser(event.y, self.hres)) != False:
             #lprint("Objeto encontrado: " + str(self.searchforobject(self.gridparser(event.x, self.wres), self.gridparser(event.y, self.hres))))
@@ -562,6 +561,7 @@ import uuid
 
 class ObjetoBase():
     allobjects = []
+    cnt = 0
     #Una función para atraerlos a todos y atarlos en las tinieblas
     def __init__(self, x, y, objtype, *args, name="Default", maxconnections=4, ip=None):
         global cnt_objects
@@ -605,11 +605,11 @@ class ObjetoBase():
         self.image = gtk.Image.new_from_file(imgdir)
         self.resizetogrid(self.image)
         if name == "Default" or name == None:
-            self.name = self.objectype + " " + str(cnt_objects)
+            self.name = self.objectype + " " + str(self.__class__.cnt)
         else:
             self.name = name
         cnt_objects += 1
-        self.obcnt += 1
+        self.__class__.cnt += 1
 
         TheGrid.moveto(self.image, self.x, self.y)
         self.image.show()
@@ -704,10 +704,10 @@ class ObjetoBase():
                     #print(con)
                     if con.objectype == "Computer":
                         subcomps.append(con)
-                    elif con.objectype == "Switch":
+                    elif con.objectype == "Switch" or con.objectype == "Hub":
                         subcomps.extend(subcompcon(con))
                     else:
-                        #print("Saltado", con)
+                        print("Saltado", con)
                         pass
                 #passedyet.append(con)
 
@@ -765,7 +765,7 @@ class ObjetoBase():
         tmp.link = objeto
         tmp2 = Gtk.MenuItem.new_with_label(objeto.name)
         self.builder.get_object("grid_rclick-sendpkg").get_submenu().append(tmp2)
-        if self.__class__.__name__ != "Switch":
+        if self.__class__.__name__ != "Switch" and self.__class__.__name__ != "Hub":
             tmp2.connect("activate", self.send_pck)
             tmp2.show()
         tmp2.link = objeto
@@ -777,7 +777,7 @@ class ObjetoBase():
         tmp.link = self
         tmp2 = Gtk.MenuItem.new_with_label(self.name)
         objeto.builder.get_object("grid_rclick-sendpkg").get_submenu().append(tmp2)
-        if objeto.__class__.__name__ != "Switch":
+        if objeto.__class__.__name__ != "Switch" and objeto.__class__.__name__ != "Hub":
             tmp2.show()
             tmp2.connect("activate", objeto.send_pck)
         tmp2.link = self
@@ -866,7 +866,7 @@ class ObjetoBase():
 npack = 0
 
 class Router(ObjetoBase):
-    obcnt = 1
+    cnt = 1
     def __init__(self, x, y, *args, name="Default"):
         global cnt_objects
         self.objectype = "Router"
@@ -886,7 +886,7 @@ class Router(ObjetoBase):
         del self
 
 class Switch(ObjetoBase):
-    obcnt = 1
+    cnt = 1
     def __init__(self, x, y, *args, name="Default", maxconnections=4, ip=None):
         self.objectype = "Switch"
 
@@ -974,20 +974,26 @@ class Switch(ObjetoBase):
 #¿Tengo permisos de escritura?, no se si tendré permisos
 #Update: Si los tenía
 class Hub(ObjetoBase):
+    cnt = 1
     def __init__(self, x, y, *args, name="Default", maxconnections=4, ip=None):
         self.objectype = "Hub"
         push_elemento("Creado objeto Hub")
         self.imgdir = resdir + "Hub.*"
-        ObjetoBase.__init__(self, x, y, self.objectype, name=self.objectype)
+        ObjetoBase.__init__(self, x, y, self.objectype, name=name)
         self.x = x
         self.y = y
 
     def packet_received(self,pck):
-        for obj in self.connections:
-            pck.animate(self.obj)
+        ttl  = int(pck.str[64:72],2)
+        macs = "{0:0112b}".format(pck.frame)[6*8+1:6*16+1]
+        ttlnew = "{0:08b}".format(ttl-1)
+        pck.str = "".join(( pck.str[:64], ttlnew, pck.str[72:] ))
+        if ttl >= 0:
+            for obj in self.connections:
+                pck.animate(self, obj)
 
 class Computador(ObjetoBase):
-    obcnt = 1
+    cnt = 1
     def __init__(self, x, y, *args, name="Default", maxconnections=1, ip=None):
         self.objectype = "Computer"
 
@@ -1062,7 +1068,7 @@ class Computador(ObjetoBase):
         print("Compcon: ", [x.name for x in self.compcon()])
 
         for child in submenu1.get_children():
-            if child.link.__class__.__name__ == "Switch":
+            if child.link.__class__.__name__ == "Switch" or child.link.__class__.__name__ == "Hub":
                 child.hide()
                 for con in self.compcon():
                     if con.uuid not in [x.link.uuid for x in submenu1.get_children()]:
@@ -1167,6 +1173,8 @@ class Computador(ObjetoBase):
                 print("IPd:", ".".join([str(int(tmp[i * n:i * n+n], base=2)) for i,blah in enumerate(tmp[::n])]))
 
                 print("<<Fin de los atributos")
+
+        if int(".".join([str(int(tmp[i * n:i * n+n], base=2)) for i,blah in enumerate(tmp[::n])])) ,2)
 
 class Servidor(Computador):
     def __init__(self, x, y, *args, name="Default", maxconnections=1, ip=None):
