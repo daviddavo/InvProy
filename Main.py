@@ -18,6 +18,21 @@
 
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+    /////////////////////////////
+
+    Este programa es código libre: Puedes redistribuirlo y/o modificarlo
+    bajo los términos de la licencia GNU General Public License tal y como
+    publicado por la Free Software Foundation, ya sea la versión 3 de layout
+    licencia o la más reciente.
+
+    Este programa es distribuido con la esperanza de que sea útil, pero 
+    SIN NINGUNA GARANTÍA; sin siquiera la garantía implícita de COMERCIABILIDAD
+    o de la APTITUD DE LA MISMA PARA UN PROPÓSITO PARTICULAR. Ver la GNU General
+    Public License para más detalles.
+
+    Debes haber recibido una copia de la GNU General Public License con
+    este programa, si no es así, ver <http://www.gnu.org/licenses/>.
 '''
 from datetime import datetime
 startTime = datetime.now()
@@ -38,7 +53,7 @@ except:
 os.system("clear")
 print("\033[91m##############################\033[00m")
 
-print("InvProy  Copyright (C) 2016  David Davó Laviña\ndavid@ddavo.me   http://ddavo.me\n\
+print("InvProy  Copyright (C) 2016  David Davó Laviña\ndavid@ddavo.me   <http://ddavo.me>\n\
 This program comes with ABSOLUTELY NO WARRANTY; for details go to 'Ayuda > Acerca de'\n\
 This is free software, and you are welcome to redistribute it\n\
 under certain conditions\n")
