@@ -1,4 +1,5 @@
 .atomignore
+.directory
 cmd.exe
 logfiles/
 *.log

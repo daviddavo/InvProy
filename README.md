@@ -19,7 +19,7 @@ Por favor, documentar bugs e incidencias en issues.
 
 ### COSAS POR HACER ###
 - [x] Subirlo a GitHub
-- [ ] Conseguir una licencia
+- [x] Conseguir una licencia
 - [ ] Terminarlo (v 0.1)
 - [ ] Aplicar el protocolo TCP
 - [ ] Utilizar el router (Conectar redes, puertas de enlace)
@@ -43,7 +43,7 @@ Por favor, documentar bugs e incidencias en issues.
 
 - [x] Añadir los ethernet frames
 - [x] Arreglar lo de la MAC
-- [ ] Enrutamiento de paquetes
+- [x] Enrutamiento de paquetes
 - [ ] Máscaras de red para las ip.
 - [ ] ARP
 - [ ] Regenerar dirección MAC en las opciones

@@ -912,7 +912,8 @@ class Switch(ObjetoBase):
 
         #LO PRIMERO: AÑADIRLO A LA TABLA
 
-        self.table.append([int(macd,2), int(macs,2), int(time.time()+self.timeout)])
+        if int(macd,2) not in [x[0] for x in self.table]:
+            self.table.append([int(macd,2), int(macs,2), int(time.time()+self.timeout)])
         for tab in self.table:
             if tab[2] <= time.time():
                 print("Ha llegado tu hora")
@@ -1109,43 +1110,19 @@ class Computador(ObjetoBase):
             raise Exception("Un objeto no tiene IP")
         #Ambos deben tener direccion ip
         #def __init__(self, header, payload, trailer, cabel=None):
-        payload = int( 4.3*10**19 ) << 6 | 42
-
-        vihltos   = 0b0100010100000000
-        #20 Ipheader + 8 ICMPHEader + Payload
-        lenght    = int( 20 + 8 + ( int(math.log(payload, 2))+1)/8 ) #In Bytes
-        flags     = 0b010
-        frag_off  = 0b0000000000000
-        ttl       = 32 #Reducido a 32 al solo pasar por una red local
-        protocol  = 1
-        checksum  = 0 #No es necesario porque no hay cables
-        sourceip  = int(self.IP)
-        desti_ip  = int(to.IP)
-        identific = Sub_N
-
-        ip_header = (((((((((vihltos << 16 | lenght)<<16 | identific) << 3 | flags) << 13 | frag_off) \
-            << 8 | ttl) << 8 | protocol) << 16 | checksum) << 32 | sourceip) << 32 | desti_ip)
-
-        Type = 8
-        Code = 0
-        identifier = 1*2**15 + 42 * 2**8 + 42
-        icmp_header_checksum = random.getrandbits(16)
-        icmp_header = ((((((((Type << 8) | Code)<< 16) | checksum) << 16) | identifier) << 16) | Sub_N)
-        pck = icmp(ip_header, icmp_header, payload)
+        ping = Ping.create(0, self.IP, to.IP)
         Sub_N += 1
         npack += 1
 
-        print("PCK ICMP HEADER:", "{0:063b}".format(icmp_header))
-        print("PCK IPHEADER:", "{0:0159b}".format(ip_header))
-
-        print("lenght (bytes):", lenght)
+        print("PCK ICMP HEADER:", "{0:064b}".format(ping.icmp_header))
+        print("PCK IPHEADER:", "{0:0160b}".format(ping.ip_header))
 
         print("MAC's:", self.macdir, to.macdir)
-        frame = eth(to.macdir[0], self.macdir[0], pck)
-        frame.applytopack(pck)
-        print("Pck frame:", pck.frame)
+        frame = eth(to.macdir[0], self.macdir[0], ping)
+        frame.applytopack(ping)
+        print("Pck frame:", ping.frame)
 
-        pck.animate(self, self.connections[0])
+        ping.animate(self, self.connections[0])
 
     #Ver routing: https://en.wikipedia.org/wiki/IP_forwarding
     def packet_received(self, pck):
@@ -1173,8 +1150,22 @@ class Computador(ObjetoBase):
                 print("IPd:", ".".join([str(int(tmp[i * n:i * n+n], base=2)) for i,blah in enumerate(tmp[::n])]))
 
                 print("<<Fin de los atributos")
+        n = 8
+        tmp = pck.str[128:160]
+        print(int(tmp,2), int(self.IP))
+        if int(tmp,2) == int(self.IP):
+            ty = int("{0:064b}".format(pck.icmp_header)[:8],2)
+            if ty == 8:
+                print("El paquete era para mí, voy a responder un gracias :D")
+                ping = Ping.create(1, self.IP, int(pck.str[96:128],2))
+                frame = eth(int("{0:011b}".format(pck.frame)[6*8+1:6*16+1],2), self.macdir[0], ping)
+                frame.applytopack(ping)
 
-        if int(".".join([str(int(tmp[i * n:i * n+n], base=2)) for i,blah in enumerate(tmp[::n])])) ,2)
+                ping.animate(self, self.connections[0])
+            elif ty == 0:
+                print("De nada")
+            else:
+                print("ty es:", ty)
 
 class Servidor(Computador):
     def __init__(self, x, y, *args, name="Default", maxconnections=1, ip=None):
@@ -1322,7 +1313,12 @@ class packet():
 
     #Composición de movimientos lineales en eje x e y
     #Siendo t=fps/s, v=px/s, v default = 84
-    def animate(self, start, end, fps=120, v=84, color="#673AB7"):
+    def animate(self, start, end, fps=120, v=84, color=None):
+        if color == None:
+            if self.color != None:
+                color = self.color
+            else:
+                color = "#673AB7"
         print("Animation started")
         from math import sqrt, pi
         #Long del cable
@@ -1459,12 +1455,50 @@ class icmp(packet):
 #Estos paquetes pueden ser Request o Reply.
 #El header es de 20 bytes, la payload es de 8 + datos opcionales, pero el estándar es 64 bits.
 #Tipo de mensaje es 8 para request y 0 para reply. El ICMP es siempre 0.
-class ping(icmp):
-    def __init__(self, r):
+class Ping(icmp):
+    identifi = 0
+    def __init__(self):
+        pass
+
+    def create(r, sourceip, desti_ip, *n, payload=int( 4.3*10**19 ) << 6 | 42, \
+        flags=0b010, ttl=32):
+        self = Ping()
         if r == 0:
-            self.tipo = 0
+            Type = 8
+            self.color = "#4CAF50"
         if r == 1:
-            self.tipo = 8
+            Type = 0
+            self.color = "#F44336"
+
+        self.payload = payload
+
+        vihltos   = 0b0100010100000000
+        #20 Ipheader + 8 ICMPHEader + Payload
+        lenght    = int( 20 + 8 + ( int(math.log(payload, 2))+1)/8 ) #In Bytes
+        frag_off  = 0b0000000000000
+        protocol  = 1
+        checksum  = 0 #No es necesario porque no hay cables
+        sourceip  = int(sourceip)
+        desti_ip  = int(desti_ip)
+        identific = Ping.identifi
+        Ping.identifi += 1
+
+        self.ip_header = (((((((((vihltos << 16 | lenght)<<16 | identific) << 3 | flags) << 13 | frag_off) \
+        << 8 | ttl) << 8 | protocol) << 16 | checksum) << 32 | sourceip) << 32 | desti_ip)
+
+        identifier = 1*2**15 + 42 * 2**8 + 42
+        Code = 0
+        icmp_header_checksum = random.getrandbits(16)
+        self.icmp_header = ((((((((Type << 8) | Code)<< 16) | checksum) << 16) | identifier) << 16) | identific)
+        self.pck = icmp(self.ip_header, self.icmp_header, self.payload)
+
+        self.str = self.pck.str
+        self.lenght = self.pck.lenght
+        self.bits = self.pck.bits
+
+        return self
+
+
 
 #Ventana para configurar las variables de Config.ini
 #Nota: Por terminar
