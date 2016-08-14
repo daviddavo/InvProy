@@ -579,7 +579,7 @@ class ObjetoBase():
         self.menuemergente = self.builder.get_object("grid_rclick")
         self.builder.get_object("grid_rclick-disconnect_all").connect("activate", self.disconnect)
         self.builder.get_object("grid_rclick-delete").connect("activate", self.delete)
-        self.builder.get_object("grid_rclick-debug").connect("activate", self.compcon)
+        self.builder.get_object("grid_rclick-debug").connect("activate", self.debug)
 
         self.window_changethings = w_changethings(self)
         self.builder.get_object("grid_rclick-name").connect("activate", self.window_changethings.show)
@@ -636,6 +636,10 @@ class ObjetoBase():
     #Esta funcion retorna una str cuando se usa el objeto. En lugar de <0xXXXXXXXX object>
     def __str__(self):
         return  "<Tipo: " + self.objectype +" | Name: " + self.name + " | Pos: " + str(self.x) + ", " + str(self.y) + ">"
+
+    def debug(self, *args):
+        print("DEBUG")
+        print("MAC:", self.macdir)
 
     def rclick(self, event):
         global rclick_Object
@@ -894,7 +898,7 @@ class Switch(ObjetoBase):
         self.timeout = 900 #Segundos
 
         self.table = [
-        #[Puerto, MAC, expiration]
+        #[MAC, nextpoint, expiration]
         ] #Ya se usará
 
     def deleteobject(self, *jhafg):
@@ -903,23 +907,29 @@ class Switch(ObjetoBase):
         self.__del__()
 
     def packet_received(self, pck):
-        ObjetoBase.packet_received(self, pck)
-        
         macd = "{0:0112b}".format(pck.frame)[0:6*8]
         macs = "{0:0112b}".format(pck.frame)[6*8+1:6*16+1]
+
+        #LO PRIMERO: AÑADIRLO A LA TABLA
+
+        self.table.append([int(macd,2), int(macs,2), int(time.time()+self.timeout)])
+        for tab in self.table:
+            if tab[2] <= time.time():
+                print("Ha llegado tu hora")
+                self.table.remove(tab)
+
+        ################################
+
+        #ObjetoBase.packet_received(self, pck)
+        
         ttl  = int(pck.str[64:72],2)
         ttlnew = "{0:08b}".format(ttl-1)
         pck.str = "".join(( pck.str[:64], ttlnew, pck.str[72:] ))
-        macsnew = "{0:047b}".format(self.macdir[0])
-        print("IPd:", int(pck.str[128:160],2))
-        ipd = int(pck.str[128:160],2)
 
         print("self.macdir",self.macdir[0], int("{0:0112b}".format(pck.frame)[6*8+1:6*16+1],2))
         print("TTL:", int(pck.str[64:72],2), pck.str[64:72])
 
         print("Soy un switch y mi deber es entregar el paquete a {}".format(int(macd,2)))
-        ipdic = {int(x.IP):x for x in self.connections if x.objectype == "Computer"}
-        print("IPDIC:", ipdic)
         dic = {}
         for i in self.connections:
             dic[i.macdir[0]] = i
@@ -929,10 +939,15 @@ class Switch(ObjetoBase):
         #Si macd en conn, enviarle el paquete
         #Si existe una tabla de enrutamiento que contiene una ruta para macd, enviar por ahi
         #Si no, enviar al siguiente, y así
-        if (int(macd,2) in dic or ipd in ipdic) and int(pck.str[64:72],2) > 0:
-            pck.animate(self, ipdic[ipd])
-        elif "Switch" in [x.objectype for x in self.connections] and int(pck.str[64:72],2) >= 0:
+        if int(macd,2) in dic and ttl > 0:
+            pck.animate(self, dic[int(macd,2)])
+
+        elif int(macd,2) in []:
+            pass
+
+        elif "Switch" in [x.objectype for x in self.connections] and ttl >= 0:
             print("Ahora lo enviamos al siguiente router")
+            print(int(macd,2), dic)
             tmplst = self.connections[:] #Crea una nueva copia de la lista
             print(tmplst)
             for i in tmplst:
@@ -946,8 +961,15 @@ class Switch(ObjetoBase):
             print("Tmplst:", tmplst)
             obj = choice(tmplst)
             print("Sending to:", obj)
-            pck.frame = int("".join(( pck.str[:6*8+2], macsnew ,pck.str[6*16+1:] )),2)
+            #pck.frame = int("".join(( pck.str[:6*8+2], macsnew ,pck.str[6*16+1:] )),2)
             pck.animate(self, obj)
+
+    def debug(self, *args):
+        print("MyMac:", self.macdir)
+        row_format ="{:>20}" * 3
+        print(row_format.format("MAC", "NXT", "EXP s"))
+        for row in self.table:
+            print(row_format.format(row[0], row[1], int(row[2]-int(time.time()))))
 
 #¿Tengo permisos de escritura?, no se si tendré permisos
 #Update: Si los tenía
@@ -959,6 +981,10 @@ class Hub(ObjetoBase):
         ObjetoBase.__init__(self, x, y, self.objectype, name=self.objectype)
         self.x = x
         self.y = y
+
+    def packet_received(self,pck):
+        for obj in self.connections:
+            pck.animate(self.obj)
 
 class Computador(ObjetoBase):
     obcnt = 1
@@ -1240,22 +1266,25 @@ def theend():
         if tmpvar > 4:
             tmpvar = 0
     else:
-        TestC = Computador(randrange(1,13,2),randrange(1,13,2), name="From")
+        TestC = Computador(2,3, name="From")
         TestC.IP = ip_address("192.168.1.38")
         #TestC.IP.set_str("192.168.1.38")
         print("{0:031b}".format(int(TestC.IP)))
 
-        TestD = Computador(randrange(2,14,2),randrange(2,14,2), name="To")
+        TestD = Computador(8,3, name="To")
         #TestD.IP.set_str("192.168.1.42")
         TestD.IP = ip_address("192.168.1.42")
         print("{0:031b}".format(int(TestD.IP)))
 
-        bridge = Switch(randrange(1,14), randrange(1,14), name="Bridge")
+        bridge = Switch(4, 3, name="Bridge")
+        bridge2= Switch(6, 3, name="Bridge2")
 
         cable = Cable(TestC, bridge)
-        cable2= Cable(bridge, TestD)
+        cable2= Cable(bridge, bridge2)
+        cable3= Cable(bridge2, TestD)
         TestC.connect(bridge, cable)
-        TestD.connect(bridge, cable2)
+        bridge.connect(bridge2, cable2)
+        TestD.connect(bridge2, cable3)
 
         tmpvar += 1
 
@@ -1384,7 +1413,7 @@ class eth(packet):
 
         destmac = corrector(destmac)
         sourcemac = corrector(sourcemac)
-        print("Destmac", "{0:047b}".format(destmac))
+        print("Destmac", "{0:048b}".format(destmac))
 
         self.macheader = (destmac << (6*8+1) | sourcemac) << 16 | EtherType
         print(int("{0:0111b}".format(self.macheader)[0:6*8],2))
