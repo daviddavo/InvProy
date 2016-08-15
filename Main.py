@@ -476,7 +476,7 @@ class Grid():
         if self.searchforobject(self.gridparser(event.x, self.wres), self.gridparser(event.y, self.hres)) == False:
             if clicked == 1:
                 push_elemento("Clicked: " + str(clicked) + " bttnclicked: " + str(bttnclicked))
-                if bttnclicked == "toolbutton3":
+                if bttnclicked == "Router":
                     Router(self.gridparser(event.x, self.wres), self.gridparser(event.y, self.hres))
                     push_elemento("Creado objeto router")
                 elif bttnclicked == "toolbutton4":
@@ -965,13 +965,13 @@ class Switch(ObjetoBase):
         ttlnew = "{0:08b}".format(ttl-1)
         pck.str = "".join(( pck.str[:64], ttlnew, pck.str[72:] ))
 
-        print("self.macdir",self.macdir[0], int("{0:0112b}".format(pck.frame)[6*8+1:6*16+1],2))
+        print("self.macdir",int(self.macdir), int("{0:0112b}".format(pck.frame)[6*8+1:6*16+1],2))
         print("TTL:", int(pck.str[64:72],2), pck.str[64:72])
 
         print("Soy un switch y mi deber es entregar el paquete a {}".format(int(macd,2)))
         dic = {}
         for i in self.connections:
-            dic[i.macdir[0]] = i
+            dic[int(i.macdir)] = i
         print("Connections MAC's:", dic)
 
         #Cambiamos los bits de macs
@@ -990,7 +990,7 @@ class Switch(ObjetoBase):
             tmplst = self.connections[:] #Crea una nueva copia de la lista
             print(tmplst)
             for i in tmplst:
-                if int(macs,2) == i.macdir[0]:
+                if int(macs,2) == int(i.macdir):
                     print("REMOVING", i)
                     tmplst.remove(i)
             try:
@@ -1156,7 +1156,7 @@ class Computador(ObjetoBase):
         print("PCK IPHEADER:", "{0:0160b}".format(ping.ip_header))
 
         print("MAC's:", self.macdir, to.macdir)
-        frame = eth(to.macdir[0], self.macdir[0], ping)
+        frame = eth(int(to.macdir), int(self.macdir), ping)
         frame.applytopack(ping)
         print("Pck frame:", ping.frame)
 
@@ -1196,7 +1196,7 @@ class Computador(ObjetoBase):
             if ty == 8:
                 print("El paquete era para mí, voy a responder un gracias :D")
                 ping = Ping.create(1, self.IP, int(pck.str[96:128],2))
-                frame = eth(int("{0:011b}".format(pck.frame)[6*8+1:6*16+1],2), self.macdir[0], ping)
+                frame = eth(int("{0:011b}".format(pck.frame)[6*8+1:6*16+1],2), int(self.macdir), ping)
                 frame.applytopack(ping)
 
                 ping.animate(self, self.connections[0])
