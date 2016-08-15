@@ -49,12 +49,14 @@ Si instalas la versión más reciente de Ubuntu 16, no es necesaria la descarga 
 - [x] Añadir los ethernet frames
 - [x] Arreglar lo de la MAC
 - [x] Enrutamiento de paquetes
+- [x] Regenerar dirección MAC en las opciones
+- [ ] Hacer que las MAC sean una clase
 - [ ] Poder "seleccionar"
 - [ ] Máscaras de red para las ip.
 - [ ] ARP
-- [ ] Regenerar dirección MAC en las opciones
 - [ ] Comprobar duplicados (de ip, mac) en la ventana de las opciones y avisar al usuario
 - [ ] Mover con teclado o ratón el grid
+- [ ] Botón que te lleve (en la cuadricula) al siguiente objeto.
 
 ## Copyright ##
 Copyright (C) 2016  David Davó Laviña

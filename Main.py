@@ -59,7 +59,7 @@ This is free software, and you are welcome to redistribute it\n\
 under certain conditions\n")
 
 try: #Intenta importar los modulos necesarios
-    sys.path.append("Modules/")
+    #sys.path.append("Modules/")
     import Modules.Test
 except:
     print("Error: No se han podido importar los modulos...")
@@ -67,8 +67,8 @@ except:
 
 #Aqui importamos los modulos del programa que necesitamos...
 
-from logmod import *
-import save
+from Modules.logmod import *
+from Modules import save
 
 def lprint(*objects, sep=" ", end="\n", file=sys.stdout, flush=False):
     print(*objects, sep=sep, end=end, file=file, flush=flush)
@@ -219,9 +219,6 @@ class MainClase(Gtk.Window):
         self.ventana.connect("key-release-event", self.on_key_release_event)
         self.ventana.set_default_size(WRES, HRES)
         self.ventana.set_keep_above(bool(config.getboolean("GRAPHICS", "window-set-keep-above")))
-        #self.ventana.set_keep_above(false)
-
-
 
         #Modifica el color de fondo del viewport
         clr = hex_to_rgba(config.get("GRAPHICS", "viewport-background-color"))
@@ -412,7 +409,7 @@ class Grid():
         self.viewport   = builder.get_object("viewport1")
         self.eventbox   = builder.get_object("eventbox1")
         self.eventbox.connect("button-press-event", self.clicked_on_grid)
-        self.viewport.get_hadjustment().set_value(800)
+        #self.viewport.get_hadjustment().set_value(800)
 
         self.wres = config.getint("GRAPHICS", "viewport-wres")
         self.hres = config.getint("GRAPHICS", "viewport-hres")
@@ -443,6 +440,13 @@ class Grid():
 
         self.backgr_lay.put(self.image, 0, 0)
 
+        def subshow(widget):
+            #Para que no aparezca arriba a la izquierda:
+            scrolled = builder.get_object("scrolledwindow1")
+            scrolled.get_vadjustment().set_value(height/3)
+            scrolled.get_hadjustment().set_value(width/3)
+
+        builder.get_object("window1").connect("show", subshow)
         self.overlay.show_all()
         self.contadorback = 0
 
@@ -1269,11 +1273,17 @@ def theend():
     global tmpvar
     global TestC
     global TestD
+
+    scrolled = builder.get_object("scrolledwindow1")
+    scrolled.get_vadjustment().set_value(0)
+    scrolled.get_hadjustment().set_value(0)
+
     if tmpvar>0:
         TestC.send_pck(to=TestD)
         tmpvar += 1
         if tmpvar > 4:
             tmpvar = 0
+
     else:
         TestC = Computador(2,3, name="From")
         TestC.IP = ip_address("192.168.1.38")
