@@ -292,7 +292,6 @@ class MainClase(Gtk.Window):
             areweputtingcable = "True"
 
         object_name = objeto.props.label
-        lprint("Object name", object_name)
         clicked = True
         bttnclicked = object_name
 
@@ -628,8 +627,8 @@ class ObjetoBase():
         TheGrid.moveto(self.image, self.x, self.y)
         self.image.show()
 
-        self.macdir = self.genmac()
-        print("MAC:", self.macdir)
+        self.macdir = self.mac()
+        print("MAC:", self.macdir, int(self.macdir), bin(self.macdir))
         if ip == None:
             print("No ip definida")
             self.ipstr = "None"
@@ -681,18 +680,43 @@ class ObjetoBase():
     def clickado(self, widget, event):
         lprint("Clickado en objeto " + str(self) + " @ " + str(self.x) + ", " + str(self.y))
 
-    def genmac(*self, bits=48, mode=None):
-        #Por defecto se usa mac 48, o lo que es lo mismo, la de toa la vida
-        #Nota, falta un comprobador de que la mac no se repita
-        realmac = int("11" + str("{0:0"+ str(bits-2) +"b}").format(random.getrandbits(bits-2)),2)
-        readmac = str(hex(realmac)).upper().replace("0X", "")
-        readmac = ":".join([readmac[i * 2:i * 2 + 2] for i,bl in enumerate(readmac[::2])])
-        if mode == 0:
-            return realmac
-        if mode == 1:
-            return readmac
-        else:
-            return [realmac, readmac]
+    class mac():
+        def __init__(self, *macaddr, bits=48):
+            print("macaddr:", *macaddr)
+            if macaddr == None or True:
+                tmp = self.genmac(bits=bits)
+
+                self.int = tmp[0]
+                self.str = tmp[1]
+                self.bin = ("{0:0"+str(bits)+"b}").format(self.int)
+
+        def genmac(*self, bits=48, mode=None):
+            #Por defecto se usa mac 48, o lo que es lo mismo, la de toa la vida
+            #Nota, falta un comprobador de que la mac no se repita
+            realmac = int("11" + str("{0:0"+ str(bits-2) +"b}").format(random.getrandbits(bits-2)),2)
+            readmac = str(hex(realmac)).upper().replace("0X", "")
+            readmac = ":".join([readmac[i * 2:i * 2 + 2] for i,bl in enumerate(readmac[::2])])
+            if mode == 0:
+                return realmac
+            if mode == 1:
+                return readmac
+            else:
+                return [realmac, readmac]
+
+        def __str__(self):
+            readmac = str(hex(self.int)).upper().replace("0X", "")
+            return ":".join([readmac[i * 2:i * 2 + 2] for i,bl in enumerate(readmac[::2])])
+
+        def __bytes__(self):
+            return Object.__bytes__(self)
+
+        def __int__(self):
+            return self.int
+        def __index__(self):
+            return self.int
+        def list(self):
+            return self.str.split(":")
+
 
     #Esta fucnión se encarga de comprobar a que ordenador(es) está conectado
     #en total, pasando por routers, hubs y switches.
@@ -1690,8 +1714,7 @@ class w_changethings(): #Oie tú, pedazo de subnormal, que cada objeto debe tene
         self.window.show_all()
         self.imagebutton.set_image(self.link.image)
         self.name_entry.set_text(self.link.name)
-        lprint(self.link.macdir[1])
-        tmplst = self.link.macdir[1].split(":")
+        tmplst = self.link.macdir.list()
         for i in tmplst:
             tmpentry = self.link.builder.get_object("chg_MAC-entry" + str(tmplst.index(i)))
             tmpentry.set_text(i)
@@ -1723,8 +1746,9 @@ class w_changethings(): #Oie tú, pedazo de subnormal, que cada objeto debe tene
         
         self.link.name = self.name_entry.get_text()
         lprint([ self.link.builder.get_object(y).get_text() for y in ["chg_MAC-entry" + str(x) for x in range(0,5)] ])
-        self.link.macdir[1] = ":".join( [ self.link.builder.get_object(y).get_text() for y in ["chg_MAC-entry" + str(x) for x in range(5)] ])
-        lprint(self.link.macdir)
+        self.link.macdir.str = ":".join( [ self.link.builder.get_object(y).get_text() for y in ["chg_MAC-entry" + str(x) for x in range(5)] ])
+        self.link.macdir.int = int(self.link.macdir.str.replace(":",""), 16)
+        self.link.macdir.bin = "{0:048b}".format(self.link.macdir.int)
         if self.link.objectype == "Computer":
             try:
                 self.link.IP = ip_address(".".join( [ self.link.builder.get_object(y).get_text() for y in ["changethings_entry-IP" + str(x) for x in range(4)] ]))
@@ -1770,7 +1794,7 @@ class w_changethings(): #Oie tú, pedazo de subnormal, que cada objeto debe tene
         MainClase.on_key_release_event(self, widget, event)
 
     def regenclicked(self, widget):
-        t = ObjetoBase.genmac()[1].split(":")
+        t = ObjetoBase.mac.genmac()[1].split(":")
         for i in t:
             tmpentry = self.link.builder.get_object("chg_MAC-entry" + str(t.index(i)))
             tmpentry.set_text(i)
