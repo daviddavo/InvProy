@@ -10,17 +10,22 @@ Por favor, documentar bugs e incidencias en issues.
 2. Ejecutar `Main.py`, puedes usar `python3 Main.py`
 
 ### DEPENDENCIAS: ###
-* python3-gobject
+Si instalas la versión más reciente de Ubuntu 16, no es necesaria la descarga de nada.
+
+* python3-gobject (arch) / python3-gi (Ubuntu)
 * python3
-* pycairo
+* pycairo (arch) / python3-gi-cairo
 
 ### TESTADO EN ###
 - [x] Arch Linux LTS
+- [x] Ubuntu 14.04 LTS
+- [x] Ubuntu 16
+- [ ] MaX v8.0 
 
 ### COSAS POR HACER ###
 - [x] Subirlo a GitHub
 - [x] Conseguir una licencia
-- [ ] Terminarlo (v 0.1)
+- [x] Terminarlo (v 0.1)
 - [ ] Aplicar el protocolo TCP
 - [ ] Utilizar el router (Conectar redes, puertas de enlace)
 - [ ] Crear `branches` de Git
@@ -44,6 +49,7 @@ Por favor, documentar bugs e incidencias en issues.
 - [x] Añadir los ethernet frames
 - [x] Arreglar lo de la MAC
 - [x] Enrutamiento de paquetes
+- [ ] Poder "seleccionar"
 - [ ] Máscaras de red para las ip.
 - [ ] ARP
 - [ ] Regenerar dirección MAC en las opciones

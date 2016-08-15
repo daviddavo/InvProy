@@ -162,8 +162,6 @@ def bformat(num, fix):
     else:
         return "ERR0R"
 
-#Imprime cosas al log. Movido a Modules/logmod.py 190216
-
 gladefile = "Interface2.glade"
 
 try:
@@ -315,7 +313,6 @@ class MainClase(Gtk.Window):
         if ("CONTROL_L" in allkeys) and ("R" in allkeys):
             restart()
         if ("CONTROL_L" in allkeys) and ("U" in allkeys):
-            #HARD UPDATE: DEBUG
             global allobjects
             print("HARD UPDATE")
             print(allobjects)
@@ -446,6 +443,7 @@ class Grid():
 
         self.backgr_lay.put(self.image, 0, 0)
 
+        self.overlay.show_all()
         self.contadorback = 0
 
     def moveto(self, image, x, y, *args, layout=None):
@@ -462,7 +460,6 @@ class Grid():
                 layout.put(image, x*self.sqres, y*self.sqres)
         else:
             print("\033[31mError: Las coordenadas se salen del grid\033[00m")
-            #raise
 
     def clicked_on_grid(self, widget, event, *args):
         global clicked
@@ -472,7 +469,6 @@ class Grid():
         self.contadorback += 1
 
         push_elemento("Clicked on grid @" + str(self.gridparser(event.x, self.wres)) + "," + str(self.gridparser(event.y, self.hres)))
-        #lprint(str(self.contadorback) + " Clicked on grid " + str(args) + "@" + str(self.gridparser(event.x, self.wres)) + ", " + str(self.gridparser(event.y, self.hres)))
 
         if self.searchforobject(self.gridparser(event.x, self.wres), self.gridparser(event.y, self.hres)) == False:
             if clicked == 1:
@@ -491,7 +487,6 @@ class Grid():
                     push_elemento("Creado objeto Hub")
 
         elif self.searchforobject(self.gridparser(event.x, self.wres), self.gridparser(event.y, self.hres)) != False:
-            #lprint("Objeto encontrado: " + str(self.searchforobject(self.gridparser(event.x, self.wres), self.gridparser(event.y, self.hres))))
             push_elemento("Ahí ya hay un objeto, por favor selecciona otro sitio")
         else:
             lprint("pls rebisa l codigo")
@@ -682,7 +677,7 @@ class ObjetoBase():
     def clickado(self, widget, event):
         lprint("Clickado en objeto " + str(self) + " @ " + str(self.x) + ", " + str(self.y))
 
-    def genmac(self, *args, bits=48, mode=None):
+    def genmac(*self, bits=48, mode=None):
         #Por defecto se usa mac 48, o lo que es lo mismo, la de toa la vida
         #Nota, falta un comprobador de que la mac no se repita
         realmac = int("11" + str("{0:0"+ str(bits-2) +"b}").format(random.getrandbits(bits-2)),2)
@@ -1645,6 +1640,7 @@ class w_changethings(): #Oie tú, pedazo de subnormal, que cada objeto debe tene
     def __init__(self, objeto):
         self.window = objeto.builder.get_object("changethings")
         self.name_entry = objeto.builder.get_object("changethings_name-entry")
+        self.imagebutton = objeto.builder.get_object("changethings_imagebutton")
         self.applybutton = objeto.builder.get_object("chg_apply")
         self.applybutton.connect("clicked", self.apply)
         self.cancelbutton = objeto.builder.get_object("chg_cancel")
@@ -1652,6 +1648,8 @@ class w_changethings(): #Oie tú, pedazo de subnormal, que cada objeto debe tene
         self.window.connect("delete-event", self.hidewindow)
         self.window.connect("key-press-event", self.on_key_press_event)
         self.window.connect("key-release-event", self.on_key_release_event)
+        objeto.builder.get_object("chg_MAC-regen").connect("clicked", self.regenclicked)
+        print(objeto.builder.get_object("chg_MAC-regen").set_image(gtk.Image.new_from_stock("gtk-refresh", 1)))
 
         self.link = objeto
 
@@ -1680,6 +1678,7 @@ class w_changethings(): #Oie tú, pedazo de subnormal, que cada objeto debe tene
     def show(self, *widget):
         print("widget:", self.link)
         self.window.show_all()
+        self.imagebutton.set_image(self.link.image)
         self.name_entry.set_text(self.link.name)
         lprint(self.link.macdir[1])
         tmplst = self.link.macdir[1].split(":")
@@ -1759,6 +1758,13 @@ class w_changethings(): #Oie tú, pedazo de subnormal, que cada objeto debe tene
 
     def on_key_release_event(self, widget, event):
         MainClase.on_key_release_event(self, widget, event)
+
+    def regenclicked(self, widget):
+        t = ObjetoBase.genmac()[1].split(":")
+        for i in t:
+            tmpentry = self.link.builder.get_object("chg_MAC-entry" + str(t.index(i)))
+            tmpentry.set_text(i)
+            tmpentry.show()
 
 class about(Gtk.AboutDialog):
     def __init__(self):
