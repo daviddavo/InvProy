@@ -594,10 +594,6 @@ class ObjetoBase():
         self.builder.get_object("grid_rclick-delete").connect("activate", self.delete)
         self.builder.get_object("grid_rclick-debug").connect("activate", self.debug)
 
-        self.window_changethings = w_changethings(self)
-        self.builder.get_object("grid_rclick-name").connect("activate", self.window_changethings.show)
-
-
         allobjects.append(self)
 
         self.realx = x * TheGrid.sqres
@@ -612,10 +608,10 @@ class ObjetoBase():
         for f in os.listdir(resdir):
             lprint(f, f.startswith(objtype))
             if f.startswith(objtype) and ( f.endswith(".jpg") or f.endswith(".png") ):
-                imgdir = resdir + f
+                self.imgdir = resdir + f
                 break
 
-        self.image = gtk.Image.new_from_file(imgdir)
+        self.image = gtk.Image.new_from_file(self.imgdir)
         self.resizetogrid(self.image)
         if name == "Default" or name == None:
             self.name = self.objectype + " " + str(self.__class__.cnt)
@@ -643,6 +639,9 @@ class ObjetoBase():
         #lprint(cnt_rows)
         self.label.show()
         self.image.set_tooltip_text(self.name + " (" + str(len(self.connections)) + "/" + str(self.max_connections) + ")\n" + self.ipstr)
+
+        self.window_changethings = w_changethings(self)
+        self.builder.get_object("grid_rclick-name").connect("activate", self.window_changethings.show)
 
         self.cnt = 0 #Se me olvido que hace esta cosa
 
@@ -1306,7 +1305,7 @@ def theend():
         TestC.send_pck(to=TestD)
         tmpvar += 1
         if tmpvar > 4:
-            tmpvar = 0
+            tmpvar = 1
 
     else:
         TestC = Computador(2,3, name="From")
@@ -1686,6 +1685,7 @@ class w_changethings(): #Oie tú, pedazo de subnormal, que cada objeto debe tene
         print(objeto.builder.get_object("chg_MAC-regen").set_image(gtk.Image.new_from_stock("gtk-refresh", 1)))
 
         self.link = objeto
+        self.image = Gtk.Image.new_from_pixbuf(objeto.image.get_pixbuf())
 
         #Esto es un quick fix que hace que las entry sólo acepten números
         def filter_numsdec(widget):
@@ -1712,7 +1712,7 @@ class w_changethings(): #Oie tú, pedazo de subnormal, que cada objeto debe tene
     def show(self, *widget):
         print("widget:", self.link)
         self.window.show_all()
-        self.imagebutton.set_image(self.link.image)
+        self.imagebutton.set_image(self.image)
         self.name_entry.set_text(self.link.name)
         tmplst = self.link.macdir.list()
         for i in tmplst:

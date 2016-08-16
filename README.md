@@ -28,7 +28,6 @@ Si instalas la versión más reciente de Ubuntu 16, no es necesaria la descarga 
 - [x] Terminarlo (v 0.1)
 - [ ] Aplicar el protocolo TCP
 - [ ] Utilizar el router (Conectar redes, puertas de enlace)
-- [ ] Crear `branches` de Git
 - [ ] Instalador pip
 - [ ] Crear paquetes de distribución para AUR
 - [ ] También para Ubuntu/MAX/Debian
@@ -50,7 +49,8 @@ Si instalas la versión más reciente de Ubuntu 16, no es necesaria la descarga 
 - [x] Arreglar lo de la MAC
 - [x] Enrutamiento de paquetes
 - [x] Regenerar dirección MAC en las opciones
-- [ ] Hacer que las MAC sean una clase
+- [x] Hacer que las MAC sean una clase
+- [ ] Tabla de enrutamiento para los Switch
 - [ ] Poder "seleccionar"
 - [ ] Máscaras de red para las ip.
 - [ ] ARP
