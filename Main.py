@@ -958,6 +958,49 @@ class Switch(ObjetoBase):
                 return True
             return False
 
+    class w_switch_table(Gtk.ApplicationWindow):
+        def __init__(self, switch):
+            self.link = switch
+            builder = switch.builder
+            builder.get_object("window_switch_hbox").override_background_color(Gtk.StateType.NORMAL, Gdk.RGBA(*hex_to_rgba("#FF9800")))
+            builder.get_object("window_switch-table_button").connect("clicked", self.hide)
+            builder.get_object("window_switch-table").connect("delete-event", self.hide)
+            self.labels = []
+
+        def show(self, *a):
+            self.link.builder.get_object("window_switch-table").show_all()
+            self.ticking = True
+            GObject.timeout_add(1001, self.tick)
+
+        def hide(self, window, *event):
+            self.link.builder.get_object("window_switch-table").hide()
+            self.ticking = False
+            return True
+        def append(self, lst):
+            grid = self.link.builder.get_object("window_switch-table_grid")
+            grid.insert_row(0)
+            for i in range(len(lst)):
+                if i == 0:
+                    readmac = str(hex(lst[i])).upper().replace("0X", "")
+                    readmac = ":".join([readmac[i * 2:i * 2 + 2] for i,bl in enumerate(readmac[::2])])
+                    child = Gtk.Label.new(readmac)
+                elif i == 2:
+                    child = Gtk.Label.new(str(int(lst[i]-time.time())))
+                    child.exp = lst[i]
+                    self.labels.append(child)
+                else:
+                    child = Gtk.Label.new(str(lst[i]))
+                grid.attach(child, i, 0, 1, 1)
+                child.show()
+                print("Appending", child)
+        def tick(self):
+            for label in self.labels:
+                label.set_label(str(int(label.exp-time.time())))
+            return self.ticking
+        def remove(self, lst):
+            pass
+            #Get children, if children.get_label() == MAC, delete it.
+
     def __init__(self, x, y, *args, name="Default", maxconnections=5, ip=None):
         self.objectype = "Switch"
         self.portid = 0
@@ -969,7 +1012,7 @@ class Switch(ObjetoBase):
         ObjetoBase.__init__(self, x, y, self.objectype, name=name, maxconnections=maxconnections)
         self.x = x
         self.y = y
-        self.timeout = 900 #Segundos
+        self.timeout = 100 #Segundos
 
         for p in range(self.max_connections):
             self.Port(self)
@@ -977,7 +1020,12 @@ class Switch(ObjetoBase):
 
         self.table = [
         #[MAC, port, expiration]
-        ] #Ya se usará
+        ]
+        self.wtable = self.w_switch_table(self)
+        child = Gtk.MenuItem.new_with_label("Routing Table")
+        self.builder.get_object("grid_rclick").append(child)
+        child.connect("activate", self.wtable.show)
+        child.show()
 
     def deleteobject(self, *jhafg):
         self.image.destroy()
@@ -1006,11 +1054,14 @@ class Switch(ObjetoBase):
         #LO PRIMERO: AÑADIRLO A LA TABLA
 
         if int(macs,2) not in [x[0] for x in self.table]:
-            self.table.append([int(macs,2), port, int(time.time()+self.timeout)])
+            tmp = [int(macs,2), port, int(time.time()+self.timeout)]
+            self.table.append(tmp)
+            self.wtable.append(tmp)
         for tab in self.table:
             if tab[2] <= time.time():
                 print("Ha llegado tu hora")
                 self.table.remove(tab)
+                self.wtable.remove(tab)
 
         ################################
 

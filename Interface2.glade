@@ -1244,4 +1244,111 @@ http://ddavo.me</property>
       </object>
     </child>
   </object>
+  <object class="GtkApplicationWindow" id="window_switch-table">
+    <property name="can_focus">False</property>
+    <property name="window_position">center</property>
+    <child>
+      <object class="GtkBox" id="window_switch-table_box">
+        <property name="visible">True</property>
+        <property name="can_focus">False</property>
+        <property name="orientation">vertical</property>
+        <child>
+          <object class="GtkBox" id="window_switch_hbox">
+            <property name="visible">True</property>
+            <property name="can_focus">False</property>
+            <property name="margin_bottom">3</property>
+            <property name="homogeneous">True</property>
+            <child>
+              <object class="GtkLabel" id="window_switch_mac">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="margin_left">5</property>
+                <property name="label" translatable="yes">MAC</property>
+                <attributes>
+                  <attribute name="weight" value="ultraheavy"/>
+                </attributes>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">True</property>
+                <property name="position">0</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkLabel" id="window_switch_port">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="margin_left">5</property>
+                <property name="margin_right">5</property>
+                <property name="label" translatable="yes">PORT</property>
+                <property name="justify">center</property>
+                <attributes>
+                  <attribute name="weight" value="ultraheavy"/>
+                </attributes>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">True</property>
+                <property name="position">1</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkLabel" id="window_switch_ttl">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="margin_right">5</property>
+                <property name="label" translatable="yes">TTL (s)</property>
+                <property name="justify">center</property>
+                <attributes>
+                  <attribute name="weight" value="ultraheavy"/>
+                </attributes>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">True</property>
+                <property name="position">2</property>
+              </packing>
+            </child>
+          </object>
+          <packing>
+            <property name="expand">False</property>
+            <property name="fill">True</property>
+            <property name="position">0</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkGrid" id="window_switch-table_grid">
+            <property name="visible">True</property>
+            <property name="can_focus">False</property>
+            <property name="margin_left">5</property>
+            <property name="margin_right">5</property>
+            <property name="row_spacing">2</property>
+            <property name="column_homogeneous">True</property>
+            <child>
+              <placeholder/>
+            </child>
+          </object>
+          <packing>
+            <property name="expand">False</property>
+            <property name="fill">True</property>
+            <property name="position">1</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkButton" id="window_switch-table_button">
+            <property name="label">gtk-close</property>
+            <property name="visible">True</property>
+            <property name="can_focus">True</property>
+            <property name="receives_default">True</property>
+            <property name="use_stock">True</property>
+          </object>
+          <packing>
+            <property name="expand">False</property>
+            <property name="fill">True</property>
+            <property name="position">2</property>
+          </packing>
+        </child>
+      </object>
+    </child>
+  </object>
 </interface>
