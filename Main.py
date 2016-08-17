@@ -651,7 +651,7 @@ class ObjetoBase():
 
     def debug(self, *args):
         print("DEBUG")
-        print("MAC:", self.macdir)
+        print("MAC:", self.macdir, int(self.macdir))
 
     def rclick(self, event):
         global rclick_Object
@@ -828,6 +828,13 @@ class ObjetoBase():
         self.update()
         objeto.update()
 
+        if objeto.__class__.__name__ == "Switch":
+            print("Connecting {} to {}".format(objeto, self))
+            objeto.connectport(self)
+        if self.__class__.__name__ == "Switch":
+            print("Connecting {} to {}".format(objeto, self))
+            self.connectport(objeto)
+
     def disconnect(self, widget, *args, de=None):
         print("Cables:", self.cables)
         #QUICKFIX
@@ -867,6 +874,11 @@ class ObjetoBase():
 
             de.update()
 
+            if self.__class__.__name__ == "Switch":
+                self.disconnectport(de)
+            elif de.__class__.__name__ == "Switch":
+                de.disconnectport(self)
+
         self.update()
 
     def delete(self, *widget, conf=1):
@@ -884,7 +896,7 @@ class ObjetoBase():
         else:
             raise
 
-    def packet_received(self, pck):
+    def packet_received(self, pck, *args, port=None):
         print("Hola, soy {} y he recibido un paquete, pero no sé que hacer con él".format(self.name))
         if config.getboolean("DEBUG", "packet-received"):
             print(">Pck:",pck)
@@ -924,18 +936,47 @@ class Router(ObjetoBase):
 
 class Switch(ObjetoBase):
     cnt = 1
-    def __init__(self, x, y, *args, name="Default", maxconnections=4, ip=None):
+    #El objeto puerto
+    class Port():
+        def __init__(self, switch):
+            self.id = switch.portid
+            self.dic = switch.pdic
+            self.all = switch.pall
+            switch.portid += 1
+            self.switch = switch
+            self.connection = None
+            self.all[self.id] = self
+            self.dic[self.id] = self.connection
+        def connect(self, connection):
+            self.connection = connection
+            self.dic[self.id] = self.connection
+        def disconnect(self):
+            self.connection = None
+            self.dic[self.id] = self.connection
+        def is_available(self):
+            if self.connection == None:
+                return True
+            return False
+
+    def __init__(self, x, y, *args, name="Default", maxconnections=5, ip=None):
         self.objectype = "Switch"
+        self.portid = 0
+        self.pdic = {}
+        self.pall = {}
 
         push_elemento("Creado objeto Switch")
         self.imgdir = resdir + "Switch.*"
-        ObjetoBase.__init__(self, x, y, self.objectype, name=name)
+        ObjetoBase.__init__(self, x, y, self.objectype, name=name, maxconnections=maxconnections)
         self.x = x
         self.y = y
         self.timeout = 900 #Segundos
 
+        for p in range(self.max_connections):
+            self.Port(self)
+        print(self.pall)
+
         self.table = [
-        #[MAC, nextpoint, expiration]
+        #[MAC, port, expiration]
         ] #Ya se usará
 
     def deleteobject(self, *jhafg):
@@ -943,14 +984,29 @@ class Switch(ObjetoBase):
         push_elemento("Eliminado objeto " + self.objectype)
         self.__del__()
 
-    def packet_received(self, pck):
+    def connectport(self, objeto):
+        for port in self.pall:
+            if self.pall[port].is_available():
+                self.pall[port].connect(objeto)
+                break
+        print(self.pdic)
+
+    def disconnectport(self, objeto):
+        for p in self.pdic:
+            print("i: {}, idx: {}".format(p,self.pdic[p]))
+            if objeto == self.pdic[p]:
+                self.pall[p].disconnect()
+                break
+        print(self.pdic)
+
+    def packet_received(self, pck, port=None):
         macd = "{0:0112b}".format(pck.frame)[0:6*8]
         macs = "{0:0112b}".format(pck.frame)[6*8+1:6*16+1]
 
         #LO PRIMERO: AÑADIRLO A LA TABLA
 
-        if int(macd,2) not in [x[0] for x in self.table]:
-            self.table.append([int(macd,2), int(macs,2), int(time.time()+self.timeout)])
+        if int(macs,2) not in [x[0] for x in self.table]:
+            self.table.append([int(macs,2), port, int(time.time()+self.timeout)])
         for tab in self.table:
             if tab[2] <= time.time():
                 print("Ha llegado tu hora")
@@ -967,7 +1023,8 @@ class Switch(ObjetoBase):
         print("self.macdir",int(self.macdir), int("{0:0112b}".format(pck.frame)[6*8+1:6*16+1],2))
         print("TTL:", int(pck.str[64:72],2), pck.str[64:72])
 
-        print("Soy un switch y mi deber es entregar el paquete a {}".format(int(macd,2)))
+        print("Soy {} y mi deber es entregar el paquete a {}".format(self.name,int(macd,2)))
+        print("El paquete llegó por el puerto  {}".format(port))
         dic = {}
         for i in self.connections:
             dic[int(i.macdir)] = i
@@ -977,11 +1034,14 @@ class Switch(ObjetoBase):
         #Si macd en conn, enviarle el paquete
         #Si existe una tabla de enrutamiento que contiene una ruta para macd, enviar por ahi
         #Si no, enviar al siguiente, y así
+        print(">MAAAC:",int(macd,2), "DIIIC:")
         if int(macd,2) in dic and ttl > 0:
             pck.animate(self, dic[int(macd,2)])
 
-        elif int(macd,2) in []:
-            pass
+        elif int(macd,2) in [x[0] for x in self.table]:
+            for x in self.table:
+                if x[0] == int(macd,2):
+                    pck.animate(self, self.pdic[x[1]])
 
         elif "Switch" in [x.objectype for x in self.connections] and ttl >= 0:
             print("Ahora lo enviamos al siguiente router")
@@ -999,14 +1059,16 @@ class Switch(ObjetoBase):
             print("Tmplst:", tmplst)
             obj = choice(tmplst)
             print("Sending to:", obj)
-            #pck.frame = int("".join(( pck.str[:6*8+2], macsnew ,pck.str[6*16+1:] )),2)
             pck.animate(self, obj)
 
     def debug(self, *args):
+        print(self.pdic)
         print("MyMac:", self.macdir)
         row_format ="{:>20}" * 3
         print(row_format.format("MAC", "NXT", "EXP s"))
         for row in self.table:
+            if row[1] == None:
+                row[1] = "None"
             print(row_format.format(row[0], row[1], int(row[2]-int(time.time()))))
 
 #¿Tengo permisos de escritura?, no se si tendré permisos
@@ -1021,7 +1083,7 @@ class Hub(ObjetoBase):
         self.x = x
         self.y = y
 
-    def packet_received(self,pck):
+    def packet_received(self,pck,port=None):
         ttl  = int(pck.str[64:72],2)
         macs = "{0:0112b}".format(pck.frame)[6*8+1:6*16+1]
         ttlnew = "{0:08b}".format(ttl-1)
@@ -1162,7 +1224,7 @@ class Computador(ObjetoBase):
         ping.animate(self, self.connections[0])
 
     #Ver routing: https://en.wikipedia.org/wiki/IP_forwarding
-    def packet_received(self, pck):
+    def packet_received(self, pck, *args, port=None):
         print("Hola, soy {} y he recibido un paquete, tal vez tenga que responder".format(self.name))
         #Si el tipo de ping es x, responder, si es y imprimir info
         if config.getboolean("DEBUG", "packet-received"):
@@ -1195,7 +1257,7 @@ class Computador(ObjetoBase):
             if ty == 8:
                 print("El paquete era para mí, voy a responder un gracias :D")
                 ping = Ping.create(1, self.IP, int(pck.str[96:128],2))
-                frame = eth(int("{0:011b}".format(pck.frame)[6*8+1:6*16+1],2), int(self.macdir), ping)
+                frame = eth(int("{0:0112b}".format(pck.frame)[6*8+1:6*16+1],2), int(self.macdir), ping)
                 frame.applytopack(ping)
 
                 ping.animate(self, self.connections[0])
@@ -1356,13 +1418,12 @@ class packet():
 
     #Composición de movimientos lineales en eje x e y
     #Siendo t=fps/s, v=px/s, v default = 84
-    def animate(self, start, end, fps=120, v=84, color=None):
+    def animate(self, start, end, fps=120, v=200, color=None, port=None):
         if color == None:
             if self.color != None:
                 color = self.color
             else:
                 color = "#673AB7"
-        print("Animation started")
         from math import sqrt, pi
         #Long del cable
         try:
@@ -1372,7 +1433,6 @@ class packet():
         w, h = cable.w + TheGrid.sqres, cable.h + TheGrid.sqres
         x, y = cable.x*TheGrid.sqres-TheGrid.sqres/2, cable.y*TheGrid.sqres-TheGrid.sqres/2
         xi, yi = (start.x-0.5)*TheGrid.sqres-x, (start.y-0.5)*TheGrid.sqres-y
-        print("xi {}, yi {}".format(xi,yi))
         xf, yf = end.x, end.y
         r = sqrt(cable.w**2+cable.h**2) #Pixeles totales
         t=r/v #Tiempo en segundos que durara la animacion
@@ -1393,7 +1453,7 @@ class packet():
         TheGrid.animat_lay.put(image,x,y)
         TheGrid.animat_lay.show_all()
 
-        print("x: {}, y: {}, tf:{}, spf*m:{}, t: {}".format(x/TheGrid.sqres,y/TheGrid.sqres,tf,int(spf*1000), t))
+        #print("x: {}, y: {}, tf:{}, spf*m:{}, t: {}".format(x/TheGrid.sqres,y/TheGrid.sqres,tf,int(spf*1000), t))
         f = 0
         x,y = xi,yi
         sx,sy = (w-TheGrid.sqres)/tf,(h-TheGrid.sqres)/tf
@@ -1408,6 +1468,7 @@ class packet():
             nonlocal y
             nonlocal ctx
             nonlocal surface
+            nonlocal port
             if f <= tf:
                 #Do things
                 #print("Current f: {}; x,y: {}, {}".format(f, x,y))
@@ -1429,10 +1490,18 @@ class packet():
                 image.destroy()
                 del surface
                 #print("Paquete enviado a {}".format(end))
-                end.packet_received(self)
+                if end.__class__.__name__ == "Switch":
+                    for p in end.pall:
+                        if end.pall[p].connection == start:
+                            port = p
+                            break
+                    print("PORT:", port)
+                    end.packet_received(self,port=port)
+                    return False
+                end.packet_received(self, port=port)
                 return False
 
-        print("GOB:",GObject.timeout_add(spf*1000, iteration))
+        GObject.timeout_add(spf*1000, iteration)
 
         
         return True
@@ -1504,7 +1573,7 @@ class Ping(icmp):
         pass
 
     def create(r, sourceip, desti_ip, *n, payload=int( 4.3*10**19 ) << 6 | 42, \
-        flags=0b010, ttl=32):
+        flags=0b010, ttl=10):
         self = Ping()
         if r == 0:
             Type = 8
@@ -1745,8 +1814,8 @@ class w_changethings(): #Oie tú, pedazo de subnormal, que cada objeto debe tene
         lprint(npi)
         
         self.link.name = self.name_entry.get_text()
-        lprint([ self.link.builder.get_object(y).get_text() for y in ["chg_MAC-entry" + str(x) for x in range(0,5)] ])
-        self.link.macdir.str = ":".join( [ self.link.builder.get_object(y).get_text() for y in ["chg_MAC-entry" + str(x) for x in range(5)] ])
+        lprint([ self.link.builder.get_object(y).get_text() for y in ["chg_MAC-entry" + str(x) for x in range(0,6)] ])
+        self.link.macdir.str = ":".join( [ self.link.builder.get_object(y).get_text() for y in ["chg_MAC-entry" + str(x) for x in range(6)] ])
         self.link.macdir.int = int(self.link.macdir.str.replace(":",""), 16)
         self.link.macdir.bin = "{0:048b}".format(self.link.macdir.int)
         if self.link.objectype == "Computer":
