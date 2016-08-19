@@ -962,42 +962,58 @@ class Switch(ObjetoBase):
         def __init__(self, switch):
             self.link = switch
             builder = switch.builder
-            builder.get_object("window_switch_hbox").override_background_color(Gtk.StateType.NORMAL, Gdk.RGBA(*hex_to_rgba("#FF9800")))
+            #builder.get_object("window_switch_hbox").override_background_color(Gtk.StateType.NORMAL, Gdk.RGBA(*hex_to_rgba("#FF9800")))
             builder.get_object("window_switch-table_button").connect("clicked", self.hide)
             builder.get_object("window_switch-table").connect("delete-event", self.hide)
-            self.labels = []
+            self.store = Gtk.ListStore(str,int,int,int)
+            
+            self.view = builder.get_object("window_switch-table-TreeView")
+            self.view.set_model(self.store)
+            for i, column_title in enumerate(["MAC", "Puerto", "TTL (s)"]):
+                renderer = Gtk.CellRendererText()
+                column = Gtk.TreeViewColumn(column_title, renderer, text=i)
+                self.view.append_column(column)
+            self.ticking = False
+            builder.get_object("window_switch-table").set_keep_above(True)
 
         def show(self, *a):
-            self.link.builder.get_object("window_switch-table").show_all()
             self.ticking = True
             GObject.timeout_add(1001, self.tick)
+            for row in self.store:
+                row[2] = row[3] - time.time()
+            self.link.builder.get_object("window_switch-table").show_all()
 
         def hide(self, window, *event):
             self.link.builder.get_object("window_switch-table").hide()
             self.ticking = False
             return True
         def append(self, lst):
-            grid = self.link.builder.get_object("window_switch-table_grid")
-            grid.insert_row(0)
-            for i in range(len(lst)):
-                if i == 0:
-                    readmac = str(hex(lst[i])).upper().replace("0X", "")
-                    readmac = ":".join([readmac[i * 2:i * 2 + 2] for i,bl in enumerate(readmac[::2])])
-                    child = Gtk.Label.new(readmac)
-                elif i == 2:
-                    child = Gtk.Label.new(str(int(lst[i]-time.time())))
-                    child.exp = lst[i]
-                    self.labels.append(child)
-                else:
-                    child = Gtk.Label.new(str(lst[i]))
-                grid.attach(child, i, 0, 1, 1)
-                child.show()
-                print("Appending", child)
+            lst.append(lst[2])
+            for row in self.store:
+                row[2] = row[3] - time.time()
+            row = self.store.append(lst)
+            print(self.view.get_property("visible"))
+            if self.view.get_property("visible") == True and self.ticking == False:
+                self.ticking = True
+                GObject.timeout_add(1001, self.tick)
+
         def tick(self):
-            for label in self.labels:
-                label.set_label(str(int(label.exp-time.time())))
+            for row in self.store:
+                row[2] = row[3] - time.time()
+                if row[2] <= 0:
+                    try:
+                        self.store.remove(row.iter)
+                        self.link.table.remove(row)
+                    except:
+                        pass
+            if len(self.store) == 0:
+                self.ticking = False
             return self.ticking
         def remove(self, lst):
+            for row in self.store:
+                if row == lst:
+                    self.store.remove(row.iter)
+                    self.link.table
             pass
             #Get children, if children.get_label() == MAC, delete it.
 
@@ -1012,7 +1028,7 @@ class Switch(ObjetoBase):
         ObjetoBase.__init__(self, x, y, self.objectype, name=name, maxconnections=maxconnections)
         self.x = x
         self.y = y
-        self.timeout = 100 #Segundos
+        self.timeout = 20 #Segundos
 
         for p in range(self.max_connections):
             self.Port(self)
@@ -1052,16 +1068,26 @@ class Switch(ObjetoBase):
         macs = "{0:0112b}".format(pck.frame)[6*8+1:6*16+1]
 
         #LO PRIMERO: AÑADIRLO A LA TABLA
+        readmac = str(hex(int(macs,2))).upper().replace("0X", "")
+        readmac = ":".join([readmac[i * 2:i * 2 + 2] for i,bl in enumerate(readmac[::2])])
 
-        if int(macs,2) not in [x[0] for x in self.table]:
-            tmp = [int(macs,2), port, int(time.time()+self.timeout)]
-            self.table.append(tmp)
-            self.wtable.append(tmp)
         for tab in self.table:
             if tab[2] <= time.time():
                 print("Ha llegado tu hora")
                 self.table.remove(tab)
                 self.wtable.remove(tab)
+            if tab[0] == int(macd,2):
+                print("TAB[0] == mcd")
+                tab[2] = int(time.time()+self.timeout)
+                for row in self.wtable.store:
+                    print(row[0], tab[0])
+                    if int(row[0].replace(":",""),16) == tab[0]:
+                        row[3] = int(time.time()+self.timeout)
+        if int(macs,2) not in [x[0] for x in self.table]:
+            tmp = [int(macs,2), port, int(time.time()+self.timeout)]            
+            self.table.append(tmp)
+            tmp = [readmac, port, int(time.time()+self.timeout)]
+            self.wtable.append(tmp)
 
         ################################
 
@@ -1120,6 +1146,8 @@ class Switch(ObjetoBase):
         for row in self.table:
             if row[1] == None:
                 row[1] = "None"
+            if int(row[2]-time.time()) <= 0:
+                self.table.remove(row)
             print(row_format.format(row[0], row[1], int(row[2]-int(time.time()))))
 
 #¿Tengo permisos de escritura?, no se si tendré permisos
@@ -1624,7 +1652,7 @@ class Ping(icmp):
         pass
 
     def create(r, sourceip, desti_ip, *n, payload=int( 4.3*10**19 ) << 6 | 42, \
-        flags=0b010, ttl=10):
+        flags=0b010, ttl=32):
         self = Ping()
         if r == 0:
             Type = 8

@@ -50,7 +50,7 @@ Si instalas la versión más reciente de Ubuntu 16, no es necesaria la descarga 
 - [x] Enrutamiento de paquetes
 - [x] Regenerar dirección MAC en las opciones
 - [x] Hacer que las MAC sean una clase
-- [ ] Tabla de enrutamiento para los Switch
+- [x] Tabla de enrutamiento para los Switch
 - [ ] Poder "seleccionar"
 - [ ] Máscaras de red para las ip.
 - [ ] ARP
