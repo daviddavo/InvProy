@@ -101,6 +101,7 @@ gtk = Gtk
 config      = configparser.RawConfigParser()
 configdir   = "Config.ini"
 config.read(configdir)
+allobjects = []
 
 #Funcion que convierte un numero a una str con [digits] cifras
 def digitsnumber(number, digits):
@@ -195,7 +196,6 @@ lprint(resdir)
 #CLASSES
 
 allkeys = set()
-allobjects = []
 cables = []
 clickedobjects = set() #Creamos una cosa para meter los ultimos 10 objetos clickados. (EN DESUSO)
 clicked = 0
@@ -317,7 +317,9 @@ class MainClase(Gtk.Window):
 
         if ("CONTROL_L" in allkeys) and ("S" in allkeys):
             global allobjects
-            save.save(allobjects)
+            save.save(allobjects, cables)
+        if ("CONTROL_L" in allkeys) and ("L" in allkeys):
+            save.load()
         if ("CONTROL_L" in allkeys) and ("D" in allkeys):
             theend()
 
@@ -445,7 +447,8 @@ class Grid():
             scrolled.get_vadjustment().set_value(height/3)
             scrolled.get_hadjustment().set_value(width/3)
 
-        builder.get_object("window1").connect("show", subshow)
+        if config.getboolean("GRAPHICS","start-centered"):
+            builder.get_object("window1").connect("show", subshow)
         self.overlay.show_all()
         self.contadorback = 0
 
@@ -644,6 +647,36 @@ class ObjetoBase():
         self.builder.get_object("grid_rclick-name").connect("activate", self.window_changethings.show)
 
         self.cnt = 0 #Se me olvido que hace esta cosa
+
+    def load(self):
+        global cnt_objects
+        global cnt_rows
+        global allobjects
+        self.builder = Gtk.Builder()
+        self.builder.add_from_file(gladefile)
+        self.menuemergente = self.builder.get_object("grid_rclick")
+        self.builder.get_object("grid_rclick-disconnect_all").connect("activate", self.disconnect)
+        self.builder.get_object("grid_rclick-delete").connect("activate", self.delete)
+        self.builder.get_object("grid_rclick-debug").connect("activate", self.debug)
+        cnt_objects += 1
+        self.__class__.cnt += 1
+        allobjects.append(self)
+        self.image = gtk.Image.new_from_file(self.imgdir)
+        self.resizetogrid(self.image)
+        TheGrid.moveto(self.image, self.x-1, self.y-1)
+        self.image.show()
+        lista = builder.get_object("grid2")
+        lista.insert_row(cnt_rows)
+        self.label = Gtk.Label.new(self.name)
+        lista.attach(self.label, 0, cnt_rows, 1, 1)
+        cnt_rows += 1
+        self.label.show()
+        self.image.set_tooltip_text(self.name + " (" + str(len(self.connections)) + "/" + str(self.max_connections) + ")\n" + self.ipstr)
+        self.window_changethings = w_changethings(self)
+        self.builder.get_object("grid_rclick-name").connect("activate", self.window_changethings.show)
+
+        print("CABLES",self.cables)
+        self.fromobj.connect(self.toobj, self)
 
     #Esta funcion retorna una str cuando se usa el objeto. En lugar de <0xXXXXXXXX object>
     def __str__(self):
@@ -1017,7 +1050,7 @@ class Switch(ObjetoBase):
             pass
             #Get children, if children.get_label() == MAC, delete it.
 
-    def __init__(self, x, y, *args, name="Default", maxconnections=5, ip=None):
+    def __init__(self, x, y, *args, name="Default", maxconnections=5):
         self.objectype = "Switch"
         self.portid = 0
         self.pdic = {}
@@ -1371,9 +1404,29 @@ class Cable():
         self.w   = max(abs(fromo.realx - to.realx),3)
         self.h   = max(abs(fromo.realy - to.realy),3)
 
-        ###INICIO DE LO DE CAIRO
+        self.cair()
 
-        width, height = max(abs(fromo.realx - to.realx),3), max(abs(fromo.realy - to.realy),3)
+        self.x, self.y = min(fromo.x, to.x)-0.5, min(fromo.y, to.y)-0.5
+        
+        TheGrid.moveto(self.image, self.x, self.y, layout=TheGrid.cables_lay)
+        lprint("Puesto cable en: ", self.x, "; ", self.y)
+
+        self.image.show()
+
+        global cables
+        cables.append(self)
+        lprint("Todos los cables: ", cables)
+
+    def load(self):
+        global cables
+        self.cair()
+        self.image.show()
+        cables.append(self)
+
+    def cair(self):
+        fromo = self.fromobj
+        to    = self.toobj
+        width, height = max(abs(self.fromobj.realx - self.toobj.realx),3), max(abs(self.fromobj.realy - self.toobj.realy),3)
         surface = cairo.ImageSurface(cairo.FORMAT_ARGB32, width, height)
         ctx = cairo.Context(surface)
 
@@ -1381,7 +1434,7 @@ class Cable():
 
         ctx.close_path ()
 
-        if config.getboolean("DEBUG", "show-cable-rectangle") == True:
+        if config.getboolean("DEBUG", "show-cable-rectangle"):
             ctx.set_source_rgba(0, 0, 1, 0.1) # Solid color
             ctx.rectangle(0,0,width,height)
             ctx.fill()
@@ -1405,19 +1458,9 @@ class Cable():
         ctx.stroke()
 
         self.image = gtk.Image.new_from_surface(surface)
-
-        ###FIN DE LO DE CAIRO
-
         self.x, self.y = min(fromo.x, to.x)-0.5, min(fromo.y, to.y)-0.5
         
         TheGrid.moveto(self.image, self.x, self.y, layout=TheGrid.cables_lay)
-        lprint("Puesto cable en: ", self.x, "; ", self.y)
-
-        self.image.show()
-
-        global cables
-        cables.append(self)
-        lprint("Todos los cables: ", cables)
 
     def delete(self):
         global cables
@@ -1429,6 +1472,8 @@ class Cable():
         self.image.hide()
         print("\033[96mCable\033[00m", self, "\033[96mdeleted\033[00m")
         del self
+
+save.classes = [ObjetoBase, Switch, Hub, Computador, Servidor, Cable]
 
 #Función debug
 tmpvar = 0

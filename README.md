@@ -54,8 +54,8 @@ Si instalas la versión más reciente de Ubuntu 16, no es necesaria la descarga 
 - [ ] Poder "seleccionar"
 - [ ] Máscaras de red para las ip.
 - [ ] ARP
-- [ ] Comprobar duplicados (de ip, mac) en la ventana de las opciones y avisar al usuario
-- [ ] Mover con teclado o ratón el grid
+- [ ] Comprobar duplicados (de ip, mac) mediante paquetes de red.
+- [ ] Mover con teclado o ratón (no rueda) el grid.
 - [ ] Botón que te lleve (en la cuadricula) al siguiente objeto.
 
 ## Copyright ##
