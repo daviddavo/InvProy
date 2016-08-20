@@ -240,8 +240,8 @@ class MainClase(Gtk.Window):
         #configWindow = cfgWindow()
 
         builder.get_object("imagemenuitem9").connect("activate", self.showcfgwindow)
-        builder.get_object("imagemenuitem3").connect("activate", save.save)
-        builder.get_object("imagemenuitem2").connect("activate", save.load)
+        builder.get_object("imagemenuitem3").connect("activate", self.save)
+        builder.get_object("imagemenuitem2").connect("activate", self.load)
         builder.get_object("imagemenuitem10").connect("activate", about().show)
         builder.get_object("show_grid").connect("toggled", self.togglegrid)
 
@@ -317,9 +317,11 @@ class MainClase(Gtk.Window):
 
         if ("CONTROL_L" in allkeys) and ("S" in allkeys):
             global allobjects
-            save.save(allobjects, cables)
+            MainClase.save()
         if ("CONTROL_L" in allkeys) and ("L" in allkeys):
-            save.load()
+            MainClase.load()
+            allkeys.discard("CONTROL_L")
+            allkeys.discard("L")
         if ("CONTROL_L" in allkeys) and ("D" in allkeys):
             theend()
 
@@ -356,6 +358,15 @@ class MainClase(Gtk.Window):
                 return False
         except:
             return False
+
+    def save(*args):
+        global cables
+        global allobjects
+        save.save(allobjects,cables)
+    def load(*args):
+        global cables
+        global allobjects
+        save.load(allobjects,cables)
 
 #Esta clase no es mas que un prompt que pide 'Si' o 'No'.
 #La función run() retorna 1 cuando se clicka sí y 0 cuando se clicka no, así sirven como enteros y booleans.
@@ -658,6 +669,8 @@ class ObjetoBase():
         self.builder.get_object("grid_rclick-disconnect_all").connect("activate", self.disconnect)
         self.builder.get_object("grid_rclick-delete").connect("activate", self.delete)
         self.builder.get_object("grid_rclick-debug").connect("activate", self.debug)
+        self.connections = []
+        self.cables = []
         cnt_objects += 1
         self.__class__.cnt += 1
         allobjects.append(self)
@@ -676,7 +689,6 @@ class ObjetoBase():
         self.builder.get_object("grid_rclick-name").connect("activate", self.window_changethings.show)
 
         print("CABLES",self.cables)
-        self.fromobj.connect(self.toobj, self)
 
     #Esta funcion retorna una str cuando se usa el objeto. En lugar de <0xXXXXXXXX object>
     def __str__(self):
@@ -883,9 +895,8 @@ class ObjetoBase():
             ###NO FUNCIONA DEL TODO BIEN, NO USAR###
             #Bug, el ultimo cable no se borra
             print("Ahora a desconectar de todos")
-            for connection in self.connections:
-                print("Connection:", connection)
-                self.disconnect(widget, de=connection)
+            while len(self.connections) > 0:
+                self.disconnect(widget, de=self.connections[0])
 
         else:
             print(self.connections)
@@ -914,10 +925,13 @@ class ObjetoBase():
 
         self.update()
 
-    def delete(self, *widget, conf=1):
-        yonW = YesOrNoWindow("¿Estás seguro de que quieres eliminar " + self.name + " definitivamente? El objeto será imposible de recuperar y te hechará de menos.")
-        yonR = yonW.run()
-        yonW.destroy()
+    def delete(self, *widget, conf=1, pr=1):
+        if pr == 1:
+            yonW = YesOrNoWindow("¿Estás seguro de que quieres eliminar " + self.name + " definitivamente? El objeto será imposible de recuperar y te hechará de menos.")
+            yonR = yonW.run()
+            yonW.destroy()
+        else:
+            yonR = 1
         if yonR == 1:
             self.disconnect(0, de="All")
             self.label.destroy()
@@ -957,11 +971,6 @@ class Router(ObjetoBase):
         ObjetoBase.__init__(self, x, y, self.objectype, name=name)
         self.x = x
         self.y = y
-
-    def deleteobject(self, *kasfbkja):
-        self.image.destroy()
-        push_elemento("Eliminado objeto router")
-        self.__del__()
 
     def __del__(self, *args):
         push_elemento("Eliminado objeto")
@@ -1075,11 +1084,6 @@ class Switch(ObjetoBase):
         self.builder.get_object("grid_rclick").append(child)
         child.connect("activate", self.wtable.show)
         child.show()
-
-    def deleteobject(self, *jhafg):
-        self.image.destroy()
-        push_elemento("Eliminado objeto " + self.objectype)
-        self.__del__()
 
     def connectport(self, objeto):
         for port in self.pall:
@@ -1422,6 +1426,8 @@ class Cable():
         self.cair()
         self.image.show()
         cables.append(self)
+
+        self.fromobj.connect(self.toobj, self)
 
     def cair(self):
         fromo = self.fromobj

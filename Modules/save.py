@@ -1,26 +1,67 @@
 print("Module save imported")
 import pickle
+import gi
+from gi.repository import Gtk, GObject, Gdk, GdkPixbuf
+
+gladefile = "Interface2.glade"
+last = None
 
 ### AUN NO FUNCIONA ###
 
-def save(allobjects, cabls, fil="Tmp.inv"):
-    print("Saving?")
-    try:
-        os.remove(fil)
-    except:
-        pass
-    print(allobjects)
-    with open(fil, "wb") as output:
-        pickle.dump((allobjects,cabls), output)
+def save(allobjects, cabls):
+    sw = loadWindow(mode=1)
+    fil = sw.run()
+    sw.destroy()
+    if fil != 0:
+        try:
+            os.remove(fil)
+        except:
+            pass
+        print(allobjects)
+        with open(fil, "wb") as output:
+            pickle.dump((allobjects,cabls), output)
 
-def load(fil="Tmp.inv"):
-    global Switch
-    print(classes)
-    with open(fil, "rb") as inpt:
-        allobj, cables = pickle.load(inpt)
-        print(allobj)
-        print(cables)
-        for obj in allobj:
-            obj.load()
-        for cable in cables:
-            cable.load()
+def load(allobjects, cabls):
+    lw = loadWindow()
+    fil = lw.run()
+    lw.destroy()
+    print(fil)
+    if fil != 0:
+        while len(allobjects) > 0:
+            allobjects[0].delete(pr=0)
+        with open(fil, "rb") as inpt:
+            allobj, cables = pickle.load(inpt)
+            print(allobj)
+            print(cables)
+            for obj in allobj:
+                obj.load()
+            for cable in cables:
+                cable.load()
+
+class loadWindow(Gtk.Window):
+    def __init__(self, mode=0):
+        self.builder = Gtk.Builder()
+        self.builder.add_from_file(gladefile)
+        self.window = self.builder.get_object("window-filechooser_load")
+        filt = Gtk.FileFilter.new()
+        filt.add_pattern("*.inv")
+        filt.set_name("Archivos .inv")
+        self.window.add_filter(filt)
+        todos = Gtk.FileFilter.new()
+        todos.add_pattern("*")
+        todos.set_name("Todos los tipos de archivo")
+        self.window.add_filter(todos)
+        if mode == 1:
+            print("Saving")
+            self.window.set_action(Gtk.FileChooserAction.SAVE)
+            self.builder.get_object("window-filechooser_load-this").set_label("Guardar")
+
+    def run(self):
+        rs = self.window.run()
+        self.window.hide()
+        if rs == 1:
+            rs = self.window.get_filename()
+        self.window.destroy()
+        return rs
+    def destroy(self):
+        del self

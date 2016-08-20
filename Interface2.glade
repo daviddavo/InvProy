@@ -760,12 +760,11 @@ http://ddavo.me</property>
       </object>
     </child>
   </object>
-  <object class="GtkFileChooserDialog" id="window-filechooser_save">
+  <object class="GtkFileChooserDialog" id="window-filechooser_load">
     <property name="can_focus">False</property>
     <property name="type_hint">dialog</property>
     <property name="skip_taskbar_hint">True</property>
     <property name="urgency_hint">True</property>
-    <property name="action">save</property>
     <property name="do_overwrite_confirmation">True</property>
     <property name="preview_widget_active">False</property>
     <child internal-child="vbox">
@@ -774,12 +773,12 @@ http://ddavo.me</property>
         <property name="orientation">vertical</property>
         <property name="spacing">2</property>
         <child internal-child="action_area">
-          <object class="GtkButtonBox" id="__noname2">
+          <object class="GtkButtonBox" id="window-filechooser_load-buttonbox">
             <property name="can_focus">False</property>
             <property name="layout_style">end</property>
             <child>
-              <object class="GtkButton" id="__noname3">
-                <property name="label" translatable="yes">Guardar</property>
+              <object class="GtkButton" id="window-filechooser_load-this">
+                <property name="label" translatable="yes">Abrir</property>
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="receives_default">True</property>
@@ -791,7 +790,7 @@ http://ddavo.me</property>
               </packing>
             </child>
             <child>
-              <object class="GtkButton" id="__noname4">
+              <object class="GtkButton" id="window-filechooser_load-cancel">
                 <property name="label" translatable="yes">Cancelar</property>
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
@@ -815,6 +814,10 @@ http://ddavo.me</property>
         </child>
       </object>
     </child>
+    <action-widgets>
+      <action-widget response="1">window-filechooser_load-this</action-widget>
+      <action-widget response="0">window-filechooser_load-cancel</action-widget>
+    </action-widgets>
   </object>
   <object class="GtkWindow" id="window1">
     <property name="can_focus">False</property>
