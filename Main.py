@@ -1051,6 +1051,7 @@ class Switch(ObjetoBase):
             lst.append(lst[2])
             for row in self.store:
                 row[2] = row[3] - time.time()
+            print(lst)                
             row = self.store.append(lst)
             print(self.view.get_property("visible"))
             if self.view.get_property("visible") == True and self.ticking == False:
@@ -1102,6 +1103,11 @@ class Switch(ObjetoBase):
         self.builder.get_object("grid_rclick").append(child)
         child.connect("activate", self.wtable.show)
         child.show()
+
+    def load(self):
+        ObjetoBase.load(self)
+        self.table = []
+        self.wtable = self.w_switch_table(self)
 
     def connectport(self, objeto):
         for port in self.pall:
