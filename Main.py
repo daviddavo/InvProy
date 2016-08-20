@@ -241,6 +241,7 @@ class MainClase(Gtk.Window):
 
         builder.get_object("imagemenuitem9").connect("activate", self.showcfgwindow)
         builder.get_object("imagemenuitem3").connect("activate", self.save)
+        builder.get_object("imagemenuitem4").connect("activate", self.save)
         builder.get_object("imagemenuitem2").connect("activate", self.load)
         builder.get_object("imagemenuitem10").connect("activate", about().show)
         builder.get_object("show_grid").connect("toggled", self.togglegrid)
@@ -362,11 +363,20 @@ class MainClase(Gtk.Window):
     def save(*args):
         global cables
         global allobjects
-        save.save(allobjects,cables)
+        lscl = 0
+        try:
+            if args[1].get_label() == "gtk-save-as":
+                print("Guardando como")
+                lscl = 1
+        except:
+            pass
+        save.save(allobjects,cables, aslc=lscl)
+        push_elemento("Guardando...")
     def load(*args):
         global cables
         global allobjects
         save.load(allobjects,cables)
+        push_elemento("Cargando...")
 
 #Esta clase no es mas que un prompt que pide 'Si' o 'No'.
 #La función run() retorna 1 cuando se clicka sí y 0 cuando se clicka no, así sirven como enteros y booleans.

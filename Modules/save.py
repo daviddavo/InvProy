@@ -4,15 +4,23 @@ import gi
 from gi.repository import Gtk, GObject, Gdk, GdkPixbuf
 
 gladefile = "Interface2.glade"
-last = None
+last = 0
+asgl = 1
 
 ### AUN NO FUNCIONA ###
 
-def save(allobjects, cabls):
-    sw = loadWindow(mode=1)
-    fil = sw.run()
-    sw.destroy()
+def save(allobjects, cabls, aslc=0):
+    global asgl
+    global last
+    if aslc | asgl:
+        asgl = 0
+        sw = loadWindow(mode=1)
+        fil = sw.run()
+        sw.destroy()
+    else:
+        fil = last
     if fil != 0:
+        last = fil
         try:
             os.remove(fil)
         except:
@@ -27,6 +35,10 @@ def load(allobjects, cabls):
     lw.destroy()
     print(fil)
     if fil != 0:
+        global last
+        global asgl
+        asgl = 0
+        last = fil
         while len(allobjects) > 0:
             allobjects[0].delete(pr=0)
         with open(fil, "rb") as inpt:
