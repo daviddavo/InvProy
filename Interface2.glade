@@ -762,6 +762,7 @@ http://ddavo.me</property>
   </object>
   <object class="GtkFileChooserDialog" id="window-filechooser_load">
     <property name="can_focus">False</property>
+    <property name="title" translatable="yes">Archivo</property>
     <property name="type_hint">dialog</property>
     <property name="skip_taskbar_hint">True</property>
     <property name="urgency_hint">True</property>
@@ -1055,6 +1056,16 @@ http://ddavo.me</property>
               </packing>
             </child>
             <child>
+              <object class="GtkSeparatorToolItem" id="Separator1">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="homogeneous">True</property>
+              </packing>
+            </child>
+            <child>
               <object class="GtkToolButton" id="toolbutton3">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
@@ -1113,6 +1124,29 @@ http://ddavo.me</property>
                 <property name="label" translatable="yes">toolbutton7</property>
                 <property name="use_underline">True</property>
                 <property name="stock_id">gtk-spell-check</property>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="homogeneous">True</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkSeparatorToolItem" id="separator2">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="homogeneous">True</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkToolButton" id="toolbutton8">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="label" translatable="yes">toolbutton8</property>
+                <property name="use_underline">True</property>
+                <property name="stock_id">gtk-refresh</property>
               </object>
               <packing>
                 <property name="expand">False</property>
@@ -1205,7 +1239,13 @@ http://ddavo.me</property>
                             <property name="hexpand">True</property>
                             <property name="vexpand">True</property>
                             <child>
-                              <placeholder/>
+                              <object class="GtkSeparator">
+                                <property name="visible">True</property>
+                                <property name="can_focus">False</property>
+                              </object>
+                              <packing>
+                                <property name="index">-1</property>
+                              </packing>
                             </child>
                           </object>
                         </child>

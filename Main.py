@@ -220,10 +220,6 @@ class MainClase(Gtk.Window):
         self.ventana.set_default_size(WRES, HRES)
         self.ventana.set_keep_above(bool(config.getboolean("GRAPHICS", "window-set-keep-above")))
 
-        #Modifica el color de fondo del viewport
-        clr = hex_to_rgba(config.get("GRAPHICS", "viewport-background-color"))
-        builder.get_object("viewport1").override_background_color(Gtk.StateFlags.NORMAL, Gdk.RGBA(*clr))#clr[0], clr[1], clr[2], clr[3]))
-
         i = int(config.get('GRAPHICS', 'toolbutton-size'))
 
         #Probablemente estas dos variables se puedan coger del builder de alguna manera, pero no se cómo.
@@ -239,6 +235,7 @@ class MainClase(Gtk.Window):
         global configWindow
         #configWindow = cfgWindow()
 
+        builder.get_object("imagemenuitem1").connect("activate", self.new)
         builder.get_object("imagemenuitem9").connect("activate", self.showcfgwindow)
         builder.get_object("imagemenuitem1").connect("activate", self.new)
         builder.get_object("imagemenuitem3").connect("activate", self.save)
@@ -386,6 +383,12 @@ class MainClase(Gtk.Window):
         while len(cables) > 0:
             cables[0].delete()
 
+    def new(*args):
+        global cables
+        global allobjects
+        while len(allobjects) > 0:
+            allobjects[0].delete(pr=0)
+
 #Esta clase no es mas que un prompt que pide 'Si' o 'No'.
 #La función run() retorna 1 cuando se clicka sí y 0 cuando se clicka no, así sirven como enteros y booleans.
 class YesOrNoWindow(Gtk.Dialog):
@@ -445,6 +448,11 @@ class Grid():
         self.hres = config.getint("GRAPHICS", "viewport-hres")
         self.sqres = config.getint("GRAPHICS", "viewport-sqres")
         self.overlay.set_size_request(self.wres*self.sqres, self.hres*self.sqres)
+
+        #Modifica el color de fondo del viewport
+        clr = hex_to_rgba(config.get("GRAPHICS", "viewport-background-color"))
+        print("CLR:", clr)
+        self.viewport.override_background_color(Gtk.StateFlags.NORMAL, Gdk.RGBA(*clr))
 
         #13/07/16 Ahora esto va por cairo, mejooor.
         ### INICIO CAIRO
@@ -1022,7 +1030,6 @@ class Switch(ObjetoBase):
         def __init__(self, switch):
             self.link = switch
             builder = switch.builder
-            #builder.get_object("window_switch_hbox").override_background_color(Gtk.StateType.NORMAL, Gdk.RGBA(*hex_to_rgba("#FF9800")))
             builder.get_object("window_switch-table_button").connect("clicked", self.hide)
             builder.get_object("window_switch-table").connect("delete-event", self.hide)
             self.store = Gtk.ListStore(str,int,int,int)
@@ -1032,6 +1039,7 @@ class Switch(ObjetoBase):
             for i, column_title in enumerate(["MAC", "Puerto", "TTL (s)"]):
                 renderer = Gtk.CellRendererText()
                 column = Gtk.TreeViewColumn(column_title, renderer, text=i)
+                column.set_sort_column_id(i)
                 self.view.append_column(column)
             self.ticking = False
             builder.get_object("window_switch-table").set_keep_above(True)
@@ -1104,10 +1112,22 @@ class Switch(ObjetoBase):
         child.connect("activate", self.wtable.show)
         child.show()
 
+        self.ch = child
+
     def load(self):
         ObjetoBase.load(self)
+        del self.wtable
         self.table = []
         self.wtable = self.w_switch_table(self)
+
+        del self.ch
+        child = Gtk.MenuItem.new_with_label("Routing Table")
+        self.builder.get_object("grid_rclick").append(child)
+        child.connect("activate", self.wtable.show)
+        child.show()
+
+        self.ch = child
+
 
     def connectport(self, objeto):
         for port in self.pall:

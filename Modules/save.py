@@ -1,6 +1,8 @@
 print("Module save imported")
 import pickle
 import gi
+import gi.repository
+gi.require_version('Gtk', '3.0')
 from gi.repository import Gtk, GObject, Gdk, GdkPixbuf
 
 gladefile = "Interface2.glade"
@@ -20,6 +22,10 @@ def save(allobjects, cabls, aslc=0):
     else:
         fil = last
     if fil != 0:
+        print(fil.split(".")[-1])
+        if fil.split(".")[-1] != "inv":
+            print("Nombre de archivo {} no tiene extensión .inv".format(fil))
+            fil += ".inv"
         last = fil
         try:
             os.remove(fil)
