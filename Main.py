@@ -255,7 +255,52 @@ class MainClase(Gtk.Window):
         }
         builder.connect_signals(handlers)
 
+        builder.get_object("toolbutton1").connect("clicked", objlst.show)
+
         self.ventana.show_all()
+
+    class ObjLst():
+        def __init__(self):
+            self.view = builder.get_object("objetos_treeview")
+            self.tree = Gtk.TreeStore(str,str)
+            renderer = Gtk.CellRendererText()
+            column = Gtk.TreeViewColumn("Objetos", renderer, text=0)
+            self.view.append_column(column)
+            column.set_sort_column_id(0)
+
+            renderer = Gtk.CellRendererText()
+            column = Gtk.TreeViewColumn("Valor", renderer, text=1)
+            column.set_sort_column_id(1)
+            self.view.append_column(column)
+            self.view.set_model(self.tree)
+            self.view.show_all()
+
+            self.revealer = builder.get_object("Revealer1")
+            print("Revealer:",self.revealer.get_reveal_child())
+            self.panpos = 100
+
+        def append(self, obj, otherdata=[]):
+            #SI OBJ YA ESTÄ, QUE AÑADA ATRIBUTOS A LA LISTA.
+            it1 = self.tree.append(None, row=[obj.name, obj.objectype])
+            it2 = self.tree.append(it1, row=["MAC", str(obj.macdir)])
+            for i in otherdata:
+                self.tree.append(it1, row=i)
+
+            return it1
+
+        def show(self, *args):
+            rev = self.revealer.get_reveal_child()
+            if rev:
+                self.panpos = builder.get_object("paned1").get_position()
+
+            builder.get_object("paned1").set_position(-1)
+            self.revealer.set_reveal_child(not self.revealer.get_reveal_child())
+
+            if not rev:
+                pass
+
+        def set_value(self,*args):
+            self.tree.set_value(*args)
 
     def showcfgwindow(self, *args):
         global configWindow
@@ -378,6 +423,7 @@ class MainClase(Gtk.Window):
     def new(*args):
         global allobjects
         global cables
+        save.last = 0
         while len(allobjects) > 0:
             allobjects[0].delete(pr=0)
         while len(cables) > 0:
@@ -609,6 +655,7 @@ TheGrid = Grid()
 #De la que heredaran las demas funciones
 cnt_objects = 1
 cnt_rows = 2
+objlst = MainClase.ObjLst()
 
 import uuid
 
@@ -671,13 +718,8 @@ class ObjetoBase():
 
         #Ahora vamos con lo de aparecer en la lista de la izquierda,
         #aunque en realidad es un grid
-        lista = builder.get_object("grid2")
-        lista.insert_row(cnt_rows)
-        self.label = Gtk.Label.new(self.name)
-        lista.attach(self.label, 0, cnt_rows, 1, 1)
-        cnt_rows += 1
-        #lprint(cnt_rows)
-        self.label.show()
+        lista = objlst
+        self.trlst = lista.append(self)
         self.image.set_tooltip_text(self.name + " (" + str(len(self.connections)) + "/" + str(self.max_connections) + ")\n" + self.ipstr)
 
         self.window_changethings = w_changethings(self)
@@ -851,7 +893,11 @@ class ObjetoBase():
         print("\033[95m>>Updating\033[00m", self)
         print(self.builder.get_object("grid_rclick-disconnect"))
         self.image.set_tooltip_text(self.name + " (" + str(len(self.connections)) + "/" + str(self.max_connections) + ")")
-        self.label.set_text(self.name)
+        objlst.set_value(self.trlst, 0, self.name)
+
+        ### HACER UN DICCIONARIO CON LO DE SELF.TRLST
+
+        objlst.set_value()
         for child in self.builder.get_object("grid_rclick-disconnect").get_submenu().get_children():
             if child.props.label.upper() != "TODOS":
                 if child.link.uuid not in [x.uuid for x in self.connections]:
@@ -1062,7 +1108,7 @@ class Switch(ObjetoBase):
             print(lst)                
             row = self.store.append(lst)
             print(self.view.get_property("visible"))
-            if self.view.get_property("visible") == True and self.ticking == False:
+            if self.view.get_property("visible") == True:
                 self.ticking = True
                 GObject.timeout_add(1001, self.tick)
 
@@ -1083,8 +1129,8 @@ class Switch(ObjetoBase):
                 if row == lst:
                     self.store.remove(row.iter)
                     self.link.table
+                    break
             pass
-            #Get children, if children.get_label() == MAC, delete it.
 
     def __init__(self, x, y, *args, name="Default", maxconnections=5):
         self.objectype = "Switch"
@@ -1263,8 +1309,8 @@ class Computador(ObjetoBase):
         self.x = x
         self.y = y
         self.max_connections = maxconnections
-        #self.IP = self.ip()
         self.IP = None
+        self.update()
 
     class ip():
         def __init__(self, *args, ipstr="None"):
@@ -1323,7 +1369,6 @@ class Computador(ObjetoBase):
     def update(self):
         ObjetoBase.update(self)
         self.image.set_tooltip_text(self.name + " (" + str(len(self.connections)) + "/" + str(self.max_connections) + ")\n" + str(self.IP))
-        self.label.set_text(self.name)
         submenu1 = self.builder.get_object("grid_rclick-sendpkg").get_submenu()
         print("Compcon: ", [x.name for x in self.compcon()])
 
