@@ -26,12 +26,12 @@ Si instalas la versión más reciente de Ubuntu 16, no es necesaria la descarga 
 - [x] Subirlo a GitHub
 - [x] Conseguir una licencia
 - [x] Terminarlo (v 0.1)
+- [x] Guardar/Abrir configs de red
 - [ ] Aplicar el protocolo TCP
 - [ ] Utilizar el router (Conectar redes, puertas de enlace)
 - [ ] Instalador pip
 - [ ] Crear paquetes de distribución para AUR
 - [ ] También para Ubuntu/MAX/Debian
-- [ ] Guardar/Abrir configs de red
 - [ ] Modo aprendizaje
 - [ ] Compatibilidad con MUCHOS más protocolos
 - [ ] Editor de paquetes
@@ -51,12 +51,14 @@ Si instalas la versión más reciente de Ubuntu 16, no es necesaria la descarga 
 - [x] Regenerar dirección MAC en las opciones
 - [x] Hacer que las MAC sean una clase
 - [x] Tabla de enrutamiento para los Switch
+- [x] Renovar lo de la izquierda con labels
 - [ ] Poder "seleccionar"
 - [ ] Máscaras de red para las ip.
 - [ ] ARP
 - [ ] Comprobar duplicados (de ip, mac) mediante paquetes de red.
 - [ ] Mover con teclado o ratón (no rueda) el grid.
 - [ ] Botón que te lleve (en la cuadricula) al siguiente objeto.
+- [ ] En la lista de objetos, poner opciones de click derecho.
 
 ## Copyright ##
 Copyright (C) 2016  David Davó Laviña

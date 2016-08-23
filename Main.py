@@ -220,6 +220,8 @@ class MainClase(Gtk.Window):
         self.ventana.set_default_size(WRES, HRES)
         self.ventana.set_keep_above(bool(config.getboolean("GRAPHICS", "window-set-keep-above")))
 
+        builder.get_object("Revealer1").set_reveal_child(bool(config.getboolean("GRAPHICS", "revealer-show-default")))
+
         i = int(config.get('GRAPHICS', 'toolbutton-size'))
 
         #Probablemente estas dos variables se puedan coger del builder de alguna manera, pero no se cómo.
@@ -283,10 +285,33 @@ class MainClase(Gtk.Window):
             #SI OBJ YA ESTÄ, QUE AÑADA ATRIBUTOS A LA LISTA.
             it1 = self.tree.append(None, row=[obj.name, obj.objectype])
             it2 = self.tree.append(it1, row=["MAC", str(obj.macdir)])
+            itc = self.tree.append(it1, row=["Conexiones", "{}/{}".format(len(obj.connections), obj.max_connections)])
             for i in otherdata:
                 self.tree.append(it1, row=i)
 
+            obj.trdic = {"MAC":it2, "Connections":itc}
+
             return it1
+
+        def update(self, obj, thing, val):
+            if thing in obj.trdic.keys():
+                self.tree.set_value(obj.trdic[thing], 1, val)
+            else:
+                it = self.tree.append(obj.trlst, row=[thing, val])
+                obj.trdic[thing] = it
+
+        def upcon(self, obj):
+            if not hasattr(obj, "trcondic"):
+                obj.trcondic = {}
+            #objlst.tree.append(self.trdic["Connections"], row=[self.name, self.objectype])
+            self.tree.set_value(obj.trdic["Connections"], 1, "{}/{}".format(len(obj.connections), obj.max_connections))
+            for i in obj.connections:
+                print(i.__repr__(), obj.trcondic)
+                if i in obj.trcondic.keys():
+                    self.tree.set_value(obj.trcondic[i], 0, i.name)
+                else:
+                    r = self.tree.append(obj.trdic["Connections"], row=[i.name, ""])
+                    obj.trcondic[i] = r
 
         def show(self, *args):
             rev = self.revealer.get_reveal_child()
@@ -301,6 +326,9 @@ class MainClase(Gtk.Window):
 
         def set_value(self,*args):
             self.tree.set_value(*args)
+
+        def delete(self, obj):
+            self.tree.remove(obj.trlst)
 
     def showcfgwindow(self, *args):
         global configWindow
@@ -895,9 +923,7 @@ class ObjetoBase():
         self.image.set_tooltip_text(self.name + " (" + str(len(self.connections)) + "/" + str(self.max_connections) + ")")
         objlst.set_value(self.trlst, 0, self.name)
 
-        ### HACER UN DICCIONARIO CON LO DE SELF.TRLST
-
-        objlst.set_value()
+        objlst.update(self,"MAC", str(self.macdir))
         for child in self.builder.get_object("grid_rclick-disconnect").get_submenu().get_children():
             if child.props.label.upper() != "TODOS":
                 if child.link.uuid not in [x.uuid for x in self.connections]:
@@ -907,15 +933,17 @@ class ObjetoBase():
                 else:
                     print("Object", child.link.__repr__(), "in self.connections", self.connections)
             pass
+
+        objlst.upcon(self)
+
         print("\033[95m<<\033[00m")
 
     def connect(self, objeto, cable):
-        #Permutado objeto y self para ver que tal va
         tmp = Gtk.MenuItem.new_with_label(objeto.name)
         self.builder.get_object("grid_rclick-disconnect").get_submenu().append(tmp)
         tmp.show()
         tmp.connect("activate", self.disconnect)
-        #link es un objeto vinculado al widget
+        #link es un objeto vinculado al widget, luego es útil.
         tmp.link = objeto
         tmp2 = Gtk.MenuItem.new_with_label(objeto.name)
         self.builder.get_object("grid_rclick-sendpkg").get_submenu().append(tmp2)
@@ -938,9 +966,11 @@ class ObjetoBase():
 
         self.connections.append(objeto)
         self.cables.append(cable)
+        #objlst.tree.append(self.trdic["Connections"], row=[objeto.name, objeto.objectype])
 
         objeto.connections.append(self)
         objeto.cables.append(cable)
+        #objlst.tree.append(objeto.trdic["Connections"], row=[self.name, self.objectype])
 
         self.update()
         objeto.update()
@@ -971,8 +1001,11 @@ class ObjetoBase():
                 self.disconnect(widget, de=self.connections[0])
 
         else:
-            print(self.connections)
-            print(de.__repr__())
+            objlst.tree.remove(self.trcondic[de])
+            del self.trcondic[de]
+            objlst.tree.remove(de.trcondic[self])
+            del de.trcondic[self]
+
             de.connections.remove(self)
             self.connections.remove(de)
 
@@ -1006,7 +1039,7 @@ class ObjetoBase():
             yonR = 1
         if yonR == 1:
             self.disconnect(0, de="All")
-            self.label.destroy()
+            objlst.delete(self)
             self.image.destroy()
             global allobjects
             allobjects.remove(self)
@@ -1389,6 +1422,9 @@ class Computador(ObjetoBase):
                         pass
 
                 print("self.connections", self.connections)
+
+        if self.IP != None:
+            objlst.update(self,"IP", str(self.IP))
 
     #Ahora es cuando viene la parte de haber estudiado.
     #SÓLO ENVÍA PINGS, (ICMP)
