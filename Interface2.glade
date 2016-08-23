@@ -1035,7 +1035,7 @@ http://ddavo.me</property>
                 <property name="can_focus">False</property>
                 <property name="label" translatable="yes">Añadir elemento</property>
                 <property name="use_underline">True</property>
-                <property name="stock_id">gtk-add</property>
+                <property name="stock_id">gtk-justify-right</property>
               </object>
               <packing>
                 <property name="expand">False</property>
@@ -1146,7 +1146,7 @@ http://ddavo.me</property>
                 <property name="can_focus">False</property>
                 <property name="label" translatable="yes">toolbutton8</property>
                 <property name="use_underline">True</property>
-                <property name="stock_id">gtk-refresh</property>
+                <property name="stock_id">gtk-jump-to</property>
               </object>
               <packing>
                 <property name="expand">False</property>
@@ -1165,45 +1165,32 @@ http://ddavo.me</property>
             <property name="visible">True</property>
             <property name="can_focus">True</property>
             <child>
-              <object class="GtkScrolledWindow" id="scrolledwindow2">
+              <object class="GtkRevealer" id="Revealer1">
+                <property name="width_request">-1</property>
                 <property name="visible">True</property>
-                <property name="can_focus">True</property>
+                <property name="can_focus">False</property>
                 <property name="margin_left">5</property>
-                <property name="shadow_type">in</property>
-                <property name="min_content_width">100</property>
+                <property name="hexpand">True</property>
+                <property name="transition_type">slide-left</property>
+                <property name="transition_duration">500</property>
                 <child>
-                  <object class="GtkViewport" id="viewport2">
+                  <object class="GtkScrolledWindow" id="scrolledwindow2">
+                    <property name="width_request">200</property>
                     <property name="visible">True</property>
-                    <property name="can_focus">False</property>
+                    <property name="can_focus">True</property>
+                    <property name="hexpand">True</property>
+                    <property name="shadow_type">in</property>
+                    <property name="min_content_width">100</property>
                     <child>
-                      <object class="GtkGrid" id="grid2">
+                      <object class="GtkTreeView" id="objetos_treeview">
+                        <property name="name">objetos_treeview</property>
                         <property name="visible">True</property>
-                        <property name="can_focus">False</property>
-                        <child>
-                          <object class="GtkLabel" id="label9">
-                            <property name="visible">True</property>
-                            <property name="can_focus">False</property>
-                            <property name="margin_top">5</property>
-                            <property name="margin_bottom">5</property>
-                            <property name="hexpand">True</property>
-                            <property name="label" translatable="yes">Objetos</property>
-                          </object>
-                          <packing>
-                            <property name="left_attach">0</property>
-                            <property name="top_attach">0</property>
-                          </packing>
-                        </child>
-                        <child>
-                          <object class="GtkSeparator" id="separator1">
-                            <property name="visible">True</property>
-                            <property name="can_focus">False</property>
-                            <property name="margin_bottom">5</property>
-                            <property name="hexpand">True</property>
-                          </object>
-                          <packing>
-                            <property name="left_attach">0</property>
-                            <property name="top_attach">1</property>
-                          </packing>
+                        <property name="can_focus">True</property>
+                        <property name="halign">baseline</property>
+                        <property name="valign">baseline</property>
+                        <property name="hexpand">True</property>
+                        <child internal-child="selection">
+                          <object class="GtkTreeSelection"/>
                         </child>
                       </object>
                     </child>
@@ -1212,7 +1199,7 @@ http://ddavo.me</property>
               </object>
               <packing>
                 <property name="resize">False</property>
-                <property name="shrink">True</property>
+                <property name="shrink">False</property>
               </packing>
             </child>
             <child>
@@ -1220,6 +1207,7 @@ http://ddavo.me</property>
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="margin_right">5</property>
+                <property name="hexpand">True</property>
                 <property name="hscrollbar_policy">external</property>
                 <property name="vscrollbar_policy">external</property>
                 <property name="shadow_type">in</property>
@@ -1227,25 +1215,22 @@ http://ddavo.me</property>
                   <object class="GtkViewport" id="viewport1">
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
+                    <property name="hexpand">True</property>
                     <child>
                       <object class="GtkEventBox" id="eventbox1">
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
+                        <property name="hexpand">True</property>
                         <child>
                           <object class="GtkOverlay" id="overlay1">
                             <property name="name">overlay1</property>
                             <property name="visible">True</property>
                             <property name="can_focus">False</property>
+                            <property name="margin_right">5</property>
                             <property name="hexpand">True</property>
                             <property name="vexpand">True</property>
                             <child>
-                              <object class="GtkSeparator">
-                                <property name="visible">True</property>
-                                <property name="can_focus">False</property>
-                              </object>
-                              <packing>
-                                <property name="index">-1</property>
-                              </packing>
+                              <placeholder/>
                             </child>
                           </object>
                         </child>
