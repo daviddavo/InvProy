@@ -735,7 +735,8 @@ class ObjetoBase():
         TheGrid.moveto(self.image, self.x, self.y)
         self.image.show()
 
-        self.macdir = self.mac()
+        self.macdir = object()
+        mac.__init__(self.macdir) #Soluciona un bug raro en Ubuntu
         print("MAC:", self.macdir, int(self.macdir), bin(self.macdir))
         if ip == None:
             print("No ip definida")
