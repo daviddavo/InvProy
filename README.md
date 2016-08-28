@@ -32,6 +32,7 @@ Si instalas la versión más reciente de Ubuntu 16, no es necesaria la descarga 
 - [ ] Instalador pip
 - [ ] Crear paquetes de distribución para AUR
 - [ ] También para Ubuntu/MAX/Debian
+- [ ] Actualización de optimización
 - [ ] Modo aprendizaje
 - [ ] Compatibilidad con MUCHOS más protocolos
 - [ ] Editor de paquetes
