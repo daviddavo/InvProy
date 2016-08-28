@@ -251,7 +251,6 @@ class MainClase(Gtk.Window):
         handlers = {
         "onDeleteWindow":             exiting,
         "onExitPress":                exiting,
-        "on_window1_key_press_event": nothing,
         "onRestartPress":             restart,
         
         }
@@ -394,9 +393,7 @@ class MainClase(Gtk.Window):
             MainClase.load()
             allkeys.discard("CONTROL_L")
             allkeys.discard("L")
-        if ("CONTROL_L" in allkeys) and ("D" in allkeys):
-            theend()
-
+            
         #Para no tener que hacer click continuamente
         if ("Q" in allkeys):
             self.toolbutton_clicked(builder.get_object("toolbutton3"))
@@ -774,12 +771,9 @@ class ObjetoBase():
         self.resizetogrid(self.image)
         TheGrid.moveto(self.image, self.x-1, self.y-1)
         self.image.show()
-        lista = builder.get_object("grid2")
-        lista.insert_row(cnt_rows)
-        self.label = Gtk.Label.new(self.name)
-        lista.attach(self.label, 0, cnt_rows, 1, 1)
-        cnt_rows += 1
-        self.label.show()
+
+        self.trlst = objlst.append(self)
+
         self.image.set_tooltip_text(self.name + " (" + str(len(self.connections)) + "/" + str(self.max_connections) + ")\n" + self.ipstr)
         self.window_changethings = w_changethings(self)
         self.builder.get_object("grid_rclick-name").connect("activate", self.window_changethings.show)
@@ -1606,47 +1600,6 @@ class Cable():
 
 save.classes = [ObjetoBase, Switch, Hub, Computador, Servidor, Cable]
 
-#Función debug
-tmpvar = 0
-def theend():
-    from random import randrange
-    global tmpvar
-    global TestC
-    global TestD
-
-    scrolled = builder.get_object("scrolledwindow1")
-    scrolled.get_vadjustment().set_value(0)
-    scrolled.get_hadjustment().set_value(0)
-
-    if tmpvar>0:
-        TestC.send_pck(to=TestD)
-        tmpvar += 1
-        if tmpvar > 4:
-            tmpvar = 1
-
-    else:
-        TestC = Computador(2,3, name="From")
-        TestC.IP = ip_address("192.168.1.38")
-        #TestC.IP.set_str("192.168.1.38")
-        print("{0:031b}".format(int(TestC.IP)))
-
-        TestD = Computador(8,3, name="To")
-        #TestD.IP.set_str("192.168.1.42")
-        TestD.IP = ip_address("192.168.1.42")
-        print("{0:031b}".format(int(TestD.IP)))
-
-        bridge = Switch(4, 3, name="Bridge")
-        bridge2= Switch(6, 3, name="Bridge2")
-
-        cable = Cable(TestC, bridge)
-        cable2= Cable(bridge, bridge2)
-        cable3= Cable(bridge2, TestD)
-        TestC.connect(bridge, cable)
-        bridge.connect(bridge2, cable2)
-        TestD.connect(bridge2, cable3)
-
-        tmpvar += 1
-
 #De momento sólo soportará el protocolo IPv4
 class packet():
     def __init__(self, header, trailer, payload, cabel=None):
@@ -2163,21 +2116,12 @@ def restart(*args):
     os.chdir(startcwd)
     os.execl(sys.executable, sys.executable, *sys.argv)
 
-def returnTrue(*lala):
-    return True
-
-def nothing(self, *args):
-    #Funcion Hugo
-    pass
-
 def leppard():
     lprint("Gunter glieben glauchen globen")
 
 writeonlog("Esto ha llegado al final del codigo al parecer sin errores")
-writeonlog("O tal vez no")
+writeonlog("O no")
 MainClase()
-
-#end()
 
 lprint("Actual time: " + time.strftime("%H:%M:%S"))
 lprint("Complete load time: " + str(datetime.now() - startTime))
