@@ -735,8 +735,7 @@ class ObjetoBase():
         TheGrid.moveto(self.image, self.x, self.y)
         self.image.show()
 
-        self.macdir = object()
-        mac.__init__(self.macdir) #Soluciona un bug raro en Ubuntu
+        self.macdir = mac()
         print("MAC:", self.macdir, int(self.macdir), bin(self.macdir))
         if ip == None:
             print("No ip definida")
@@ -814,44 +813,6 @@ class ObjetoBase():
 
     def clickado(self, widget, event):
         lprint("Clickado en objeto " + str(self) + " @ " + str(self.x) + ", " + str(self.y))
-
-    class mac():
-        def __init__(self, *macaddr, bits=48):
-            print("macaddr:", *macaddr)
-            if macaddr == None or True:
-                tmp = self.genmac(bits=bits)
-
-                self.int = tmp[0]
-                self.str = tmp[1]
-                self.bin = ("{0:0"+str(bits)+"b}").format(self.int)
-
-        def genmac(*self, bits=48, mode=None):
-            #Por defecto se usa mac 48, o lo que es lo mismo, la de toa la vida
-            #Nota, falta un comprobador de que la mac no se repita
-            realmac = int("11" + str("{0:0"+ str(bits-2) +"b}").format(random.getrandbits(bits-2)),2)
-            readmac = str(hex(realmac)).upper().replace("0X", "")
-            readmac = ":".join([readmac[i * 2:i * 2 + 2] for i,bl in enumerate(readmac[::2])])
-            if mode == 0:
-                return realmac
-            if mode == 1:
-                return readmac
-            else:
-                return [realmac, readmac]
-
-        def __str__(self):
-            readmac = str(hex(self.int)).upper().replace("0X", "")
-            return ":".join([readmac[i * 2:i * 2 + 2] for i,bl in enumerate(readmac[::2])])
-
-        def __bytes__(self):
-            return Object.__bytes__(self)
-
-        def __int__(self):
-            return self.int
-        def __index__(self):
-            return self.int
-        def list(self):
-            return self.str.split(":")
-
 
     #Esta fucnión se encarga de comprobar a que ordenador(es) está conectado
     #en total, pasando por routers, hubs y switches.
@@ -1059,6 +1020,43 @@ class ObjetoBase():
 
                 print("<<Fin de los atributos")
 
+class mac():
+    def __init__(self, *macaddr, bits=48):
+        print("macaddr:", *macaddr)
+        if macaddr == None or True:
+            tmp = self.genmac(bits=bits)
+
+            self.int = tmp[0]
+            self.str = tmp[1]
+            self.bin = ("{0:0"+str(bits)+"b}").format(self.int)
+
+    def genmac(*self, bits=48, mode=None):
+        #Por defecto se usa mac 48, o lo que es lo mismo, la de toa la vida
+        #Nota, falta un comprobador de que la mac no se repita
+        realmac = int("11" + str("{0:0"+ str(bits-2) +"b}").format(random.getrandbits(bits-2)),2)
+        readmac = str(hex(realmac)).upper().replace("0X", "")
+        readmac = ":".join([readmac[i * 2:i * 2 + 2] for i,bl in enumerate(readmac[::2])])
+        if mode == 0:
+            return realmac
+        if mode == 1:
+            return readmac
+        else:
+            return [realmac, readmac]
+
+    def __str__(self):
+        readmac = str(hex(self.int)).upper().replace("0X", "")
+        return ":".join([readmac[i * 2:i * 2 + 2] for i,bl in enumerate(readmac[::2])])
+
+    def __bytes__(self):
+        return Object.__bytes__(self)
+
+    def __int__(self):
+        return self.int
+    def __index__(self):
+        return self.int
+    def list(self):
+        return self.str.split(":")
+
 npack = 0
 
 class Router(ObjetoBase):
@@ -1076,89 +1074,92 @@ class Router(ObjetoBase):
         push_elemento("Eliminado objeto")
         del self
 
+### ESTO ERA NESTED DE SWITHC ###
+
+class Port():
+    def __init__(self, switch):
+        self.id = switch.portid
+        self.dic = switch.pdic
+        self.all = switch.pall
+        switch.portid += 1
+        self.switch = switch
+        self.connection = None
+        self.all[self.id] = self
+        self.dic[self.id] = self.connection
+    def connect(self, connection):
+        self.connection = connection
+        self.dic[self.id] = self.connection
+    def disconnect(self):
+        self.connection = None
+        self.dic[self.id] = self.connection
+    def is_available(self):
+        if self.connection == None:
+            return True
+        return False
+
+class w_switch_table(Gtk.ApplicationWindow):
+    def __init__(self, switch):
+        self.link = switch
+        builder = switch.builder
+        builder.get_object("window_switch-table_button").connect("clicked", self.hide)
+        builder.get_object("window_switch-table").connect("delete-event", self.hide)
+        self.store = Gtk.ListStore(str,int,int,int)
+        
+        self.view = builder.get_object("window_switch-table-TreeView")
+        self.view.set_model(self.store)
+        for i, column_title in enumerate(["MAC", "Puerto", "TTL (s)"]):
+            renderer = Gtk.CellRendererText()
+            column = Gtk.TreeViewColumn(column_title, renderer, text=i)
+            column.set_sort_column_id(i)
+            self.view.append_column(column)
+        self.ticking = False
+        builder.get_object("window_switch-table").set_keep_above(True)
+
+    def show(self, *a):
+        self.ticking = True
+        GObject.timeout_add(1001, self.tick)
+        for row in self.store:
+            row[2] = row[3] - time.time()
+        self.link.builder.get_object("window_switch-table").show_all()
+
+    def hide(self, window, *event):
+        self.link.builder.get_object("window_switch-table").hide()
+        self.ticking = False
+        return True
+    def append(self, lst):
+        lst.append(lst[2])
+        for row in self.store:
+            row[2] = row[3] - time.time()
+        print(lst)                
+        row = self.store.append(lst)
+        print(self.view.get_property("visible"))
+        if self.view.get_property("visible") == True:
+            self.ticking = True
+            GObject.timeout_add(1001, self.tick)
+
+    def tick(self):
+        for row in self.store:
+            row[2] = row[3] - time.time()
+            if row[2] <= 0:
+                try:
+                    self.store.remove(row.iter)
+                    self.link.table.remove(row)
+                except:
+                    pass
+        if len(self.store) == 0:
+            self.ticking = False
+        return self.ticking
+    def remove(self, lst):
+        for row in self.store:
+            if row == lst:
+                self.store.remove(row.iter)
+                self.link.table
+                break
+        pass
+
 class Switch(ObjetoBase):
     cnt = 1
     #El objeto puerto
-    class Port():
-        def __init__(self, switch):
-            self.id = switch.portid
-            self.dic = switch.pdic
-            self.all = switch.pall
-            switch.portid += 1
-            self.switch = switch
-            self.connection = None
-            self.all[self.id] = self
-            self.dic[self.id] = self.connection
-        def connect(self, connection):
-            self.connection = connection
-            self.dic[self.id] = self.connection
-        def disconnect(self):
-            self.connection = None
-            self.dic[self.id] = self.connection
-        def is_available(self):
-            if self.connection == None:
-                return True
-            return False
-
-    class w_switch_table(Gtk.ApplicationWindow):
-        def __init__(self, switch):
-            self.link = switch
-            builder = switch.builder
-            builder.get_object("window_switch-table_button").connect("clicked", self.hide)
-            builder.get_object("window_switch-table").connect("delete-event", self.hide)
-            self.store = Gtk.ListStore(str,int,int,int)
-            
-            self.view = builder.get_object("window_switch-table-TreeView")
-            self.view.set_model(self.store)
-            for i, column_title in enumerate(["MAC", "Puerto", "TTL (s)"]):
-                renderer = Gtk.CellRendererText()
-                column = Gtk.TreeViewColumn(column_title, renderer, text=i)
-                column.set_sort_column_id(i)
-                self.view.append_column(column)
-            self.ticking = False
-            builder.get_object("window_switch-table").set_keep_above(True)
-
-        def show(self, *a):
-            self.ticking = True
-            GObject.timeout_add(1001, self.tick)
-            for row in self.store:
-                row[2] = row[3] - time.time()
-            self.link.builder.get_object("window_switch-table").show_all()
-
-        def hide(self, window, *event):
-            self.link.builder.get_object("window_switch-table").hide()
-            self.ticking = False
-            return True
-        def append(self, lst):
-            lst.append(lst[2])
-            for row in self.store:
-                row[2] = row[3] - time.time()
-            print(lst)                
-            row = self.store.append(lst)
-            print(self.view.get_property("visible"))
-            if self.view.get_property("visible") == True:
-                self.ticking = True
-                GObject.timeout_add(1001, self.tick)
-
-        def tick(self):
-            for row in self.store:
-                row[2] = row[3] - time.time()
-                if row[2] <= 0:
-                    try:
-                        self.store.remove(row.iter)
-                        self.link.table.remove(row)
-                    except:
-                        pass
-            if len(self.store) == 0:
-                self.ticking = False
-            return self.ticking
-        def remove(self, lst):
-            for row in self.store:
-                if row == lst:
-                    self.store.remove(row.iter)
-                    self.link.table
-                    break
-            pass
 
     def __init__(self, x, y, *args, name="Default", maxconnections=5):
         self.objectype = "Switch"
@@ -1174,13 +1175,13 @@ class Switch(ObjetoBase):
         self.timeout = 20 #Segundos
 
         for p in range(self.max_connections):
-            self.Port(self)
+            Port(self)
         print(self.pall)
 
         self.table = [
         #[MAC, port, expiration]
         ]
-        self.wtable = self.w_switch_table(self)
+        self.wtable = w_switch_table(self)
         child = Gtk.MenuItem.new_with_label("Routing Table")
         self.builder.get_object("grid_rclick").append(child)
         child.connect("activate", self.wtable.show)
@@ -1192,7 +1193,7 @@ class Switch(ObjetoBase):
         ObjetoBase.load(self)
         del self.wtable
         self.table = []
-        self.wtable = self.w_switch_table(self)
+        self.wtable = w_switch_table(self)
 
         del self.ch
         child = Gtk.MenuItem.new_with_label("Routing Table")
