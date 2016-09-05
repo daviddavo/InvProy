@@ -4,6 +4,8 @@ Mi proyecto de investigación de 1º de Bachillerato de Excelencia, aún WIP y c
 
 Por favor, documentar bugs e incidencias en issues.
 
+NOTA: Los ficheros guardados, de momento no son compatibles entre versiones :(
+
 ### USO DEL PROGRAMA ###
 
 1. Descargar las dependencias
@@ -20,13 +22,14 @@ Si instalas la versión más reciente de Ubuntu 16, no es necesaria la descarga 
 - [x] Arch Linux LTS
 - [x] Ubuntu 14.04 LTS
 - [x] Ubuntu 16
-- [ ] MaX v8.0 
+- [ ] MaX v8.0
 
 ### COSAS POR HACER ###
 - [x] Subirlo a GitHub
 - [x] Conseguir una licencia
 - [x] Terminarlo (v 0.1)
 - [x] Guardar/Abrir configs de red
+- [ ] Seguir modelo OSI
 - [ ] Aplicar el protocolo TCP
 - [ ] Utilizar el router (Conectar redes, puertas de enlace)
 - [ ] Instalador pip
@@ -53,6 +56,7 @@ Si instalas la versión más reciente de Ubuntu 16, no es necesaria la descarga 
 - [x] Hacer que las MAC sean una clase
 - [x] Tabla de enrutamiento para los Switch
 - [x] Renovar lo de la izquierda con labels
+- [ ] Enviar ping a una dirección IP
 - [ ] Poder "seleccionar"
 - [ ] Máscaras de red para las ip.
 - [ ] ARP
