@@ -72,6 +72,96 @@ http://ddavo.me</property>
       </object>
     </child>
   </object>
+  <object class="GtkApplicationWindow" id="PingWin">
+    <property name="can_focus">False</property>
+    <property name="title" translatable="yes">Ping</property>
+    <property name="icon_name">network-wired</property>
+    <child>
+      <object class="GtkBox" id="PingWin_Box">
+        <property name="visible">True</property>
+        <property name="can_focus">False</property>
+        <property name="margin_left">5</property>
+        <property name="margin_right">5</property>
+        <property name="margin_top">5</property>
+        <property name="margin_bottom">5</property>
+        <property name="orientation">vertical</property>
+        <child>
+          <object class="GtkLabel" id="PingWin_Label">
+            <property name="visible">True</property>
+            <property name="can_focus">False</property>
+            <property name="label" translatable="yes">Especifique una IP a la que hacer Ping</property>
+          </object>
+          <packing>
+            <property name="expand">False</property>
+            <property name="fill">True</property>
+            <property name="position">0</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkEntry" id="PingWin_entry">
+            <property name="visible">True</property>
+            <property name="can_focus">True</property>
+            <property name="max_length">15</property>
+            <property name="activates_default">True</property>
+            <property name="width_chars">15</property>
+            <property name="xalign">0.5</property>
+            <property name="caps_lock_warning">False</property>
+            <property name="input_purpose">number</property>
+          </object>
+          <packing>
+            <property name="expand">False</property>
+            <property name="fill">True</property>
+            <property name="position">1</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkStatusbar" id="PingWin_Statusbar">
+            <property name="visible">True</property>
+            <property name="can_focus">False</property>
+            <property name="margin_left">10</property>
+            <property name="margin_right">10</property>
+            <property name="margin_start">10</property>
+            <property name="margin_end">10</property>
+            <property name="margin_top">6</property>
+            <property name="margin_bottom">6</property>
+            <property name="vexpand">True</property>
+            <property name="orientation">vertical</property>
+            <property name="spacing">2</property>
+            <child>
+              <placeholder/>
+            </child>
+            <child>
+              <placeholder/>
+            </child>
+            <child>
+              <placeholder/>
+            </child>
+            <child>
+              <placeholder/>
+            </child>
+          </object>
+          <packing>
+            <property name="expand">False</property>
+            <property name="fill">True</property>
+            <property name="position">2</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkButton" id="PingWin_Button">
+            <property name="label" translatable="yes">Ping!</property>
+            <property name="visible">True</property>
+            <property name="can_focus">True</property>
+            <property name="receives_default">True</property>
+          </object>
+          <packing>
+            <property name="expand">False</property>
+            <property name="fill">True</property>
+            <property name="position">3</property>
+          </packing>
+        </child>
+      </object>
+    </child>
+  </object>
   <object class="GtkDialog" id="YesOrNoWindow">
     <property name="can_focus">False</property>
     <property name="modal">True</property>
@@ -534,99 +624,18 @@ http://ddavo.me</property>
             <property name="can_focus">False</property>
             <property name="halign">end</property>
             <child>
-              <object class="GtkEntry" id="changethings_entry-IP0">
+              <object class="GtkEntry" id="changethings_entry-IP">
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
-                <property name="max_length">3</property>
-                <property name="width_chars">3</property>
-                <property name="max_width_chars">3</property>
-                <property name="input_purpose">number</property>
+                <property name="max_length">15</property>
+                <property name="width_chars">15</property>
+                <property name="xalign">0.5</property>
+                <property name="input_purpose">digits</property>
               </object>
               <packing>
                 <property name="expand">False</property>
                 <property name="fill">True</property>
                 <property name="position">0</property>
-              </packing>
-            </child>
-            <child>
-              <object class="GtkLabel" id="changethings_label-IP1">
-                <property name="visible">True</property>
-                <property name="can_focus">False</property>
-                <property name="label" translatable="yes">.</property>
-              </object>
-              <packing>
-                <property name="expand">False</property>
-                <property name="fill">True</property>
-                <property name="position">1</property>
-              </packing>
-            </child>
-            <child>
-              <object class="GtkEntry" id="changethings_entry-IP1">
-                <property name="visible">True</property>
-                <property name="can_focus">True</property>
-                <property name="max_length">3</property>
-                <property name="width_chars">3</property>
-                <property name="max_width_chars">3</property>
-                <property name="input_purpose">number</property>
-              </object>
-              <packing>
-                <property name="expand">False</property>
-                <property name="fill">True</property>
-                <property name="position">2</property>
-              </packing>
-            </child>
-            <child>
-              <object class="GtkLabel" id="changethings_label-IP2">
-                <property name="visible">True</property>
-                <property name="can_focus">False</property>
-                <property name="label" translatable="yes">.</property>
-              </object>
-              <packing>
-                <property name="expand">False</property>
-                <property name="fill">True</property>
-                <property name="position">3</property>
-              </packing>
-            </child>
-            <child>
-              <object class="GtkEntry" id="changethings_entry-IP2">
-                <property name="visible">True</property>
-                <property name="can_focus">True</property>
-                <property name="max_length">3</property>
-                <property name="width_chars">3</property>
-                <property name="max_width_chars">3</property>
-                <property name="input_purpose">number</property>
-              </object>
-              <packing>
-                <property name="expand">False</property>
-                <property name="fill">True</property>
-                <property name="position">4</property>
-              </packing>
-            </child>
-            <child>
-              <object class="GtkLabel" id="changethings_label-IP3">
-                <property name="visible">True</property>
-                <property name="can_focus">False</property>
-                <property name="label" translatable="yes">.</property>
-              </object>
-              <packing>
-                <property name="expand">False</property>
-                <property name="fill">True</property>
-                <property name="position">5</property>
-              </packing>
-            </child>
-            <child>
-              <object class="GtkEntry" id="changethings_entry-IP3">
-                <property name="visible">True</property>
-                <property name="can_focus">True</property>
-                <property name="max_length">4</property>
-                <property name="width_chars">4</property>
-                <property name="max_width_chars">3</property>
-                <property name="input_purpose">number</property>
-              </object>
-              <packing>
-                <property name="expand">False</property>
-                <property name="fill">True</property>
-                <property name="position">6</property>
               </packing>
             </child>
           </object>
@@ -713,12 +722,6 @@ http://ddavo.me</property>
         <property name="can_focus">False</property>
         <property name="label" translatable="yes">Ping...</property>
         <property name="use_underline">True</property>
-        <child type="submenu">
-          <object class="GtkMenu" id="grid_rclick-sendpkg-submenu">
-            <property name="visible">True</property>
-            <property name="can_focus">False</property>
-          </object>
-        </child>
       </object>
     </child>
     <child>
