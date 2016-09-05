@@ -736,6 +736,7 @@ class ObjetoBase():
         self.image.show()
 
         self.macdir = mac()
+
         print("MAC:", self.macdir, int(self.macdir), bin(self.macdir))
         if ip == None:
             print("No ip definida")
@@ -902,7 +903,7 @@ class ObjetoBase():
         #link es un objeto vinculado al widget, luego es útil.
         tmp.link = objeto
         tmp2 = Gtk.MenuItem.new_with_label(objeto.name)
-        self.builder.get_object("grid_rclick-sendpkg").get_submenu().append(tmp2)
+        
         if self.__class__.__name__ != "Switch" and self.__class__.__name__ != "Hub":
             tmp2.connect("activate", self.send_pck)
             tmp2.show()
@@ -914,7 +915,7 @@ class ObjetoBase():
         tmp.connect("activate", objeto.disconnect)
         tmp.link = self
         tmp2 = Gtk.MenuItem.new_with_label(self.name)
-        objeto.builder.get_object("grid_rclick-sendpkg").get_submenu().append(tmp2)
+        
         if objeto.__class__.__name__ != "Switch" and objeto.__class__.__name__ != "Hub":
             tmp2.show()
             tmp2.connect("activate", objeto.send_pck)
@@ -1339,6 +1340,10 @@ class Computador(ObjetoBase):
         self.y = y
         self.max_connections = maxconnections
         self.IP = None
+
+        self.pingwin = PingWin(self)
+        self.builder.get_object("grid_rclick-sendpkg").connect("activate", self.pingwin.show)
+
         self.update()
 
     class ip():
@@ -1401,6 +1406,7 @@ class Computador(ObjetoBase):
         submenu1 = self.builder.get_object("grid_rclick-sendpkg").get_submenu()
         print("Compcon: ", [x.name for x in self.compcon()])
 
+        '''
         for child in submenu1.get_children():
             if child.link.__class__.__name__ == "Switch" or child.link.__class__.__name__ == "Hub":
                 child.hide()
@@ -1418,6 +1424,7 @@ class Computador(ObjetoBase):
                         pass
 
                 print("self.connections", self.connections)
+        '''
 
         if self.IP != None:
             objlst.update(self,"IP", str(self.IP))
@@ -1460,6 +1467,9 @@ class Computador(ObjetoBase):
 
         ping.animate(self, self.connections[0])
 
+        msg = "{} >Enviado ping a {}".format(time.strftime("%H:%M:%S"), str(to.IP))
+        self.pingwin.statusbar.push(self.pingwin.statusbar.get_context_id(msg), msg)
+
     #Ver routing: https://en.wikipedia.org/wiki/IP_forwarding
     def packet_received(self, pck, *args, port=None):
         print("Hola, soy {} y he recibido un paquete, tal vez tenga que responder".format(self.name))
@@ -1486,7 +1496,7 @@ class Computador(ObjetoBase):
                 print("IPd:", ".".join([str(int(tmp[i * n:i * n+n], base=2)) for i,blah in enumerate(tmp[::n])]))
 
                 print("<<Fin de los atributos")
-        n = 8
+        n,tmp = 8, pck.str[128:160]
         tmp = pck.str[128:160]
         print(int(tmp,2), int(self.IP))
         if int(tmp,2) == int(self.IP):
@@ -1502,6 +1512,9 @@ class Computador(ObjetoBase):
                 print("De nada")
             else:
                 print("ty es:", ty)
+
+            msg = "{} >Recibido ping de {}".format(time.strftime("%H:%M:%S"), ".".join([str(int(tmp[i * n:i * n+n], base=2)) for i,blah in enumerate(tmp[::n])]))
+            self.pingwin.statusbar.push(self.pingwin.statusbar.get_context_id(msg), msg)
 
 class Servidor(Computador):
     def __init__(self, x, y, *args, name="Default", maxconnections=1, ip=None):
@@ -1860,13 +1873,12 @@ class cfgWindow(MainClase):#MainClase):
             ["Max logs", "DIRS", "Maxlogs", 3, 1000, 1, 5],
         ]
         self.createdspinbuttons = []
-        lprint("spinbuttons: " + str(len(self.spinbuttons)))
+
         self.spinnergrid = builder.get_object("graph")
-        self.contadordespinbuttons = 0
-        for spinner in range(len(self.spinbuttons)):
-            #spinbutton = builder.get_object(spinner)
+        
+        def forspin(spinner):
             spinbutton = Gtk.SpinButton.new(None, 0, 0)
-            tmplst = self.spinbuttons[spinner]
+            tmplst = spinner
             label = Gtk.Label.new(tmplst[0])
 
             self.spinnergrid.insert_row(1)
@@ -1883,11 +1895,9 @@ class cfgWindow(MainClase):#MainClase):
 
             self.createdspinbuttons.append(spinbutton)
 
-            lprint(str(self.contadordespinbuttons) + str(tmplst))
-
-            self.contadordespinbuttons += 1
-
-
+        for spinner in self.spinbuttons:
+            forspin(spinner)
+            
         #self.cfgventana.show_all()
 
     def show(self, *args):
@@ -1966,17 +1976,14 @@ class w_changethings(): #Oie tú, pedazo de subnormal, que cada objeto debe tene
         self.link = objeto
         self.image = Gtk.Image.new_from_pixbuf(objeto.image.get_pixbuf())
 
-        #Esto es un quick fix que hace que las entry sólo acepten números
-        def filter_numsdec(widget):
-            text = widget.get_text().strip()
-            widget.set_text(''.join([i for i in text if i in '0123456789']))
+        def filter_ip(entry):
+            PingWin.filter_ip(0, entry)
 
         def filter_numshex(widget):
             text = widget.get_text().strip()
             widget.set_text("".join([i for i in text if i in "0123456789ABCDEFabcdef"]))
 
-        for i in ["changethings_entry-IP" + str(x) for x in range(4)]:
-            objeto.builder.get_object(i).connect("changed", filter_numsdec)
+        objeto.builder.get_object("changethings_entry-IP").connect("changed", filter_ip)
 
         for i in ["chg_MAC-entry" + str(x) for x in range(0,5)]:
             objeto.builder.get_object(i).connect("changed", filter_numshex)
@@ -2001,11 +2008,7 @@ class w_changethings(): #Oie tú, pedazo de subnormal, que cada objeto debe tene
         #Hacer que muestre/oculte los campos de "IP"
         if self.link.objectype == "Computer":
             try:
-                tmplst = str(self.link.IP).split(".")
-                print("TMPLST:", tmplst)
-                for i in tmplst:
-                    tmpentry = self.link.builder.get_object("changethings_entry-IP" + str( tmplst.index(i) ))
-                    tmpentry.set_text(i)
+                self.link.builder.get_object("changethings_entry-IP").set_text(str(self.link.IP))
             except AttributeError: #Cuando no tiene una str definida
                 raise
                 pass
@@ -2030,12 +2033,13 @@ class w_changethings(): #Oie tú, pedazo de subnormal, que cada objeto debe tene
         self.link.macdir.bin = "{0:048b}".format(self.link.macdir.int)
         if self.link.objectype == "Computer":
             try:
-                self.link.IP = ip_address(".".join( [ self.link.builder.get_object(y).get_text() for y in ["changethings_entry-IP" + str(x) for x in range(4)] ]))
-            except ValueError:
-                ip = ".".join( [ self.link.builder.get_object(y).get_text() for y in ["changethings_entry-IP" + str(x) for x in range(4)] ]) 
-                if ip != "...":
-                    print("No parece ser una IP válida:", ip)
-                    yonW = YesOrNoWindow("{} no es una IP válida, por favor, introduzca una IP válida".format(ip), Yest="OK", Not="Ok también")
+                iptemp = self.link.builder.get_object("changethings_entry-IP").get_text()
+                if iptemp == "":
+                    pass
+                elif self.link.builder.get_object("changethings_entry-IP").tmp == 2:
+                    self.link.IP = ip_address(iptemp)
+                else:
+                    yonW = YesOrNoWindow("{} no es una IP válida, por favor, introduzca una IP válida".format(iptemp), Yest="OK", Not="Ok también")
                     yonR = yonW.run()
                     yonW.destroy()
             except:
@@ -2065,10 +2069,6 @@ class w_changethings(): #Oie tú, pedazo de subnormal, que cada objeto debe tene
             push_elemento("Cerrada ventana de Configuracion")
             self.window.hide()
 
-        if ("PERIOD" in allkeys) or ("KP_DECIMAL" in allkeys):
-            widget.get_toplevel().child_focus(0)
-
-
     def on_key_release_event(self, widget, event):
         MainClase.on_key_release_event(self, widget, event)
 
@@ -2078,6 +2078,75 @@ class w_changethings(): #Oie tú, pedazo de subnormal, que cada objeto debe tene
             tmpentry = self.link.builder.get_object("chg_MAC-entry" + str(t.index(i)))
             tmpentry.set_text(i)
             tmpentry.show()
+
+class PingWin(Gtk.ApplicationWindow):
+    def __init__(self, obj):
+        self.link = obj
+        builder  = obj.builder
+        self.win = builder.get_object("PingWin")
+        self.statusbar = builder.get_object("PingWin_Statusbar")
+        self.entry = builder.get_object("PingWin_entry")
+        self.entry.set_placeholder_text("192.168.1.XXX")
+        self.ping = builder.get_object("PingWin_Button")
+        
+        self.ping.connect("clicked", self.do_ping)
+
+        self.entry.connect("changed", self.filter_ip)
+
+    def filter_ip(self, entry):
+        if entry.get_text().strip("") == "":
+            entry.override_background_color(Gtk.StateFlags.NORMAL, Gdk.RGBA(*hex_to_rgba("#E57373")))
+        else:
+            entry.tmp = 0
+            text = entry.get_text().strip()
+            entry.set_text("".join([i for i in text if i in "0123456789."]))
+            if max( [len(x) for x in entry.get_text().split(".") ] ) > 3:
+                print("IP NO VÁLIDA")
+                entry.tmp = 1
+            try:
+                if max( [int(x) for x in entry.get_text().split(".") if x != ""]) > 254:
+                    print("IP NO VÁLIDA")
+                    entry.tmp = 1
+            except ValueError:
+                pass
+            except:
+                raise
+            if len([x for x in entry.get_text().split(".") if x != ""]) == 4 and entry.tmp==0:
+                print("IP ACABADA")
+                entry.tmp = 2
+                entry.override_background_color(Gtk.StateFlags.NORMAL, Gdk.RGBA(*hex_to_rgba("#9CCC65")))
+
+            if entry.tmp == 1:
+                entry.override_background_color(Gtk.StateFlags.NORMAL, Gdk.RGBA(*hex_to_rgba("#E57373")))
+            elif entry.tmp == 0:
+                entry.override_background_color(Gtk.StateFlags.NORMAL, Gdk.RGBA(*hex_to_rgba("#FFA726")))
+    
+    def do_ping(self, widget):
+        ip = self.entry.get_text()
+        if self.entry.tmp == 2:
+            print(self.link.compcon())
+            to = None
+            for x in self.link.compcon():
+                if ip == str(x.IP):
+                    to = x
+                    print("IP: {} from {} in compcon {}".format(ip, to, self.link.compcon()))
+                    Computador.send_pck(self.link, to=to)
+                    break
+            if to == None:
+                yonW = YesOrNoWindow("La IP {} no se ha encontrado".format(ip), Yest="OK", Not="Ok también")
+                yonR = yonW.run()
+                yonW.destroy()
+                
+        else:
+            yonW = YesOrNoWindow("{} no es una IP válida, por favor, introduzca una IP válida".format(ip), Yest="OK", Not="Ok también")
+            yonR = yonW.run()
+            yonW.destroy()
+
+    def show(self, widget):
+        self.win.show()
+    def destroy(self):
+        self.win.hide()
+        return True
 
 class about(Gtk.AboutDialog):
     def __init__(self):
