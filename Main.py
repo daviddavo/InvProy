@@ -736,6 +736,7 @@ class ObjetoBase():
         self.image.show()
 
         self.macdir = mac()
+
         print("MAC:", self.macdir, int(self.macdir), bin(self.macdir))
         if ip == None:
             print("No ip definida")
@@ -1872,13 +1873,12 @@ class cfgWindow(MainClase):#MainClase):
             ["Max logs", "DIRS", "Maxlogs", 3, 1000, 1, 5],
         ]
         self.createdspinbuttons = []
-        lprint("spinbuttons: " + str(len(self.spinbuttons)))
+
         self.spinnergrid = builder.get_object("graph")
-        self.contadordespinbuttons = 0
-        for spinner in range(len(self.spinbuttons)):
-            #spinbutton = builder.get_object(spinner)
+        
+        def forspin(spinner):
             spinbutton = Gtk.SpinButton.new(None, 0, 0)
-            tmplst = self.spinbuttons[spinner]
+            tmplst = spinner
             label = Gtk.Label.new(tmplst[0])
 
             self.spinnergrid.insert_row(1)
@@ -1895,11 +1895,9 @@ class cfgWindow(MainClase):#MainClase):
 
             self.createdspinbuttons.append(spinbutton)
 
-            lprint(str(self.contadordespinbuttons) + str(tmplst))
-
-            self.contadordespinbuttons += 1
-
-
+        for spinner in self.spinbuttons:
+            forspin(spinner)
+            
         #self.cfgventana.show_all()
 
     def show(self, *args):
