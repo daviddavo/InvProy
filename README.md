@@ -56,7 +56,10 @@ Si instalas la versión más reciente de Ubuntu 16, no es necesaria la descarga 
 - [x] Hacer que las MAC sean una clase
 - [x] Tabla de enrutamiento para los Switch
 - [x] Renovar lo de la izquierda con labels
-- [ ] Enviar ping a una dirección IP
+- [x] Enviar ping a una dirección IP
+- [ ] Añadir botón de Reset para las tablas de los Switches
+- [ ] Diálogo de barra de progreso al abrir un archivo.
+- [ ] Aplicar la gestión de puertos del Switch al Hub
 - [ ] Poder "seleccionar"
 - [ ] Máscaras de red para las ip.
 - [ ] ARP
