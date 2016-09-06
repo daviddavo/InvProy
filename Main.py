@@ -1272,7 +1272,7 @@ class Switch(ObjetoBase):
         if int(macd,2) in dic and ttl > 0:
             pck.animate(self, dic[int(macd,2)])
 
-        elif int(macd,2) in [x[0] for x in self.table]:
+        elif int(macd,2) in [x[0] for x in self.table] and ttl >= 0:
             for x in self.table:
                 if x[0] == int(macd,2):
                     pck.animate(self, self.pdic[x[1]])
@@ -1346,6 +1346,11 @@ class Computador(ObjetoBase):
 
         self.update()
 
+    def load(self):
+        ObjetoBase.load(self)
+        self.pingwin = PingWin(self)
+        self.builder.get_object("grid_rclick-sendpkg").connect("activate", self.pingwin.show)
+
     class ip():
         def __init__(self, *args, ipstr="None"):
             self.str = ipstr
@@ -1405,26 +1410,6 @@ class Computador(ObjetoBase):
         self.image.set_tooltip_text(self.name + " (" + str(len(self.connections)) + "/" + str(self.max_connections) + ")\n" + str(self.IP))
         submenu1 = self.builder.get_object("grid_rclick-sendpkg").get_submenu()
         print("Compcon: ", [x.name for x in self.compcon()])
-
-        '''
-        for child in submenu1.get_children():
-            if child.link.__class__.__name__ == "Switch" or child.link.__class__.__name__ == "Hub":
-                child.hide()
-                for con in self.compcon():
-                    if con.uuid not in [x.link.uuid for x in submenu1.get_children()]:
-                        print("Not yet")
-                        MeIt = Gtk.MenuItem.new_with_label(con.name)
-                        MeIt.link = con
-                        MeIt.connect("activate", self.send_pck)
-                        submenu1.append(MeIt)
-                        MeIt.show()
-                        con.update()
-                    else:
-                        print("\033[91m",con, "ya está en submenu1\033[0m")
-                        pass
-
-                print("self.connections", self.connections)
-        '''
 
         if self.IP != None:
             objlst.update(self,"IP", str(self.IP))
@@ -1639,9 +1624,8 @@ class packet():
             to = de.connections[1]
         self.animate(de, to)
 
-    #Composición de movimientos lineales en eje x e y
     #Siendo t=fps/s, v=px/s, v default = 84
-    def animate(self, start, end, fps=120, v=200, color=None, port=None):
+    def animate(self, start, end, fps=30, v=200, color=None, port=None):
         if color == None:
             if self.color != None:
                 color = self.color
@@ -2092,6 +2076,7 @@ class PingWin(Gtk.ApplicationWindow):
         self.ping.connect("clicked", self.do_ping)
 
         self.entry.connect("changed", self.filter_ip)
+        self.win.connect("delete-event", self.destroy)
 
     def filter_ip(self, entry):
         if entry.get_text().strip("") == "":
@@ -2144,8 +2129,8 @@ class PingWin(Gtk.ApplicationWindow):
 
     def show(self, widget):
         self.win.show()
-    def destroy(self):
-        self.win.hide()
+    def destroy(self, window, event):
+        window.hide()
         return True
 
 class about(Gtk.AboutDialog):
