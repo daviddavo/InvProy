@@ -5,17 +5,16 @@ configdir   = "Config.ini"
 config.read(configdir)
 
 log = []
+logidr = None
 def writeonlog(thingtowrite, *otherthingstowrite):
     global log
+    global logdir
     thingtowrite = time.strftime("%H:%M:%S") + "@" + thingtowrite
     try:
         thingtowrite += " | " + str(otherthingstowrite)
     except:
         pass
     log.append(thingtowrite + "\n")
-    #if len(log) > 15:
-    #    savelog()
-
 
 def savelog():
     global log
@@ -24,13 +23,21 @@ def savelog():
         log = []
 
 def createlogfile():
-    if not os.path.exists("logfiles/"):
-        os.makedirs("logfiles/")
-    nlogfiles = int(len(os.listdir("logfiles/")))
+    if config.get("DIRS", "logdir") == "Default":
+        if not os.path.exists("logfiles/"):
+            try:
+                os.makedirs("logfiles/")
+                logdir = "logfiles/"
+            except:
+                logdir = "~/.invproy/logfiles/"
+                if not os.path.exists(logdir)
+                    try:
+                        os.makedirs(logdir)
+    else:
+        logdir = config.get("DIRS", "logdir")
+
+    nlogfiles = int(len(os.listdir(logdir)))
     if nlogfiles >= int(config.get("DIRS", "Maxlogs")):
-        #print(nlogfiles)
-        #print(int(config.get("DIRS", "Maxlogs")) - nlogfiles)
-        #for i in range(abs(nlogfiles - int(config.get("DIRS", "Maxlogs")))):
         while nlogfiles > int(config.get("DIRS", "Maxlogs")):
             #Aqui pones que borre el archivo mas viejo
             nlogfiles -= 1
@@ -42,7 +49,7 @@ def createlogfile():
             except:
                 raise
     try:
-        newlogfilename = "logfiles/" + time.strftime("%y%m%d%H%M%S") + " " +  config.get("DIRS", "Log")
+        newlogfilename = logdir + time.strftime("%y%m%d%H%M%S") + " " +  config.get("DIRS", "Log")
         try:
             os.rename("Log.log", newlogfilename)
         except:

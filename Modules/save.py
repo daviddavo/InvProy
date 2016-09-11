@@ -78,9 +78,12 @@ class loadWindow(Gtk.Window):
 
     def run(self):
         rs = self.window.run()
-        self.window.hide()
         if rs == 1:
             rs = self.window.get_filename()
+            if os.path.isdir(rs):
+                self.window.set_current_folder("rs")
+                self.run()
+        self.window.hide()
         self.window.destroy()
         return rs
     def destroy(self):
