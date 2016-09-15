@@ -884,11 +884,12 @@ class ObjetoBase():
         for child in self.builder.get_object("grid_rclick-disconnect").get_submenu().get_children():
             if child.props.label.upper() != "TODOS":
                 if child.link.uuid not in [x.uuid for x in self.connections]:
-                    print("Object", child.link.__repr__(), "in connections", self.connections)
+                    #print("Object", child.link.__repr__(), "in connections", self.connections)
                     child.hide()
                     child.destroy()
                 else:
-                    print("Object", child.link.__repr__(), "in self.connections", self.connections)
+                    #print("Object", child.link.__repr__(), "in self.connections", self.connections)
+                    pass
             pass
 
         objlst.upcon(self)
@@ -1173,7 +1174,7 @@ class Switch(ObjetoBase):
         ObjetoBase.__init__(self, x, y, self.objectype, name=name, maxconnections=maxconnections)
         self.x = x
         self.y = y
-        self.timeout = 20 #Segundos
+        self.timeout = config.getint("SWITCH", "routing-ttl") #Segundos
 
         for p in range(self.max_connections):
             Port(self)
@@ -1203,6 +1204,11 @@ class Switch(ObjetoBase):
         child.show()
 
         self.ch = child
+        print("Slfto:", self.timeout)
+
+    def update(self):
+        ObjetoBase.update(self)
+        self.timeout = config.getint("SWITCH", "routing-ttl")
 
 
     def connectport(self, objeto):
