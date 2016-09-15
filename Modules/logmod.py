@@ -42,6 +42,8 @@ def createlogfile():
                     except:
                         print("No se ha podido crear {}".format(logdir))
                         ret = 0
+        else:
+            logdir = "logfiles/"
     else:
         logdir = config.get("DIRS", "logdir")
         if not os.path.exists(logdir):
