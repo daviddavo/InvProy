@@ -1163,7 +1163,7 @@ class Switch(ObjetoBase):
     cnt = 1
     #El objeto puerto
 
-    def __init__(self, x, y, *args, name="Default", maxconnections=5):
+    def __init__(self, x, y, *args, name="Default", maxconnections=int(config.get("SWITCH", "def-max-connections"))):
         self.objectype = "Switch"
         self.portid = 0
         self.pdic = {}
@@ -1981,6 +1981,8 @@ class w_changethings(): #Oie tú, pedazo de subnormal, que cada objeto debe tene
         if objeto.objectype != "Computer":
             objeto.builder.get_object("changethings_box-IP").destroy()
             objeto.builder.get_object("grid_label-IP").destroy()
+        if objeto.objectype == "Switch" or objeto.objectype == "Hub":
+            self.portspinner = Gtk.SpinButton.new_with_range(1, 20, 1)
 
         #self.applybutton.connect("clicked", self.apply)
         #self.cancelbutton.connect("clicked", self.cancel)
@@ -2010,6 +2012,10 @@ class w_changethings(): #Oie tú, pedazo de subnormal, que cada objeto debe tene
         else:
             pass
 
+        if self.link.objectype == "Switch":
+            self.portspinner.set_range(self.pall, 128)
+
+
     def apply(self, *npi):
         #acuerdate tambien de terminar esto
         #Nota: Hacer que compruebe nombres de una banlist, por ejemplo "TODOS"
@@ -2035,6 +2041,8 @@ class w_changethings(): #Oie tú, pedazo de subnormal, que cada objeto debe tene
             except:
                 print(Exception)
                 raise
+        if self.link.objectype == "Hub" or self.link.objectype == "Switch":
+            portspinner.set_range(len(self.link.objectype.connections), 128)
 
         lprint("self.link.name", self.link.name)
 
