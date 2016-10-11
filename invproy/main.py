@@ -43,10 +43,11 @@ from ipaddress import ip_address
 from random import choice
 
 #Esto hace que el programa se pueda ejecutar fuera de la carpeta.
-startcwd = os.getcwd()
+#startcwd = os.getcwd()
 
 try:
-    os.chdir(os.path.dirname(sys.argv[0]))
+    #os.chdir(os.path.dirname(sys.argv[0]))
+    pass
 except:
     pass
 
@@ -60,15 +61,16 @@ under certain conditions\n")
 
 try: #Intenta importar los modulos necesarios
     #sys.path.append("Modules/")
-    import Modules.Test
+    from invproy.modules import Test
 except:
     print("Error: No se han podido importar los modulos...")
+    raise Exception
     sys.exit()
 
 #Aqui importamos los modulos del programa que necesitamos...
 
-from Modules.logmod import *
-from Modules import save
+from invproy.modules.logmod import *
+from invproy.modules import save
 
 def lprint(*objects, sep=" ", end="\n", file=sys.stdout, flush=False):
     print(*objects, sep=sep, end=end, file=file, flush=flush)
@@ -97,10 +99,11 @@ except:
 
 #Definiendo un par de cosillas necesarias
 
+maindir, this_filename = os.path.split(__file__)
 gtk = Gtk
 config      = configparser.RawConfigParser()
-configdir   = "Config.ini"
-config.read(configdir)
+
+config.read(maindir + "/Config.ini")
 allobjects = []
 
 #Funcion que convierte un numero a una str con [digits] cifras
@@ -137,13 +140,17 @@ def checkres(recurdir):
 
     if not (cnt == len(files)):
         lprint("WARNING!!!!!111!!!11!!")
-        lprint("Faltan archivos en resources/"+recurdir)
+        lprint("Faltan archivos en "+recurdir)
+        print(os.listdir(recurdir))
         lprint(ss)
         sys.exit()
     else:
         lprint("Estan todos los archivos")
 
-checkres(config.get("DIRS", "respack"))
+print(os.listdir( os.path.abspath(os.path.join(maindir, os.pardir ))))
+print(os.listdir(maindir))
+print(os.listdir(maindir + "/resources"))
+checkres(maindir + "/" + config.get("DIRS", "respack"))
 
 #Envia a la Statusbar informacion.
 contador = 0
@@ -163,7 +170,7 @@ def bformat(num, fix):
     else:
         return "ERR0R"
 
-gladefile = "Interface2.glade"
+gladefile = maindir + "/Interface2.glade"
 
 try:
     builder = Gtk.Builder()
@@ -184,12 +191,11 @@ except Exception as e:
     sys.exit()
 
 #Intenta crear el archivo del log
-createlogfile()
 
 #CONFIGS
 
 WRES, HRES  = int(config.get("GRAPHICS", "WRES")), int(config.get("GRAPHICS", "HRES"))
-resdir      = config.get("DIRS", "respack")
+resdir      = maindir + "/" + config.get("DIRS", "respack")
 
 lprint(resdir)
 
