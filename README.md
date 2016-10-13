@@ -32,7 +32,7 @@ Si instalas la versión más reciente de Ubuntu 16, no es necesaria la descarga 
 - [ ] Seguir modelo OSI
 - [ ] Aplicar el protocolo TCP
 - [ ] Utilizar el router (Conectar redes, puertas de enlace)
-- [ ] Instalador pip
+- [x] Instalador pip
 - [ ] Crear paquetes de distribución para AUR
 - [ ] También para Ubuntu/MAX/Debian
 - [ ] Actualización de optimización
