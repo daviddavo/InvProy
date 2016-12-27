@@ -5,9 +5,8 @@ import gi
 import gi.repository
 gi.require_version('Gtk', '3.0')
 from gi.repository import Gtk, GObject, Gdk, GdkPixbuf
-from invproy import main
 
-gladefile = main.gladefile
+gladefile = "Interface2.glade"
 last = 0
 asgl = 1
 

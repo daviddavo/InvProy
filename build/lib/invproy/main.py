@@ -37,13 +37,19 @@
 from datetime import datetime
 startTime = datetime.now()
 
-import configparser, os, sys, time, random, math
+import configparser, os, csv, sys, time, random, math
 import xml.etree.ElementTree as xmltree
 from ipaddress import ip_address
 from random import choice
 
 #Esto hace que el programa se pueda ejecutar fuera de la carpeta.
 #startcwd = os.getcwd()
+
+try:
+    #os.chdir(os.path.dirname(sys.argv[0]))
+    pass
+except:
+    pass
 
 os.system("clear")
 print("\033[91m##############################\033[00m")
@@ -52,6 +58,14 @@ print("InvProy  Copyright (C) 2016  David Davó Laviña\ndavid@ddavo.me   <http:
 This program comes with ABSOLUTELY NO WARRANTY; for details go to 'Ayuda > Acerca de'\n\
 This is free software, and you are welcome to redistribute it\n\
 under certain conditions\n")
+
+try: #Intenta importar los modulos necesarios
+    #sys.path.append("Modules/")
+    from invproy.modules import Test
+except:
+    print("Error: No se han podido importar los modulos...")
+    raise Exception
+    sys.exit()
 
 #Aqui importamos los modulos del programa que necesitamos...
 
@@ -272,9 +286,8 @@ class MainClase(Gtk.Window):
             print("Revealer:",self.revealer.get_reveal_child())
             self.panpos = 100
 
-        def append(self, obj, otherdata=None):
-            '''SI OBJ YA ESTÁ, QUE AÑADA ATRIBUTOS A LA LISTA.'''
-            if otherdata == None: otherdata = []
+        def append(self, obj, otherdata=[]):
+            #SI OBJ YA ESTÄ, QUE AÑADA ATRIBUTOS A LA LISTA.
             it1 = self.tree.append(None, row=[obj.name, obj.objectype])
             it2 = self.tree.append(it1, row=["MAC", str(obj.macdir)])
             itc = self.tree.append(it1, row=["Conexiones", "{}/{}".format(len(obj.connections), obj.max_connections)])
@@ -836,6 +849,7 @@ class ObjetoBase():
                         subcomps.extend(subcompcon(con))
                     else:
                         print("Saltado", con)
+                        pass
                 #passedyet.append(con)
 
             #print("passedyet", passedyet)
@@ -1024,7 +1038,7 @@ class mac():
             self.str = tmp[1]
             self.bin = ("{0:0"+str(bits)+"b}").format(self.int)
 
-    def genmac(self, bits=48, mode=None):
+    def genmac(*self, bits=48, mode=None):
         #Por defecto se usa mac 48, o lo que es lo mismo, la de toa la vida
         #Nota, falta un comprobador de que la mac no se repita
         realmac = int("11" + str("{0:0"+ str(bits-2) +"b}").format(random.getrandbits(bits-2)),2)
@@ -1218,7 +1232,7 @@ class Switch(ObjetoBase):
                 break
         print(self.pdic)
 
-    def packet_received(self, pck, *args, port=None):
+    def packet_received(self, pck, port=None):
         macd = "{0:0112b}".format(pck.frame)[0:6*8]
         macs = "{0:0112b}".format(pck.frame)[6*8+1:6*16+1]
 
@@ -1317,7 +1331,7 @@ class Hub(ObjetoBase):
         self.x = x
         self.y = y
 
-    def packet_received(self, pck, *args, port=None):
+    def packet_received(self,pck,port=None):
         ttl  = int(pck.str[64:72],2)
         macs = "{0:0112b}".format(pck.frame)[6*8+1:6*16+1]
         ttlnew = "{0:08b}".format(ttl-1)

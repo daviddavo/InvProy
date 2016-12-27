@@ -1,0 +1,17 @@
+MANIFEST.in
+setup.py
+Invproy.egg-info/PKG-INFO
+Invproy.egg-info/SOURCES.txt
+Invproy.egg-info/dependency_links.txt
+Invproy.egg-info/entry_points.txt
+Invproy.egg-info/requires.txt
+Invproy.egg-info/top_level.txt
+invproy/Config.ini
+invproy/Interface2.glade
+invproy/__init__.py
+invproy/main.py
+invproy/modules/Test.py
+invproy/modules/__init__.py
+invproy/modules/logmod.py
+invproy/modules/save.py
+invproy/resources/Logo.png

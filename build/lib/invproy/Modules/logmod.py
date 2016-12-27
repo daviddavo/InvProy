@@ -22,17 +22,13 @@ def savelog():
     global logdir
     global ret
     if ret:
-        '''
         with open(logdir + "Log.log", "a") as logfile:
             logfile.writelines(log)
             log = []
-        '''
-        pass
 
 def createlogfile():
     global logdir
     global ret
-    '''
     if config.get("DIRS", "logdir") == "Default":
         if not os.path.exists("logfiles/"):
             try:
@@ -76,5 +72,3 @@ def createlogfile():
                 print('Ojo cuidao que no se ha podio renombrar <Log.log>')
         except:
             pass
-    '''
-    pass
