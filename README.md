@@ -1,5 +1,7 @@
 #InvProy#
 
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/5a57b3a74893449aae35feb370e56472)](https://www.codacy.com/app/daviddavo-2/InvProy?utm_source=github.com&utm_medium=referral&utm_content=daviddavo/InvProy&utm_campaign=badger)
+
 Mi proyecto de investigación de 1º de Bachillerato de Excelencia, aún WIP y con licencia.
 
 Por favor, documentar bugs e incidencias en issues.
