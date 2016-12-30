@@ -57,14 +57,7 @@ under certain conditions\n")
 
 from invproy.modules.logmod import *
 
-def lprint(*objects, sep=" ", end="\n", file=sys.stdout, flush=False):
-    print(*objects, sep=sep, end=end, file=file, flush=flush)
-    thing=str()
-    for i in objects:
-        thing += str(i) + sep
-    writeonlog(thing)
-
-lprint("Start loading time: " + time.strftime("%H:%M:%S"))
+print("Start loading time: " + time.strftime("%H:%M:%S"))
 
 try:
     #Importando las dependencias de la interfaz
@@ -72,7 +65,7 @@ try:
     gi.require_version('Gtk', '3.0')
     from gi.repository import Gtk, GObject, Gdk, GdkPixbuf
 except:
-    lprint("Por favor, instala PyGObject en tu ordenador. \n  En ubuntu suele ser 'apt-get install python3-gi'\n  En Archlinux es 'pacman -S python-gobject'")
+    print("Por favor, instala PyGObject en tu ordenador. \n  En ubuntu suele ser 'apt-get install python3-gi'\n  En Archlinux es 'pacman -S python-gobject'")
     sys.exit()
 
 try:
@@ -126,13 +119,13 @@ def checkres(recurdir):
             ss.append(i)
 
     if not (cnt == len(files)):
-        lprint("WARNING!!!!!111!!!11!!")
-        lprint("Faltan archivos en "+recurdir)
+        print("WARNING!!!!!111!!!11!!")
+        print("Faltan archivos en "+recurdir)
         print(os.listdir(recurdir))
-        lprint(ss)
+        print(ss)
         sys.exit()
     else:
-        lprint("Estan todos los archivos")
+        print("Estan todos los archivos")
 
 print(os.listdir( os.path.abspath(os.path.join(maindir, os.pardir ))))
 print(os.listdir(maindir))
@@ -148,7 +141,7 @@ def push_elemento(texto):
     testo = time.strftime("%H:%M:%S") + " | " + texto
     contador = contador + 1
     varra1.push(data, testo)
-    writeonlog(texto)
+    #writeonlog(texto)
 
 #Retorna un entero en formato de bin fixed
 def bformat(num, fix):
@@ -162,18 +155,18 @@ try:
     builder = Gtk.Builder()
     builder.add_from_file(gladefile)
     writeonlog("Cargando interfaz")
-    lprint("Interfaz cargada\nCargados un total de " + str(len(builder.get_objects())) + " objetos")
+    print("Interfaz cargada\nCargados un total de " + str(len(builder.get_objects())) + " objetos")
     xmlroot = xmltree.parse(gladefile).getroot()
-    lprint("Necesario Gtk+ "+ xmlroot[0].attrib["version"]+".0", end="")
-    lprint(" | Usando Gtk+ "+str(Gtk.get_major_version())+"."+str(Gtk.get_minor_version())+"."+str(Gtk.get_micro_version()))
+    print("Necesario Gtk+ "+ xmlroot[0].attrib["version"]+".0", end="")
+    print(" | Usando Gtk+ "+str(Gtk.get_major_version())+"."+str(Gtk.get_minor_version())+"."+str(Gtk.get_micro_version()))
 except Exception as e:
-    lprint("Error: No se ha podido cargar la interfaz.")
+    print("Error: No se ha podido cargar la interfaz.")
     if "required" in str(e):
         xmlroot = xmltree.parse(gladefile).getroot()
-        lprint("Necesario Gtk+ "+ xmlroot[0].attrib["version"]+".0", end="\n")
-        lprint(">Estas usando Gtk+"+str(Gtk.get_major_version())+"."+str(Gtk.get_minor_version())+"."+str(Gtk.get_micro_version()))
+        print("Necesario Gtk+ "+ xmlroot[0].attrib["version"]+".0", end="\n")
+        print(">Estas usando Gtk+"+str(Gtk.get_major_version())+"."+str(Gtk.get_minor_version())+"."+str(Gtk.get_micro_version()))
     else:
-        lprint("Debug:", e)
+        print("Debug:", e)
     sys.exit()
 
 #Intenta crear el archivo del log
@@ -183,7 +176,7 @@ except Exception as e:
 WRES, HRES  = int(config.get("GRAPHICS", "WRES")), int(config.get("GRAPHICS", "HRES"))
 resdir      = maindir + "/" + config.get("DIRS", "respack")
 
-lprint(resdir)
+print(resdir)
 
 #CLASSES
 
@@ -223,7 +216,8 @@ class MainClase(Gtk.Window):
         for j in range(start, end):
             objtmp = builder.get_object("toolbutton" + str(j))
             objtmp.connect("clicked", self.toolbutton_clicked)
-            objtmp.set_icon_widget(Gtk.Image.new_from_pixbuf(Gtk.Image.new_from_file(resdir + jlist[j-start]).get_pixbuf().scale_simple(i, i, GdkPixbuf.InterpType.BILINEAR)))
+            objtmp.set_icon_widget(Gtk.Image.new_from_pixbuf(
+                Gtk.Image.new_from_file(resdir + jlist[j-start]).get_pixbuf().scale_simple(i, i, GdkPixbuf.InterpType.BILINEAR)))
             objtmp.set_tooltip_text(jlist[j - start].replace(".png", ""))
 
         global configWindow
@@ -244,7 +238,7 @@ class MainClase(Gtk.Window):
         "onDeleteWindow":             exiting,
         "onExitPress":                exiting,
         "onRestartPress":             restart,
-        
+
         }
         builder.connect_signals(handlers)
 
@@ -277,7 +271,8 @@ class MainClase(Gtk.Window):
             if otherdata == None: otherdata = []
             it1 = self.tree.append(None, row=[obj.name, obj.objectype])
             it2 = self.tree.append(it1, row=["MAC", str(obj.macdir)])
-            itc = self.tree.append(it1, row=["Conexiones", "{}/{}".format(len(obj.connections), obj.max_connections)])
+            itc = self.tree.append(it1, row=["Conexiones", "{}/{}".format(
+                len(obj.connections), obj.max_connections)])
             for i in otherdata:
                 self.tree.append(it1, row=i)
 
@@ -296,7 +291,8 @@ class MainClase(Gtk.Window):
             if not hasattr(obj, "trcondic"):
                 obj.trcondic = {}
             #objlst.tree.append(self.trdic["Connections"], row=[self.name, self.objectype])
-            self.tree.set_value(obj.trdic["Connections"], 1, "{}/{}".format(len(obj.connections), obj.max_connections))
+            self.tree.set_value(obj.trdic["Connections"], 1, "{}/{}".format(
+                len(obj.connections), obj.max_connections))
             for i in obj.connections:
                 print(i.__repr__(), obj.trcondic)
                 if i in obj.trcondic.keys():
@@ -351,7 +347,7 @@ class MainClase(Gtk.Window):
             push_elemento("Cancelada acción de poner un cable")
 
         if objeto.props.label == "toolbutton5":
-            lprint("Y ahora deberiamos poner un cable")
+            print("Y ahora deberiamos poner un cable")
             push_elemento("Ahora pulsa en dos objetos")
             areweputtingcable = "True"
 
@@ -359,13 +355,13 @@ class MainClase(Gtk.Window):
         clicked = True
         bttnclicked = object_name
 
-    #Al pulsar una tecla registrada por la ventana, hace todo esto.
     def on_key_press_event(self, widget, event):
+        """ Lo que hace al pulsar una tecla """
         keyname = Gdk.keyval_name(event.keyval).upper() #El upper es por si está BLOQ MAYUS activado.
         global allkeys #Esta es una lista que almacena todas las teclas que están siendo pulsadas
         if config.getboolean("BOOLEANS", "print-key-pressed") == True:
-            lprint("Key %s (%d) pulsada" % (keyname, event.keyval))
-            lprint("Todas las teclas: ", allkeys)
+            print("Key %s (%d) pulsada" % (keyname, event.keyval))
+            print("Todas las teclas: ", allkeys)
         if not keyname in allkeys:
             allkeys.add(keyname)
         if ("CONTROL_L" in allkeys) and ("Q" in allkeys):
@@ -386,7 +382,7 @@ class MainClase(Gtk.Window):
             MainClase.load()
             allkeys.discard("CONTROL_L")
             allkeys.discard("L")
-            
+
         #Para no tener que hacer click continuamente
         if ("Q" in allkeys):
             self.toolbutton_clicked(builder.get_object("toolbutton3"))
@@ -404,7 +400,7 @@ class MainClase(Gtk.Window):
     def on_key_release_event(self, widget, event):
         keynameb = Gdk.keyval_name(event.keyval).upper()
         if config.getboolean("BOOLEANS", "print-key-pressed") == True:
-            lprint("Key %s (%d) released" % (keynameb, event.keyval))
+            print("Key %s (%d) released" % (keynameb, event.keyval))
         global allkeys
         allkeys.discard(keynameb)
 
@@ -453,9 +449,8 @@ class MainClase(Gtk.Window):
         while len(allobjects) > 0:
             allobjects[0].delete(pr=0)
 
-#Esta clase no es mas que un prompt que pide 'Si' o 'No'.
-#La función run() retorna 1 cuando se clicka sí y 0 cuando se clicka no, así sirven como enteros y booleans.
 class YesOrNoWindow(Gtk.Dialog):
+    """ Esta clase no es mas que un prompt que pide 'Si' o 'No' """
     def __init__(self, text, *args, Yest="Sí", Not="No"):
 
         self.builder = Gtk.Builder()
@@ -487,8 +482,8 @@ class YesOrNoWindow(Gtk.Dialog):
 
 objetocable1 = None
 
-#Esto es el Grid donde van las cosicas. A partir de aqui es donde esta lo divertido.
 class Grid():
+    """ Donde se visualizan los objetos """
     def __init__(self):
         #16/06/16 MAINPORT PASA A SER VARIAS LAYERS
         self.overlay    = builder.get_object("overlay1")
@@ -543,7 +538,7 @@ class Grid():
         self.backgr_lay.put(self.image, 0, 0)
 
         def subshow(widget):
-            #Para que no aparezca arriba a la izquierda:
+            """Para que la posición inicial no sea arriba a la izquierda"""
             scrolled = builder.get_object("scrolledwindow1")
             scrolled.get_vadjustment().set_value(height/3)
             scrolled.get_hadjustment().set_value(width/3)
@@ -575,42 +570,51 @@ class Grid():
         global areweputtingcable
         self.contadorback += 1
 
-        push_elemento("Clicked on grid @" + str(self.gridparser(event.x, self.wres)) + "," + str(self.gridparser(event.y, self.hres)))
+        push_elemento("Clicked on grid @" + str(self.gridparser(event.x,
+            self.wres)) + "," + str(self.gridparser(event.y, self.hres)))
 
-        if self.searchforobject(self.gridparser(event.x, self.wres), self.gridparser(event.y, self.hres)) == False:
+        if self.searchforobject(self.gridparser(event.x, self.wres),
+            self.gridparser(event.y, self.hres)) == False:
             if clicked == 1:
-                push_elemento("Clicked: " + str(clicked) + " bttnclicked: " + str(bttnclicked))
+                push_elemento(" ".join(["Clicked:", str(clicked), "bttnclicked:", str(bttnclicked)]))
                 if bttnclicked == "Router":
-                    Router(self.gridparser(event.x, self.wres), self.gridparser(event.y, self.hres))
+                    Router(self.gridparser(event.x, self.wres),
+                        self.gridparser(event.y, self.hres))
                     push_elemento("Creado objeto router")
                 elif bttnclicked == "toolbutton4":
-                    Switch(self.gridparser(event.x, self.wres), self.gridparser(event.y, self.hres))
+                    Switch(self.gridparser(event.x, self.wres),
+                        self.gridparser(event.y, self.hres))
                     push_elemento("Creado objeto switch")
                 elif bttnclicked == "toolbutton6":
-                    Computador(self.gridparser(event.x, self.wres), self.gridparser(event.y, self.hres))
+                    Computador(self.gridparser(event.x, self.wres),
+                        self.gridparser(event.y, self.hres))
                     push_elemento("Creado objeto Computador")
                 elif bttnclicked == "toolbutton7":
-                    Hub(self.gridparser(event.x, self.wres), self.gridparser(event.y, self.hres))
+                    Hub(self.gridparser(event.x, self.wres),
+                        self.gridparser(event.y, self.hres))
                     push_elemento("Creado objeto Hub")
 
-        elif self.searchforobject(self.gridparser(event.x, self.wres), self.gridparser(event.y, self.hres)) != False:
+        elif self.searchforobject(self.gridparser(event.x, self.wres),
+            self.gridparser(event.y, self.hres)) != False:
             push_elemento("Ahí ya hay un objeto, por favor selecciona otro sitio")
         else:
-            lprint("pls rebisa l codigo")
+            print("pls rebisa l codigo")
         clicked = 0
         bttnclicked = 0
 
         #Button: 1== Lclick, 2== Mclick
         #Para comprobar si es doble o triple click: if event.type == gtk.gdk.BUTTON_PRESS, o gtk.gdk_2_BUTTON_PRESS
         if event.button == 3:
-            rclick_Object = self.searchforobject(self.gridparser(event.x, self.wres), self.gridparser(event.y, self.hres))
+            rclick_Object = self.searchforobject(self.gridparser(event.x,
+                self.wres), self.gridparser(event.y, self.hres))
             if rclick_Object != False:
                 rclick_Object.rclick(event)
             else:
                 print("Agua")
 
         if areweputtingcable != 0:
-            objeto = self.searchforobject(self.gridparser(event.x, self.wres), self.gridparser(event.y, self.hres))
+            objeto = self.searchforobject(self.gridparser(event.x, self.wres),
+                self.gridparser(event.y, self.hres))
             if objeto == False:
                 push_elemento("Selecciona un objeto por favor")
             elif objeto != False:
@@ -631,8 +635,9 @@ class Grid():
                 else:
                     push_elemento("Número máximo de conexiones alcanzado")
 
-    #Te pasa las cordenadas int que retorna Gtk a coordenadas del Grid, bastante sencillito. Tienes que llamarlo 2 veces, una por coordenada
     def gridparser(self, coord, cuadrados, mode=0):
+        """ Convertir coordenadas en pixeles a cuadrados """
+        #TODO: Que no sea necesario llamarlo dos veces
         if mode == 0:
             partcoord = coord / self.sqres
             for i in range(cuadrados + 1):
@@ -646,7 +651,8 @@ class Grid():
     def resizetogrid(self, image):
         #Image debe ser una imagen gtk del tipo gtk.Image
         pixbuf = image.get_pixbuf()
-        pixbuf = pixbuf.scale_simple(self.sqres, self.sqres, GdkPixbuf.InterpType.BILINEAR)
+        pixbuf = pixbuf.scale_simple(self.sqres, self.sqres,
+            GdkPixbuf.InterpType.BILINEAR)
         image.set_from_pixbuf(pixbuf)
 
     #Una función para encontrarlos,
@@ -665,7 +671,7 @@ class Grid():
             return False
 
     def __str__(self):
-        lprint("No se que es esto")
+        print("No se que es esto")
 
 TheGrid = Grid()
 
@@ -711,7 +717,7 @@ class ObjetoBase():
 
         #Algún día pasaré todos los algoritmos a algoritmos de busqueda binaria
         for f in os.listdir(resdir):
-            lprint(f, f.startswith(objtype))
+            print(f, f.startswith(objtype))
             if f.startswith(objtype) and ( f.endswith(".jpg") or f.endswith(".png") ):
                 self.imgdir = resdir + f
                 break
@@ -739,10 +745,12 @@ class ObjetoBase():
         #aunque en realidad es un grid
         lista = objlst
         self.trlst = lista.append(self)
-        self.image.set_tooltip_text(self.name + " (" + str(len(self.connections)) + "/" + str(self.max_connections) + ")\n" + self.ipstr)
+        self.image.set_tooltip_text("".join([self.name, " (", str(len(self.connections)),
+            "/", str(self.max_connections), ")\n", self.ipstr]))
 
         self.window_changethings = w_changethings(self)
-        self.builder.get_object("grid_rclick-name").connect("activate", self.window_changethings.show)
+        self.builder.get_object("grid_rclick-name").connect("activate",
+            self.window_changethings.show)
 
         self.cnt = 0 #Se me olvido que hace esta cosa
 
@@ -768,7 +776,8 @@ class ObjetoBase():
 
         self.trlst = objlst.append(self)
 
-        self.image.set_tooltip_text(self.name + " (" + str(len(self.connections)) + "/" + str(self.max_connections) + ")\n" + self.ipstr)
+        self.image.set_tooltip_text("".join([self.name, " (", len(self.connections),
+            "/", self.max_connections, ")\n", self.ipstr]))
         self.window_changethings = w_changethings(self)
         self.builder.get_object("grid_rclick-name").connect("activate", self.window_changethings.show)
 
@@ -776,7 +785,7 @@ class ObjetoBase():
 
     #Esta funcion retorna una str cuando se usa el objeto. En lugar de <0xXXXXXXXX object>
     def __str__(self):
-        return  "<Tipo: " + self.objectype +" | Name: " + self.name + " | Pos: " + str(self.x) + ", " + str(self.y) + ">"
+        return "".join(["<Tipo: ", self.objectype, " | Name: ", self.name, " | Pos: ", str(self.x), ", ", str(self.y), ">"])
 
     def debug(self, *args):
         print("DEBUG")
@@ -787,8 +796,8 @@ class ObjetoBase():
         rclick_Object = self
 
         print(self)
-        lprint("rclick en", self.x, self.y, self.objectype, "\nConnections: ", end="")
-        lprint(self.connections)
+        print("rclick en", self.x, self.y, self.objectype, "\nConnections: ", end="")
+        print(self.connections)
         self.rmenu = self.menuemergente
         if self.objectype == "Computer" and len(self.compcon()) > 0:
             self.builder.get_object("grid_rclick-sendpkg").show()
@@ -802,11 +811,11 @@ class ObjetoBase():
 
     def resizetogrid(self, image, *args):
         #Ver resizetogrid en Grid (clase)
-        lprint(*args)
+        print(*args)
         TheGrid.resizetogrid(image)
 
     def clickado(self, widget, event):
-        lprint("Clickado en objeto " + str(self) + " @ " + str(self.x) + ", " + str(self.y))
+        print("Clickado en objeto " + str(self) + " @ " + str(self.x) + ", " + str(self.y))
 
     #Esta fucnión se encarga de comprobar a que ordenador(es) está conectado
     #en total, pasando por routers, hubs y switches.
@@ -896,7 +905,7 @@ class ObjetoBase():
         #link es un objeto vinculado al widget, luego es útil.
         tmp.link = objeto
         tmp2 = Gtk.MenuItem.new_with_label(objeto.name)
-        
+
         if self.__class__.__name__ != "Switch" and self.__class__.__name__ != "Hub":
             tmp2.connect("activate", self.send_pck)
             tmp2.show()
@@ -908,7 +917,7 @@ class ObjetoBase():
         tmp.connect("activate", objeto.disconnect)
         tmp.link = self
         tmp2 = Gtk.MenuItem.new_with_label(self.name)
-        
+
         if objeto.__class__.__name__ != "Switch" and objeto.__class__.__name__ != "Hub":
             tmp2.show()
             tmp2.connect("activate", objeto.send_pck)
@@ -1024,7 +1033,8 @@ class mac():
             self.str = tmp[1]
             self.bin = ("{0:0"+str(bits)+"b}").format(self.int)
 
-    def genmac(self, bits=48, mode=None):
+    @staticmethod
+    def genmac(bits=48, mode=None):
         #Por defecto se usa mac 48, o lo que es lo mismo, la de toa la vida
         #Nota, falta un comprobador de que la mac no se repita
         realmac = int("11" + str("{0:0"+ str(bits-2) +"b}").format(random.getrandbits(bits-2)),2)
@@ -1098,7 +1108,7 @@ class w_switch_table(Gtk.ApplicationWindow):
         builder.get_object("window_switch-table_button").connect("clicked", self.hide)
         builder.get_object("window_switch-table").connect("delete-event", self.hide)
         self.store = Gtk.ListStore(str,int,int,int)
-        
+
         self.view = builder.get_object("window_switch-table-TreeView")
         self.view.set_model(self.store)
         for i, column_title in enumerate(["MAC", "Puerto", "TTL (s)"]):
@@ -1124,7 +1134,7 @@ class w_switch_table(Gtk.ApplicationWindow):
         lst.append(lst[2])
         for row in self.store:
             row[2] = row[3] - time.time()
-        print(lst)                
+        print(lst)
         row = self.store.append(lst)
         print(self.view.get_property("visible"))
         if self.view.get_property("visible") == True:
@@ -1239,7 +1249,7 @@ class Switch(ObjetoBase):
                     if int(row[0].replace(":",""),16) == tab[0]:
                         row[3] = int(time.time()+self.timeout)
         if int(macs,2) not in [x[0] for x in self.table]:
-            tmp = [int(macs,2), port, int(time.time()+self.timeout)]            
+            tmp = [int(macs,2), port, int(time.time()+self.timeout)]
             self.table.append(tmp)
             tmp = [readmac, port, int(time.time()+self.timeout)]
             self.wtable.append(tmp)
@@ -1247,7 +1257,7 @@ class Switch(ObjetoBase):
         ################################
 
         #ObjetoBase.packet_received(self, pck)
-        
+
         ttl  = int(pck.str[64:72],2)
         ttlnew = "{0:08b}".format(ttl-1)
         pck.str = "".join(( pck.str[:64], ttlnew, pck.str[72:] ))
@@ -1472,7 +1482,7 @@ class Computador(ObjetoBase):
                 print("EtherType:", int(frame[12*8+1:8*14+1],2))
                 print("Resto==Bits:", int(frame[8*14+1::],2)==pck.bits)
                 print(pck.str)
-                
+
                 n, tmp = 8, pck.str[96:128]
                 print("IPs:", ".".join([str(int(tmp[i * n:i * n+n], base=2)) for i,blah in enumerate(tmp[::n])]))
                 tmp = pck.str[128:160]
@@ -1514,7 +1524,7 @@ class Servidor(Computador):
 #La clase para los objetos cable
 class Cable():
     def __init__(self, fromo, to, *color):
-        lprint("Argumentos sobrantes: ", *color)
+        print("Argumentos sobrantes: ", *color)
         self.objectype = "Wire"
         self.fromobj = fromo
         self.toobj = to
@@ -1528,15 +1538,15 @@ class Cable():
         self.cair()
 
         self.x, self.y = min(fromo.x, to.x)-0.5, min(fromo.y, to.y)-0.5
-        
+
         TheGrid.moveto(self.image, self.x, self.y, layout=TheGrid.cables_lay)
-        lprint("Puesto cable en: ", self.x, "; ", self.y)
+        print("Puesto cable en: ", self.x, "; ", self.y)
 
         self.image.show()
 
         global cables
         cables.append(self)
-        lprint("Todos los cables: ", cables)
+        print("Todos los cables: ", cables)
 
     def load(self):
         global cables
@@ -1561,7 +1571,7 @@ class Cable():
             ctx.set_source_rgba(0, 0, 1, 0.1) # Solid color
             ctx.rectangle(0,0,width,height)
             ctx.fill()
-        
+
 
         ctx.set_line_width(1.5)
         ctx.set_source_rgb(1,0,0)
@@ -1582,7 +1592,7 @@ class Cable():
 
         self.image = gtk.Image.new_from_surface(surface)
         self.x, self.y = min(fromo.x, to.x)-0.5, min(fromo.y, to.y)-0.5
-        
+
         TheGrid.moveto(self.image, self.x, self.y, layout=TheGrid.cables_lay)
 
     def delete(self):
@@ -1601,7 +1611,7 @@ save.classes = [ObjetoBase, Switch, Hub, Computador, Servidor, Cable]
 #De momento sólo soportará el protocolo IPv4
 class packet():
     def __init__(self, header, trailer, payload, cabel=None):
-        lprint("Creado paquete de res")
+        print("Creado paquete de res")
         self.header = header
         self.payload = payload
         self.trailer = trailer
@@ -1708,9 +1718,9 @@ class packet():
 
         GObject.timeout_add(spf*1000, iteration)
 
-        
+
         return True
-        
+
     def __str__(self):
         return "<" + str(packet) + ">"
 
@@ -1755,17 +1765,17 @@ class eth(packet):
 
     def __str__(self):
         return str( bin(self.macheader) )
-    
+
 #Internet Layer
 class icmp(packet):
     def __init__(self, ipheader, icmpheader, payload):
         print("Len:", int(bin(ipheader)[18:33],2)-28)
         self.bits = (ipheader << 8*8 | icmpheader) << ( (int(bin(ipheader)[18:33],2) -28) * 8) | payload #BITS 16a31 - 28
         packet.new_from_total(self, self.bits)
-        
+
     def __str__(self):
         return self.str
-        
+
 
 ### Application layer ###
 
@@ -1857,7 +1867,7 @@ class cfgWindow(MainClase):#MainClase):
         self.createdspinbuttons = []
 
         self.spinnergrid = builder.get_object("graph")
-        
+
         def forspin(spinner):
             spinbutton = Gtk.SpinButton.new(None, 0, 0)
             tmplst = spinner
@@ -1879,7 +1889,7 @@ class cfgWindow(MainClase):#MainClase):
 
         for spinner in self.spinbuttons:
             forspin(spinner)
-            
+
         #self.cfgventana.show_all()
 
     def show(self, *args):
@@ -1894,7 +1904,7 @@ class cfgWindow(MainClase):#MainClase):
 
         if ("CONTROL_L" in allkeys) and ("S" in allkeys):
             self.save()
-        lprint(MainClase.on_key_press_event(self,widget,event))
+        print(MainClase.on_key_press_event(self,widget,event))
 
     def on_key_release_event(self, widget, event):
         MainClase.on_key_release_event(self, widget, event)
@@ -1917,22 +1927,22 @@ class cfgWindow(MainClase):#MainClase):
                 if os.path.isfile(file_path):
                     os.unlink(file_path)
             except e:
-                lprint(e)
+                print(e)
 
     def save(self, *args):
         #[label, cfgsect, cfgkey, rangef, ranget, incrementf, increment],
-        lprint(self.createdspinbuttons)
+        print(self.createdspinbuttons)
         for i in range(len(self.createdspinbuttons)):
             tmplst = self.spinbuttons[i]
             config.set(tmplst[1], tmplst[2], int(self.createdspinbuttons[i].get_value()))
 
         push_elemento("Configuracion guardada")
         with open(configdir, 'w') as cfgfile:
-            lprint("Guardando archivo de configuracion")
+            print("Guardando archivo de configuracion")
             try:
                 config.write(cfgfile)
             except:
-                lprint("Error al guardar la configuracion")
+                print("Error al guardar la configuracion")
 
     def hidewindow(self, window, *event):
         window.hide()
@@ -2012,10 +2022,10 @@ class w_changethings(): #Oie tú, pedazo de subnormal, que cada objeto debe tene
         #acuerdate tambien de terminar esto
         #Nota: Hacer que compruebe nombres de una banlist, por ejemplo "TODOS"
         yonR = None
-        lprint(npi)
-        
+        print(npi)
+
         self.link.name = self.name_entry.get_text()
-        lprint([ self.link.builder.get_object(y).get_text() for y in ["chg_MAC-entry" + str(x) for x in range(0,6)] ])
+        print([ self.link.builder.get_object(y).get_text() for y in ["chg_MAC-entry" + str(x) for x in range(0,6)] ])
         self.link.macdir.str = ":".join( [ self.link.builder.get_object(y).get_text() for y in ["chg_MAC-entry" + str(x) for x in range(6)] ])
         self.link.macdir.int = int(self.link.macdir.str.replace(":",""), 16)
         self.link.macdir.bin = "{0:048b}".format(self.link.macdir.int)
@@ -2036,7 +2046,7 @@ class w_changethings(): #Oie tú, pedazo de subnormal, que cada objeto debe tene
         if self.link.objectype == "Hub" or self.link.objectype == "Switch":
             portspinner.set_range(len(self.link.objectype.connections), 128)
 
-        lprint("self.link.name", self.link.name)
+        print("self.link.name", self.link.name)
 
         #self.link.image.set_tooltip_text(self.link.name + " (" + str(self.link.connections) + "/" + str(self.link.max_connections) + ")")
         self.link.update()
@@ -2045,7 +2055,7 @@ class w_changethings(): #Oie tú, pedazo de subnormal, que cada objeto debe tene
             self.show()
 
     def cancel(self, *npi):
-        lprint(npi)
+        print(npi)
         self.window.hide()
 
     def hidewindow(self, window, *event):
@@ -2078,7 +2088,7 @@ class PingWin(Gtk.ApplicationWindow):
         self.entry = builder.get_object("PingWin_entry")
         self.entry.set_placeholder_text("192.168.1.XXX")
         self.ping = builder.get_object("PingWin_Button")
-        
+
         self.ping.connect("clicked", self.do_ping)
 
         self.entry.connect("changed", self.filter_ip)
@@ -2111,7 +2121,7 @@ class PingWin(Gtk.ApplicationWindow):
                 entry.override_background_color(Gtk.StateFlags.NORMAL, Gdk.RGBA(*hex_to_rgba("#E57373")))
             elif entry.tmp == 0:
                 entry.override_background_color(Gtk.StateFlags.NORMAL, Gdk.RGBA(*hex_to_rgba("#FFA726")))
-    
+
     def do_ping(self, widget):
         ip = self.entry.get_text()
         if self.entry.tmp == 2:
@@ -2127,7 +2137,7 @@ class PingWin(Gtk.ApplicationWindow):
                 yonW = YesOrNoWindow("La IP {} no se ha encontrado".format(ip), Yest="OK", Not="Ok también")
                 yonR = yonW.run()
                 yonW.destroy()
-                
+
         else:
             yonW = YesOrNoWindow("{} no es una IP válida, por favor, introduzca una IP válida".format(ip), Yest="OK", Not="Ok también")
             yonR = yonW.run()
@@ -2162,29 +2172,27 @@ class Undo():
 
 def exiting(self, *ahfjah):
     global log
-    savelog()
-    lprint("End time: " + time.strftime("%H:%M:%S"))
+    print("End time: " + time.strftime("%H:%M:%S"))
     print ("Window closed, exiting program")
     Gtk.main_quit()
 
 def restart(*args):
     global log
-    savelog()
-    lprint("End time: " + time.strftime("%H:%M%S"))
-    lprint("Restarting program")
+    print("End time: " + time.strftime("%H:%M%S"))
+    print("Restarting program")
     print("\033[92m##############################\033[00m")
     os.chdir(startcwd)
     os.execl(sys.executable, sys.executable, *sys.argv)
 
 def leppard():
-    lprint("Gunter glieben glauchen globen")
+    print("Gunter glieben glauchen globen")
 
 writeonlog("Esto ha llegado al final del codigo al parecer sin errores")
 writeonlog("O no")
 MainClase()
 
-lprint("Actual time: " + time.strftime("%H:%M:%S"))
-lprint("Complete load time: " + str(datetime.now() - startTime))
+print("Actual time: " + time.strftime("%H:%M:%S"))
+print("Complete load time: " + str(datetime.now() - startTime))
 push_elemento("Parece que esta cosa ha arrancado en tan solo " + str(datetime.now() - startTime))
 Gtk.main()
 

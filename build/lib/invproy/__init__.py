@@ -1,1 +1,0 @@
-from invproy import main 

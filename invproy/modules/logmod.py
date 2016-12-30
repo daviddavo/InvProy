@@ -77,4 +77,3 @@ def createlogfile():
         except:
             pass
     '''
-    pass
