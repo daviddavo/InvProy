@@ -26,7 +26,7 @@
     publicado por la Free Software Foundation, ya sea la versión 3 de layout
     licencia o la más reciente.
 
-    Este programa es distribuido con la esperanza de que sea útil, pero 
+    Este programa es distribuido con la esperanza de que sea útil, pero
     SIN NINGUNA GARANTÍA; sin siquiera la garantía implícita de COMERCIABILIDAD
     o de la APTITUD DE LA MISMA PARA UN PROPÓSITO PARTICULAR. Ver la GNU General
     Public License para más detalles.
@@ -70,7 +70,7 @@ except:
 
 try:
     import cairo
-except:
+except ImportError:
     print("Necesitas tener instalado cairo")
     print("Como es lógico, pon 'pacman -S python-cairo' en Archlinux")
     sys.exit()
@@ -78,7 +78,7 @@ except:
 #Definiendo un par de cosillas necesarias
 
 maindir, this_filename = os.path.split(__file__)
-gladefile = maindir + "/Interface2.glade"
+GLADEFILE = maindir + "/Interface2.glade"
 from invproy.modules import save
 gtk = Gtk
 config      = configparser.RawConfigParser()
@@ -145,7 +145,7 @@ def push_elemento(texto):
 
 #Retorna un entero en formato de bin fixed
 def bformat(num, fix):
-    if type(num) == int:
+    if isinstance(num, int):
         return str(("{0:0" + str(fix) + "b}").format(num))
     else:
         return "ERR0R"
@@ -153,16 +153,16 @@ def bformat(num, fix):
 
 try:
     builder = Gtk.Builder()
-    builder.add_from_file(gladefile)
+    builder.add_from_file(GLADEFILE)
     writeonlog("Cargando interfaz")
     print("Interfaz cargada\nCargados un total de " + str(len(builder.get_objects())) + " objetos")
-    xmlroot = xmltree.parse(gladefile).getroot()
+    xmlroot = xmltree.parse(GLADEFILE).getroot()
     print("Necesario Gtk+ "+ xmlroot[0].attrib["version"]+".0", end="")
     print(" | Usando Gtk+ "+str(Gtk.get_major_version())+"."+str(Gtk.get_minor_version())+"."+str(Gtk.get_micro_version()))
 except Exception as e:
     print("Error: No se ha podido cargar la interfaz.")
     if "required" in str(e):
-        xmlroot = xmltree.parse(gladefile).getroot()
+        xmlroot = xmltree.parse(GLADEFILE).getroot()
         print("Necesario Gtk+ "+ xmlroot[0].attrib["version"]+".0", end="\n")
         print(">Estas usando Gtk+"+str(Gtk.get_major_version())+"."+str(Gtk.get_minor_version())+"."+str(Gtk.get_micro_version()))
     else:
@@ -220,7 +220,7 @@ class MainClase(Gtk.Window):
                 Gtk.Image.new_from_file(resdir + jlist[j-start]).get_pixbuf().scale_simple(i, i, GdkPixbuf.InterpType.BILINEAR)))
             objtmp.set_tooltip_text(jlist[j - start].replace(".png", ""))
 
-        global configWindow
+        #global configWindow
         #configWindow = cfgWindow()
 
         builder.get_object("imagemenuitem1").connect("activate", self.new)
@@ -318,7 +318,8 @@ class MainClase(Gtk.Window):
         def delete(self, obj):
             self.tree.remove(obj.trlst)
 
-    def showcfgwindow(self, *args):
+    @staticmethod
+    def showcfgwindow(*args):
         global configWindow
         try:
             configWindow.show()
@@ -328,9 +329,10 @@ class MainClase(Gtk.Window):
 
     #24/06 Eliminada startCable(), incluida en toolbutton_clicked
 
-    def togglegrid(self, *widget):
+    @staticmethod
+    def togglegrid(*widget):
         widget = widget[0]
-        global TheGrid
+        #global TheGrid #There is no need to use global
         obj = TheGrid.backgr_lay
         if widget.get_active() != True and obj.is_visible():
             obj.hide()
@@ -376,7 +378,7 @@ class MainClase(Gtk.Window):
                 obj.update()
 
         if ("CONTROL_L" in allkeys) and ("S" in allkeys):
-            global allobjects
+            #global allobjects
             MainClase.save()
         if ("CONTROL_L" in allkeys) and ("L" in allkeys):
             MainClase.load()
@@ -397,15 +399,13 @@ class MainClase(Gtk.Window):
         return keyname
 
     #Al dejar de pulsar la tecla deshace lo anterior.
-    def on_key_release_event(self, widget, event):
+    @staticmethod
+    def on_key_release_event(widget, event):
         keynameb = Gdk.keyval_name(event.keyval).upper()
         if config.getboolean("BOOLEANS", "print-key-pressed") == True:
             print("Key %s (%d) released" % (keynameb, event.keyval))
         global allkeys
         allkeys.discard(keynameb)
-
-    def drag_drop(widget, context, x, y, time):
-        push_elemento( "Drag drop at " + str(x) +"," + str(y) )
 
     #Comprueba si el objeto tiene una ip asignada
     def has_ip(self):
@@ -418,8 +418,8 @@ class MainClase(Gtk.Window):
             return False
 
     def save(*args):
-        global cables
-        global allobjects
+        #global cables #There is no need to globalize it if you are only
+        #global allobjects #reading it
         lscl = 0
         try:
             if args[1].get_label() == "gtk-save-as":
@@ -430,8 +430,6 @@ class MainClase(Gtk.Window):
         save.save(allobjects,cables, aslc=lscl)
         push_elemento("Guardando...")
     def load(*args):
-        global cables
-        global allobjects
         save.load(allobjects,cables)
         push_elemento("Cargando...")
     def new(*args):
@@ -454,7 +452,7 @@ class YesOrNoWindow(Gtk.Dialog):
     def __init__(self, text, *args, Yest="Sí", Not="No"):
 
         self.builder = Gtk.Builder()
-        self.builder.add_from_file(gladefile)
+        self.builder.add_from_file(GLADEFILE)
 
         self.yesornowindow = self.builder.get_object("YesOrNoWindow")
         self.labeldialog = self.builder.get_object("YoN_label")
@@ -471,7 +469,7 @@ class YesOrNoWindow(Gtk.Dialog):
         self = self.yesornowindow
 
     def on_button_clicked(self, widget):
-        dialog = self
+        pass
 
     def run(self):
         return self.yesornowindow.run()
@@ -656,19 +654,11 @@ class Grid():
         image.set_from_pixbuf(pixbuf)
 
     #Una función para encontrarlos,
-    def searchforobject(self, x, y):
-        global allobjects
-        localvar = False
-        for i in range(len(allobjects)):
-            if allobjects[i].x == x:
-                if allobjects[i].y == y:
-                    localvar = True
-                    objeto = allobjects[i]
-                    break
-        if localvar == True:
-            return objeto
-        else:
-            return False
+    @staticmethod #Actualizado 16/12/30
+    def searchforobject(x, y): #Estoy llorando de lo bello que es ahora
+        for i in allobjects:
+            if i.x == x and i.y == y: return i
+        return False
 
     def __str__(self):
         print("No se que es esto")
@@ -689,9 +679,7 @@ class ObjetoBase():
     #Una función para atraerlos a todos y atarlos en las tinieblas
     def __init__(self, x, y, objtype, *args, name="Default", maxconnections=4, ip=None):
         global cnt_objects
-        global cnt_rows
         global allobjects
-        global gladefile
 
         #IMPORTANTE: GENERAR UUID PARA CADA OBJETO
         #La v4 crea un UUID de forma aleatoria
@@ -699,7 +687,7 @@ class ObjetoBase():
         print("\033[96mUUID:\033[00m", self.uuid)
 
         self.builder = Gtk.Builder()
-        self.builder.add_from_file(gladefile)
+        self.builder.add_from_file(GLADEFILE)
         self.menuemergente = self.builder.get_object("grid_rclick")
         self.builder.get_object("grid_rclick-disconnect_all").connect("activate", self.disconnect)
         self.builder.get_object("grid_rclick-delete").connect("activate", self.delete)
@@ -759,7 +747,7 @@ class ObjetoBase():
         global cnt_rows
         global allobjects
         self.builder = Gtk.Builder()
-        self.builder.add_from_file(gladefile)
+        self.builder.add_from_file(GLADEFILE)
         self.menuemergente = self.builder.get_object("grid_rclick")
         self.builder.get_object("grid_rclick-disconnect_all").connect("activate", self.disconnect)
         self.builder.get_object("grid_rclick-delete").connect("activate", self.delete)
@@ -809,7 +797,8 @@ class ObjetoBase():
             self.builder.get_object("grid_rclick-disconnect").hide()
         self.rmenu.popup(None, None, None, None, event.button, event.time)
 
-    def resizetogrid(self, image, *args):
+    @staticmethod
+    def resizetogrid(image, *args):
         #Ver resizetogrid en Grid (clase)
         print(*args)
         TheGrid.resizetogrid(image)
@@ -891,7 +880,6 @@ class ObjetoBase():
                 else:
                     #print("Object", child.link.__repr__(), "in self.connections", self.connections)
                     pass
-            pass
 
         objlst.upcon(self)
 
@@ -989,7 +977,7 @@ class ObjetoBase():
 
         self.update()
 
-    def delete(self, *widget, conf=1, pr=1):
+    def delete(self, *widget, pr=1):
         if pr == 1:
             yonW = YesOrNoWindow("¿Estás seguro de que quieres eliminar " + self.name + " definitivamente? El objeto será imposible de recuperar y te hechará de menos.")
             yonR = yonW.run()
@@ -1004,10 +992,9 @@ class ObjetoBase():
             allobjects.remove(self)
         elif yonR == 0:
             print("Piénsatelo dos veces")
-        else:
-            raise
 
     def packet_received(self, pck, *args, port=None):
+        """ La variable puerto será útil algún día """
         print("Hola, soy {} y he recibido un paquete, pero no sé que hacer con él".format(self.name))
         if config.getboolean("DEBUG", "packet-received"):
             print(">Pck:",pck)
@@ -1085,7 +1072,6 @@ class Port():
         self.id = switch.portid
         self.dic = switch.pdic
         self.all = switch.pall
-        switch.portid += 1
         self.switch = switch
         self.connection = None
         self.all[self.id] = self
@@ -1157,7 +1143,7 @@ class w_switch_table(Gtk.ApplicationWindow):
         for row in self.store:
             if row == lst:
                 self.store.remove(row.iter)
-                self.link.table
+                #self.link.table #<--- ???
                 break
         pass
 
@@ -1179,6 +1165,7 @@ class Switch(ObjetoBase):
         self.timeout = config.getint("SWITCH", "routing-ttl") #Segundos
 
         for p in range(self.max_connections):
+            self.portid += 1
             Port(self)
         print(self.pall)
 
@@ -1347,7 +1334,7 @@ class Computador(ObjetoBase):
         self.x = x
         self.y = y
         self.max_connections = maxconnections
-        self.IP = None
+        self.IP = ip
 
         self.pingwin = PingWin(self)
         self.builder.get_object("grid_rclick-sendpkg").connect("activate", self.pingwin.show)
@@ -1366,9 +1353,9 @@ class Computador(ObjetoBase):
         def __str__(self):
             return self.str
 
-        def set_str(self, str):
-            self.str = str
-            self.parser(str, 0)
+        def set_str(self, string):
+            self.str = string
+            self.parser(string, 0)
 
         def set_bin(self, binar):
             t = binar
@@ -1416,7 +1403,7 @@ class Computador(ObjetoBase):
     def update(self):
         ObjetoBase.update(self)
         self.image.set_tooltip_text(self.name + " (" + str(len(self.connections)) + "/" + str(self.max_connections) + ")\n" + str(self.IP))
-        submenu1 = self.builder.get_object("grid_rclick-sendpkg").get_submenu()
+        #submenu1 = self.builder.get_object("grid_rclick-sendpkg").get_submenu() #If you need to update the submenu
         print("Compcon: ", [x.name for x in self.compcon()])
 
         if self.IP != None:
@@ -1429,7 +1416,7 @@ class Computador(ObjetoBase):
         global npack
         Sub_N = Computador.sub_N
         #nonlocal sub_N
-        de = self
+        #de = self #Not used
         print(widget)
         if to == None:
             to = widget[0].link
@@ -1441,7 +1428,7 @@ class Computador(ObjetoBase):
         else:
             print("Un objeto no tiene IP")
             yonW = YesOrNoWindow("Uno o los dos objetos no tienen dirección IP", Yest="OK", Not="Ok también")
-            yonR = yonW.run()
+            yonW.run()
             yonW.destroy()
             raise Exception("Un objeto no tiene IP")
         #Ambos deben tener direccion ip
@@ -1732,12 +1719,12 @@ class eth(packet):
     #Se crea el header
     def __init__(self, destmac, sourcemac, *pack, EtherType=0x0800):
         def corrector(mac):
-            if type(mac) == str:
+            if isinstance(mac, str):
                 mac2 = 0
                 for x in mac.split(":"):
                     mac2 = mac2 << 8 | int(x, 16)
                 return mac2
-            elif type(mac) == int:
+            elif isinstance(mac, int):
                 return mac
             else:
                 raise Exception("MAC ERROR")
@@ -1850,7 +1837,7 @@ class cfgWindow(MainClase):#MainClase):
         else:
             self.cfgbttn1.set_active(False)
 
-        booleans = {"print-key-pressed": "print-key-pressed"}
+        #booleans = {"print-key-pressed": "print-key-pressed"}
 
         #TODO ESTO ES PARA LOS SPINNERS
 
@@ -1906,8 +1893,9 @@ class cfgWindow(MainClase):#MainClase):
             self.save()
         print(MainClase.on_key_press_event(self,widget,event))
 
-    def on_key_release_event(self, widget, event):
-        MainClase.on_key_release_event(self, widget, event)
+    @staticmethod
+    def on_key_release_event(widget, event):
+        MainClase.on_key_release_event(widget, event)
 
     def bttntoggled(self, *args):
         if self.cfgbttn1.get_active() == True:
@@ -1917,7 +1905,8 @@ class cfgWindow(MainClase):#MainClase):
             push_elemento("print-key-pressed set False")
             config.set("BOOLEANS", "print-key-pressed", "False")
 
-    def borrarlogs(self, *lala):
+    @staticmethod
+    def borrarlogs(*lala):
         #prompt = YesOrNoWindow("Seguro que quieres borrar los logs?")
         #if prompt.on_button_clicked(0) == True:
         push_elemento("Borrando logs")
@@ -1944,7 +1933,8 @@ class cfgWindow(MainClase):#MainClase):
             except:
                 print("Error al guardar la configuracion")
 
-    def hidewindow(self, window, *event):
+    @staticmethod
+    def hidewindow(window, *event):
         window.hide()
         return True
 
@@ -1969,7 +1959,7 @@ class w_changethings(): #Oie tú, pedazo de subnormal, que cada objeto debe tene
         self.image = Gtk.Image.new_from_pixbuf(objeto.image.get_pixbuf())
 
         def filter_ip(entry):
-            PingWin.filter_ip(0, entry)
+            PingWin.filter_ip(entry)
 
         def filter_numshex(widget):
             text = widget.get_text().strip()
@@ -2005,10 +1995,8 @@ class w_changethings(): #Oie tú, pedazo de subnormal, que cada objeto debe tene
                 self.link.builder.get_object("changethings_entry-IP").set_text(str(self.link.IP))
             except AttributeError: #Cuando no tiene una str definida
                 raise
-                pass
             except TypeError:
                 raise
-                pass
             except:
                 raise
         else:
@@ -2058,7 +2046,8 @@ class w_changethings(): #Oie tú, pedazo de subnormal, que cada objeto debe tene
         print(npi)
         self.window.hide()
 
-    def hidewindow(self, window, *event):
+    @staticmethod
+    def hidewindow(window, *event):
         window.hide()
         return True
 
@@ -2069,8 +2058,9 @@ class w_changethings(): #Oie tú, pedazo de subnormal, que cada objeto debe tene
             push_elemento("Cerrada ventana de Configuracion")
             self.window.hide()
 
-    def on_key_release_event(self, widget, event):
-        MainClase.on_key_release_event(self, widget, event)
+    @staticmethod
+    def on_key_release_event(widget, event):
+        MainClase.on_key_release_event(widget, event)
 
     def regenclicked(self, widget):
         t = ObjetoBase.mac.genmac()[1].split(":")
@@ -2094,7 +2084,8 @@ class PingWin(Gtk.ApplicationWindow):
         self.entry.connect("changed", self.filter_ip)
         self.win.connect("delete-event", self.destroy)
 
-    def filter_ip(self, entry):
+    @staticmethod
+    def filter_ip(entry):
         if entry.get_text().strip("") == "":
             entry.override_background_color(Gtk.StateFlags.NORMAL, Gdk.RGBA(*hex_to_rgba("#E57373")))
         else:
@@ -2145,7 +2136,8 @@ class PingWin(Gtk.ApplicationWindow):
 
     def show(self, widget):
         self.win.show()
-    def destroy(self, window, event):
+    @staticmethod
+    def destroy(window, event):
         window.hide()
         return True
 
@@ -2171,13 +2163,11 @@ class Undo():
 #Esta la pongo fuera porque lo mismo la necesito en otra clase
 
 def exiting(self, *ahfjah):
-    global log
     print("End time: " + time.strftime("%H:%M:%S"))
     print ("Window closed, exiting program")
     Gtk.main_quit()
 
 def restart(*args):
-    global log
     print("End time: " + time.strftime("%H:%M%S"))
     print("Restarting program")
     print("\033[92m##############################\033[00m")

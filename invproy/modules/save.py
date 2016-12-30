@@ -31,8 +31,11 @@ def save(allobjects, cabls, aslc=0):
         last = fil
         try:
             os.remove(fil)
-        except:
-            pass
+        except OSError as e:
+            if e.errno == errno.ENOENT:
+                pass
+            else:
+                raise
         print(allobjects)
         with open(fil, "wb") as output:
             pickle.dump((allobjects,cabls), output)
