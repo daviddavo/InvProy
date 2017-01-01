@@ -7,7 +7,7 @@ gi.require_version('Gtk', '3.0')
 from gi.repository import Gtk, GObject, Gdk, GdkPixbuf
 from invproy import main
 
-gladefile = main.gladefile
+GLADEFILE = main.GLADEFILE
 last = 0
 asgl = 1
 
@@ -66,7 +66,7 @@ def load(allobjects, cabls):
 class loadWindow(Gtk.Window):
     def __init__(self, mode=0):
         self.builder = Gtk.Builder()
-        self.builder.add_from_file(gladefile)
+        self.builder.add_from_file(GLADEFILE)
         self.window = self.builder.get_object("window-filechooser_load")
         filt = Gtk.FileFilter.new()
         filt.add_pattern("*.inv")

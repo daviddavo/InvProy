@@ -42,9 +42,6 @@ import xml.etree.ElementTree as xmltree
 from ipaddress import ip_address
 from random import choice
 
-#Esto hace que el programa se pueda ejecutar fuera de la carpeta.
-#startcwd = os.getcwd()
-
 os.system("clear")
 print("\033[91m##############################\033[00m")
 
@@ -52,10 +49,6 @@ print("InvProy  Copyright (C) 2016  David Davó Laviña\ndavid@ddavo.me   <http:
 This program comes with ABSOLUTELY NO WARRANTY; for details go to 'Ayuda > Acerca de'\n\
 This is free software, and you are welcome to redistribute it\n\
 under certain conditions\n")
-
-#Aqui importamos los modulos del programa que necesitamos...
-
-from invproy.modules.logmod import *
 
 print("Start loading time: " + time.strftime("%H:%M:%S"))
 
@@ -65,7 +58,9 @@ try:
     gi.require_version('Gtk', '3.0')
     from gi.repository import Gtk, GObject, Gdk, GdkPixbuf
 except:
-    print("Por favor, instala PyGObject en tu ordenador. \n  En ubuntu suele ser 'apt-get install python3-gi'\n  En Archlinux es 'pacman -S python-gobject'")
+    print("Por favor, instala PyGObject en tu ordenador. \n\
+      En ubuntu suele ser 'apt-get install python3-gi'\n\
+      En Archlinux es 'pacman -S python-gobject'")
     sys.exit()
 
 try:
@@ -100,10 +95,10 @@ def hex_to_rgba(value):
     value = value.lstrip('#')
     if len(value) == 3:
         value = ''.join([v*2 for v in list(value)])
-    (r1,g1,b1,a1)=tuple(int(value[i:i+2], 16) for i in range(0, 6, 2))+(1,)
-    (r1,g1,b1,a1)=(r1/255.00000,g1/255.00000,b1/255.00000,a1)
+    (r1, g1, b1, a1)=tuple(int(value[i:i+2], 16) for i in range(0, 6, 2))+(1,)
+    (r1, g1, b1, a1)=(r1/255.00000,g1/255.00000,b1/255.00000,a1)
 
-    return (r1,g1,b1,a1)
+    return (r1, g1, b1, a1)
 
 print("#42FF37", hex_to_rgba("#42FF37"))
 
@@ -154,7 +149,6 @@ def bformat(num, fix):
 try:
     builder = Gtk.Builder()
     builder.add_from_file(GLADEFILE)
-    writeonlog("Cargando interfaz")
     print("Interfaz cargada\nCargados un total de " + str(len(builder.get_objects())) + " objetos")
     xmlroot = xmltree.parse(GLADEFILE).getroot()
     print("Necesario Gtk+ "+ xmlroot[0].attrib["version"]+".0", end="")
@@ -182,18 +176,9 @@ print(resdir)
 
 allkeys = set()
 cables = []
-clickedobjects = set() #Creamos una cosa para meter los ultimos 10 objetos clickados. (EN DESUSO)
 clicked = 0
 bttnclicked = 0
 areweputtingcable = 0
-
-#Función a medias, esto añadirá un objeto a la cola de ultimos objetos clickados, por si luego queremos deshacerlo o algo.
-def appendtoclicked(objeto):
-    clickedobjects.insert(0, objeto)
-    try:
-        clickedobjects.remove(9)
-    except:
-        pass
 
 class MainClase(Gtk.Window):
     def __init__(self):
@@ -408,9 +393,10 @@ class MainClase(Gtk.Window):
         allkeys.discard(keynameb)
 
     #Comprueba si el objeto tiene una ip asignada
-    def has_ip(self):
+    @staticmethod
+    def has_ip(objeto):
         try:
-            if self.IP != None:
+            if objeto.IP != None:
                 return True
             else:
                 return False
@@ -441,11 +427,11 @@ class MainClase(Gtk.Window):
         while len(cables) > 0:
             cables[0].delete()
 
-    def new(*args):
-        global cables
-        global allobjects
-        while len(allobjects) > 0:
-            allobjects[0].delete(pr=0)
+    #def new(*args):
+    #    global cables
+    #    global allobjects
+    #    while len(allobjects) > 0:
+    #        allobjects[0].delete(pr=0)
 
 class YesOrNoWindow(Gtk.Dialog):
     """ Esta clase no es mas que un prompt que pide 'Si' o 'No' """
@@ -473,7 +459,6 @@ class YesOrNoWindow(Gtk.Dialog):
 
     def run(self):
         return self.yesornowindow.run()
-        self.yesornowindow.hide()
 
     def destroy(self):
         self.yesornowindow.destroy()
@@ -993,8 +978,8 @@ class ObjetoBase():
         elif yonR == 0:
             print("Piénsatelo dos veces")
 
-    def packet_received(self, pck, *args, port=None):
-        """ La variable puerto será útil algún día """
+    def packet_received(self, pck, *args):
+        """ La variable port será útil algún día """
         print("Hola, soy {} y he recibido un paquete, pero no sé que hacer con él".format(self.name))
         if config.getboolean("DEBUG", "packet-received"):
             print(">Pck:",pck)
@@ -1164,7 +1149,7 @@ class Switch(ObjetoBase):
         self.y = y
         self.timeout = config.getint("SWITCH", "routing-ttl") #Segundos
 
-        for p in range(self.max_connections):
+        while self.portid < self.max_connections:
             self.portid += 1
             Port(self)
         print(self.pall)
@@ -1310,7 +1295,8 @@ class Hub(ObjetoBase):
         self.objectype = "Hub"
         push_elemento("Creado objeto Hub")
         self.imgdir = resdir + "Hub.*"
-        ObjetoBase.__init__(self, x, y, self.objectype, name=name)
+        ObjetoBase.__init__(self, x, y, self.objectype, name=name,
+            maxconnections=maxconnections, ip=ip)
         self.x = x
         self.y = y
 
@@ -1394,11 +1380,8 @@ class Computador(ObjetoBase):
                     n = 8
                     self.bins = ".".join([tmp[i * n:i * n+n] for i,blah in enumerate(tmp[::n])])
                     self.str = ".".join([str(int(tmp[i * n:i * n+n], base=2)) for i,blah in enumerate(tmp[::n])])
-                else:
-                    raise
             else:
                 print("Debug:", mode)
-                raise NameError('No mode defined')
 
     def update(self):
         ObjetoBase.update(self)
@@ -1459,7 +1442,7 @@ class Computador(ObjetoBase):
             if pck.frame != None:
                 frame="{0:0111b}".format(pck.frame)
                 print("\033[91m>>Atributos del paquete\033[00m")
-                totalen = pck.lenght + 14*8
+                #totalen = pck.lenght + 14*8
                 print("Frame:", bin(pck.frame))
                 mac1 = "{0:0111b}".format(pck.frame)[0:6*8]
                 readmac = str(hex(int(mac1,2))).strip("0x")
@@ -1502,7 +1485,7 @@ class Servidor(Computador):
 
         push_elemento("Creado objeto {}".format(self.objectype))
         self.img = resdir + "Server.*"
-        ObjetoBase.__init__(self, x, y, self.objectype, name=name)
+        Computador.__init__(self, x, y, self.objectype, name=name, maxconnections=maxconnections, ip=ip)
         self.x = x
         self.y = y
         self.max_connections = maxconnections
@@ -1635,7 +1618,6 @@ class packet():
         w, h = cable.w + TheGrid.sqres, cable.h + TheGrid.sqres
         x, y = cable.x*TheGrid.sqres-TheGrid.sqres/2, cable.y*TheGrid.sqres-TheGrid.sqres/2
         xi, yi = (start.x-0.5)*TheGrid.sqres-x, (start.y-0.5)*TheGrid.sqres-y
-        xf, yf = end.x, end.y
         r = sqrt(cable.w**2+cable.h**2) #Pixeles totales
         t=r/v #Tiempo en segundos que durara la animacion
         tf = int(fps*t) #Fotogramas totales
@@ -1802,7 +1784,6 @@ class Ping(icmp):
 
         identifier = 1*2**15 + 42 * 2**8 + 42
         Code = 0
-        icmp_header_checksum = random.getrandbits(16)
         self.icmp_header = ((((((((Type << 8) | Code)<< 16) | checksum) << 16) | identifier) << 16) | identific)
         self.pck = icmp(self.ip_header, self.icmp_header, self.payload)
 
@@ -2131,7 +2112,7 @@ class PingWin(Gtk.ApplicationWindow):
 
         else:
             yonW = YesOrNoWindow("{} no es una IP válida, por favor, introduzca una IP válida".format(ip), Yest="OK", Not="Ok también")
-            yonR = yonW.run()
+            yonW.run()
             yonW.destroy()
 
     def show(self, widget):
@@ -2171,14 +2152,11 @@ def restart(*args):
     print("End time: " + time.strftime("%H:%M%S"))
     print("Restarting program")
     print("\033[92m##############################\033[00m")
-    os.chdir(startcwd)
     os.execl(sys.executable, sys.executable, *sys.argv)
 
 def leppard():
     print("Gunter glieben glauchen globen")
 
-writeonlog("Esto ha llegado al final del codigo al parecer sin errores")
-writeonlog("O no")
 MainClase()
 
 print("Actual time: " + time.strftime("%H:%M:%S"))
