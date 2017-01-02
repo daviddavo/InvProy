@@ -1,10 +1,9 @@
-print("Module save imported")
 import pickle
 import os
 import gi
 import gi.repository
 gi.require_version('Gtk', '3.0')
-from gi.repository import Gtk, GObject, Gdk, GdkPixbuf
+from gi.repository import Gtk, GObject, GdkPixbuf
 from invproy import main
 
 GLADEFILE = main.GLADEFILE
@@ -91,5 +90,6 @@ class loadWindow(Gtk.Window):
         self.window.hide()
         self.window.destroy()
         return rs
+
     def destroy(self):
         del self
