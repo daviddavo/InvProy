@@ -135,7 +135,6 @@ def push_elemento(texto):
     testo = time.strftime("%H:%M:%S") + " | " + texto
     contador = contador + 1
     varra1.push(data, testo)
-    #writeonlog(texto)
 
 #Retorna un entero en formato de bin fixed
 def bformat(num, fix):
@@ -181,8 +180,6 @@ areweputtingcable = 0
 
 class MainClase(Gtk.Window):
     def __init__(self):
-        global resdir
-
         self.ventana = builder.get_object("window1")
         self.ventana.connect("key-press-event", self.on_key_press_event)
         self.ventana.connect("key-release-event", self.on_key_release_event)
@@ -204,10 +201,6 @@ class MainClase(Gtk.Window):
                 Gtk.Image.new_from_file(resdir + jlist[j-start]).get_pixbuf().scale_simple(i, i, GdkPixbuf.InterpType.BILINEAR)))
             objtmp.set_tooltip_text(jlist[j - start].replace(".png", ""))
 
-        #global configWindow
-        #configWindow = cfgWindow()
-
-        builder.get_object("imagemenuitem1").connect("activate", self.new)
         builder.get_object("imagemenuitem9").connect("activate", self.showcfgwindow)
         builder.get_object("imagemenuitem1").connect("activate", self.new)
         builder.get_object("imagemenuitem3").connect("activate", self.save)
@@ -297,14 +290,10 @@ class MainClase(Gtk.Window):
         def delete(self, obj):
             self.tree.remove(obj.trlst)
 
-    @staticmethod
-    def showcfgwindow(*args):
-        global configWindow
-        try:
-            configWindow.show()
-        except:
-            configWindow = cfgWindow()
-            configWindow.show()
+    def showcfgwindow(self, *args):
+        if not hasattr(self, "configWindow"):
+            self.configWindow = cfgWindow()
+        self.configWindow.show()
 
     #24/06 Eliminada startCable(), incluida en toolbutton_clicked
 
@@ -340,10 +329,9 @@ class MainClase(Gtk.Window):
     def on_key_press_event(self, widget, event):
         """ Lo que hace al pulsar una tecla """
         keyname = Gdk.keyval_name(event.keyval).upper() #El upper es por si está BLOQ MAYUS activado.
-        global allkeys #Esta es una lista que almacena todas las teclas que están siendo pulsadas
         if config.getboolean("BOOLEANS", "print-key-pressed") == True:
             logger.debug("Key %s (%d) pulsada", keyname, event.keyval)
-            logger.debug("Todas las teclas: ", allkeys)
+            logger.debug("Todas las teclas: %s" % allkeys)
         if not keyname in allkeys:
             allkeys.add(keyname)
         if ("CONTROL_L" in allkeys) and ("Q" in allkeys):
@@ -351,14 +339,12 @@ class MainClase(Gtk.Window):
         if ("CONTROL_L" in allkeys) and ("R" in allkeys):
             restart()
         if ("CONTROL_L" in allkeys) and ("U" in allkeys):
-            global allobjects
             logger.warning("HARD UPDATE")
             logger.info(allobjects)
             for obj in allobjects:
                 obj.update()
 
         if ("CONTROL_L" in allkeys) and ("S" in allkeys):
-            #global allobjects
             MainClase.save()
         if ("CONTROL_L" in allkeys) and ("L" in allkeys):
             MainClase.load()
@@ -378,13 +364,12 @@ class MainClase(Gtk.Window):
             self.toolbutton_clicked(builder.get_object("toolbutton7"))
         return keyname
 
-    #Al dejar de pulsar la tecla deshace lo anterior.
     @staticmethod
     def on_key_release_event(widget, event):
+        """Al dejar de pulsar la tecla deshace lo anterior."""
         keynameb = Gdk.keyval_name(event.keyval).upper()
         if config.getboolean("BOOLEANS", "print-key-pressed") == True:
             logger.debug("Key %s (%d) released", keynameb, event.keyval)
-        global allkeys
         allkeys.discard(keynameb)
 
     @staticmethod
@@ -392,25 +377,25 @@ class MainClase(Gtk.Window):
         """Comprueba si el objeto tiene una ip asignada"""
         return bool(objeto.IP != None)
 
-    def save():
+    @staticmethod
+    def save(widget=None):
         #global cables #There is no need to globalize it if you are only
         #global allobjects #reading it
-        lscl = 0
-        try:
-            if args[1].get_label() == "gtk-save-as":
-                logger.info("Guardando como")
-                lscl = 1
-        except:
-            pass
+        if widget == None:
+            lscl = 0
+        elif widget.get_label() == "gtk-save-as":
+            logger.info("Guardando como")
+            lscl = 1
         save.save(allobjects,cables, aslc=lscl)
         push_elemento("Guardando...")
 
-    def load():
+    @staticmethod
+    def load(*_):
         save.load(allobjects,cables)
         push_elemento("Cargando...")
-    def new():
-        global allobjects
-        global cables
+
+    @staticmethod
+    def new(*_):
         save.last = 0
         while len(allobjects) > 0:
             allobjects[0].delete(pr=0)
@@ -539,7 +524,6 @@ class Grid():
     def clicked_on_grid(self, widget, event, *args):
         global clicked
         global bttnclicked
-        global allobjects
         global areweputtingcable
         self.contadorback += 1
 
@@ -646,19 +630,12 @@ class ObjetoBase():
     #Una función para atraerlos a todos y atarlos en las tinieblas
     def __init__(self, x, y, objtype, *args, name="Default", maxconnections=4, ip=None):
         global cnt_objects
-        global allobjects
 
         #IMPORTANTE: GENERAR UUID PARA CADA OBJETO
         #La v4 crea un UUID de forma aleatoria
         self.uuid = uuid.uuid4()
         logger.info("\033[96mUUID:\033[00m %s", self.uuid)
-
-        self.builder = Gtk.Builder()
-        self.builder.add_from_file(GLADEFILE)
-        self.menuemergente = self.builder.get_object("grid_rclick")
-        self.builder.get_object("grid_rclick-disconnect_all").connect("activate", self.disconnect)
-        self.builder.get_object("grid_rclick-delete").connect("activate", self.delete)
-        self.builder.get_object("grid_rclick-debug").connect("activate", self.debug)
+        self.build()
 
         allobjects.append(self)
 
@@ -708,16 +685,17 @@ class ObjetoBase():
 
         self.cnt = 0 #Se me olvido que hace esta cosa
 
-    def load(self):
-        global cnt_objects
-        global cnt_rows
-        global allobjects
+    def build(self):
         self.builder = Gtk.Builder()
         self.builder.add_from_file(GLADEFILE)
         self.menuemergente = self.builder.get_object("grid_rclick")
         self.builder.get_object("grid_rclick-disconnect_all").connect("activate", self.disconnect)
         self.builder.get_object("grid_rclick-delete").connect("activate", self.delete)
         self.builder.get_object("grid_rclick-debug").connect("activate", self.debug)
+
+    def load(self):
+        global cnt_objects
+        self.build()
         self.connections = []
         self.cables = []
         cnt_objects += 1
@@ -743,11 +721,9 @@ class ObjetoBase():
 
     def debug(self, *args):
         logger.debug("DEBUG")
-        logger.debug("MAC: %s", self.macdir, int(self.macdir))
+        logger.debug("MAC: %s, %s", self.macdir, int(self.macdir))
 
     def rclick(self, event):
-        global rclick_Object
-        rclick_Object = self
 
         logger.debug("rclick en %s, %s, %s\n\t>Connections: %s",
             self.objectype, self.x, self.y, self.connections)
@@ -804,12 +780,6 @@ class ObjetoBase():
             return subcomps
 
         comps.extend(subcompcon(self))
-
-        try:
-            #comps.remove(self)
-            pass
-        except:
-            pass
 
         if args == 1 or "Gtk" in str(args):
             logger.debug("Comps: %s", comps)
@@ -963,7 +933,7 @@ class ObjetoBase():
                 logger.debug("<<Fin de los atributos")
 
 class mac():
-    def __init__(self, *macaddr, bits=48):
+    def __init__(self, *args, macaddr=None, bits=48):
         #ToDo: Check that the MAC doesn't exist alredy
         if macaddr == None:
             tmp = self.genmac(bits=bits)
@@ -1005,7 +975,6 @@ npack = 0
 class Router(ObjetoBase):
     cnt = 1
     def __init__(self, x, y, *args, name="Default"):
-        global cnt_objects
         self.objectype = "Router"
         push_elemento("Creado Objeto Router")
 
@@ -1380,7 +1349,7 @@ class Computador(ObjetoBase):
         logger.debug("PCK ICMP HEADER: {}".format( "{0:064b}".format(ping.icmp_header)))
         logger.debug("PCK IPHEADER: {}".format( "{0:0160b}".format(ping.ip_header)))
 
-        logger.debug("MAC's: {}".format( self.macdir, to.macdir))
+        logger.debug("MAC's: from: {}, to: {}".format( self.macdir, to.macdir))
         frame = eth(int(to.macdir), int(self.macdir), ping)
         frame.applytopack(ping)
         logger.debug("Pck frame: {}".format( ping.frame))
@@ -1392,7 +1361,7 @@ class Computador(ObjetoBase):
 
     #Ver routing: https://en.wikipedia.org/wiki/IP_forwarding
     def packet_received(self, pck, *args, port=None):
-        logger.debug("Hola, soy {} y he recibido un paquete, tal vez tenga que responder".format( self.name ))
+        logger.debug("Hola, soy {} y he recibido un paquete en {}, tal vez tenga que responder".format( self.name, port ))
         #Si el tipo de ping es x, responder, si es y imprimir info
         if config.getboolean("DEBUG", "packet-received"):
             logger.debug(">Pck: {}".format(pck))
@@ -1470,12 +1439,10 @@ class Cable():
 
         self.image.show()
 
-        global cables
         cables.append(self)
         logger.debug("Todos los cables: %s", cables)
 
     def load(self):
-        global cables
         self.cair()
         self.image.show()
         cables.append(self)
@@ -1522,7 +1489,6 @@ class Cable():
         TheGrid.moveto(self.image, self.x, self.y, layout=TheGrid.cables_lay)
 
     def delete(self):
-        global cables
         cables.remove(self)
 
         self.fromobj.cables.remove(self)
@@ -1753,7 +1719,7 @@ class Ping(icmp):
 class cfgWindow(MainClase):#MainClase):
     def __init__(self, *args):
         push_elemento("Invocada ventana de configuracion")
-        writeonlog("Has invocado a la GRAN VENTANA DE CONFIGURACION <--- Boss")
+        logger.debug("Has invocado a la GRAN VENTANA DE CONFIGURACION <--- Boss")
         self.cfgventana = builder.get_object("cfgwindow")
         self.cfgventana.connect("key-press-event", self.on_key_press_event)
         self.cfgventana.connect("key-release-event", self.on_key_release_event)
@@ -2055,7 +2021,7 @@ class PingWin(Gtk.ApplicationWindow):
                     break
             if to == None:
                 yonW = YesOrNoWindow("La IP {} no se ha encontrado".format(ip), Yest="OK", Not="Ok también")
-                yonR = yonW.run()
+                yonW.run()
                 yonW.destroy()
 
         else:
