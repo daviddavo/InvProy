@@ -438,7 +438,6 @@ class YesOrNoWindow(Gtk.Dialog):
     def destroy(self):
         self.yesornowindow.destroy()
 
-objetocable1 = None
 
 class Grid():
     """ Donde se visualizan los objetos """
@@ -577,15 +576,13 @@ class Grid():
                     if areweputtingcable == "True":
                         push_elemento("Ahora selecciona otro más")
                         areweputtingcable = "Secondstep"
-                        global objetocable1
-                        objetocable1 = objeto
+                        self.objetocable1 = objeto
                     elif areweputtingcable == "Secondstep":
                         push_elemento("Poniendo cable")
                         areweputtingcable = 0
-                        global objetocable1
-                        cable = Cable(objetocable1, objeto)
-                        objeto.connect(objetocable1, cable)
-                        objetocable1 = 0
+                        cable = Cable(self.objetocable1, objeto)
+                        objeto.connect(self.objetocable1, cable)
+                        self.objetocable1 = 0
 
                 else:
                     push_elemento("Número máximo de conexiones alcanzado")
@@ -793,7 +790,6 @@ class ObjetoBase():
 
     #TODO: Para no tener que actualizar todo, que compruebe el que cambió
     #TODO: !! Hacer que modifique el menu_emergente (Hecho a medias xds)
-    #Nota !!: No puedes buscar un objeto en una lista, debes buscar sus atr.
     def update(self):
         logger.debug("\033[95m>>Updating\033[00m %s", self)
         logger.debug(self.builder.get_object("grid_rclick-disconnect"))
@@ -914,7 +910,7 @@ class ObjetoBase():
             self.image.destroy()
             allobjects.remove(self)
 
-    def packet_received(self, pck, *args):
+    def packet_received(self, pck, *args, port=None):
         """ La variable port será útil algún día """
         logger.debug("Hola, soy {} y he recibido un paquete, pero no sé que hacer con él".format(self.name))
         if config.getboolean("DEBUG", "packet-received"):
@@ -1179,6 +1175,7 @@ class Switch(ObjetoBase):
         #Si existe una tabla de enrutamiento que contiene una ruta para macd, enviar por ahi
         #Si no, enviar al siguiente, y así
         logger.debug(">MAAAC: %s", int(macd, 2))
+        connections_compare = [x.objectype for x in self.connections]
         if int(macd, 2) in dic and ttl > 0:
             pck.animate(self, dic[int(macd, 2)])
 
@@ -1187,7 +1184,7 @@ class Switch(ObjetoBase):
                 if x[0] == int(macd, 2):
                     pck.animate(self, self.pdic[x[1]])
 
-        elif "Switch" in [x.objectype for x in self.connections] and ttl >= 0:
+        elif "Hub" or "Switch" in connections_compare and ttl >= 0:
             logger.debug("Ahora lo enviamos al siguiente router")
             tmplst = self.connections[:] #Crea una nueva copia de la lista
             logger.debug(tmplst)
@@ -1216,11 +1213,9 @@ class Switch(ObjetoBase):
                 self.table.remove(row)
             logger.debug(row_format.format(row[0], row[1], int(row[2]-int(time.time()))))
 
-#¿Tengo permisos de escritura?, no se si tendré permisos
-#Update: Si los tenía
 class Hub(ObjetoBase):
     cnt = 1
-    def __init__(self, x, y, *args, name="Default", maxconnections=4, ip=None):
+    def __init__(self, x, y, *args, name="Default", maxconnections=5, ip=None):
         self.objectype = "Hub"
         push_elemento("Creado objeto Hub")
         self.imgdir = resdir + "Hub.*"
@@ -1229,7 +1224,7 @@ class Hub(ObjetoBase):
         self.x = x
         self.y = y
 
-    def packet_received(self, pck, *args): #, port=None):
+    def packet_received(self, pck, *args, port=None):
         ttl  = int(pck.str[64:72], 2)
         #macs = "{0:0112b}".format(pck.frame)[6*8+1:6*16+1]
         ttlnew = "{0:08b}".format(ttl-1)
@@ -1710,8 +1705,6 @@ class Ping(icmp):
         self.bits = self.pck.bits
 
         return self
-
-
 
 #Ventana para configurar las variables de Config.ini
 #Nota: Por terminar
