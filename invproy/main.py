@@ -391,8 +391,9 @@ class MainClase(Gtk.Window):
 
     @staticmethod
     def load(*_):
-        save.load(allobjects, cables)
         push_elemento("Cargando...")
+        save.load(allobjects, cables)
+        push_elemento("Cargado")
 
     @staticmethod
     def new(*_):
@@ -705,8 +706,8 @@ class ObjetoBase():
 
         self.trlst = objlst.append(self)
 
-        self.image.set_tooltip_text("".join([self.name, " (", len(self.connections),
-            "/", self.max_connections, ")\n", self.ipstr]))
+        self.image.set_tooltip_text("".join([str(x) for x in [self.name, " (", len(self.connections),
+            "/", self.max_connections, ")\n", self.ipstr]]))
         self.window_changethings = w_changethings(self)
         self.builder.get_object("grid_rclick-name").connect("activate", self.window_changethings.show)
 

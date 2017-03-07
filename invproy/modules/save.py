@@ -33,10 +33,7 @@ def save(allobjects, cabls, aslc=0):
         try:
             os.remove(fil)
         except OSError as e:
-            if e.errno == errno.ENOENT:
-                pass
-            else:
-                raise
+            raise OSError
         logger.debug(allobjects)
         with open(fil, "wb") as output:
             pickle.dump((allobjects,cabls), output)
