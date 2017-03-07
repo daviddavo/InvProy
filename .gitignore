@@ -1,3 +1,6 @@
+Invproy.egg-info
+dist
+build
 .atomignore
 .directory
 cmd.exe

@@ -26,7 +26,7 @@
     publicado por la Free Software Foundation, ya sea la versión 3 de layout
     licencia o la más reciente.
 
-    Este programa es distribuido con la esperanza de que sea útil, pero 
+    Este programa es distribuido con la esperanza de que sea útil, pero
     SIN NINGUNA GARANTÍA; sin siquiera la garantía implícita de COMERCIABILIDAD
     o de la APTITUD DE LA MISMA PARA UN PROPÓSITO PARTICULAR. Ver la GNU General
     Public License para más detalles.
@@ -34,22 +34,17 @@
     Debes haber recibido una copia de la GNU General Public License con
     este programa, si no es así, ver <http://www.gnu.org/licenses/>.
 '''
+import configparser, os, sys, time, random, math
 from datetime import datetime
 startTime = datetime.now()
 
-import configparser, os, csv, sys, time, random, math
 import xml.etree.ElementTree as xmltree
 from ipaddress import ip_address
 from random import choice
 
-#Esto hace que el programa se pueda ejecutar fuera de la carpeta.
-#startcwd = os.getcwd()
-
-try:
-    #os.chdir(os.path.dirname(sys.argv[0]))
-    pass
-except:
-    pass
+__home__ = os.path.expanduser("~/.invproy")
+from invproy.modules import logmod
+logger = logmod.logging.getLogger("main")
 
 os.system("clear")
 print("\033[91m##############################\033[00m")
@@ -59,40 +54,22 @@ This program comes with ABSOLUTELY NO WARRANTY; for details go to 'Ayuda > Acerc
 This is free software, and you are welcome to redistribute it\n\
 under certain conditions\n")
 
-try: #Intenta importar los modulos necesarios
-    #sys.path.append("Modules/")
-    from invproy.modules import Test
-except:
-    print("Error: No se han podido importar los modulos...")
-    raise Exception
-    sys.exit()
-
-#Aqui importamos los modulos del programa que necesitamos...
-
-from invproy.modules.logmod import *
-from invproy.modules import save
-
-def lprint(*objects, sep=" ", end="\n", file=sys.stdout, flush=False):
-    print(*objects, sep=sep, end=end, file=file, flush=flush)
-    thing=str()
-    for i in objects:
-        thing += str(i) + sep
-    writeonlog(thing)
-
-lprint("Start loading time: " + time.strftime("%H:%M:%S"))
+logger.info("Start loading time: " + time.strftime("%H:%M:%S"))
 
 try:
     #Importando las dependencias de la interfaz
     import gi
     gi.require_version('Gtk', '3.0')
     from gi.repository import Gtk, GObject, Gdk, GdkPixbuf
-except:
-    lprint("Por favor, instala PyGObject en tu ordenador. \n  En ubuntu suele ser 'apt-get install python3-gi'\n  En Archlinux es 'pacman -S python-gobject'")
+except ImportError:
+    print("Por favor, instala PyGObject en tu ordenador. \n\
+      En ubuntu suele ser 'apt-get install python3-gi'\n\
+      En Archlinux es 'pacman -S python-gobject'")
     sys.exit()
 
 try:
     import cairo
-except:
+except ImportError:
     print("Necesitas tener instalado cairo")
     print("Como es lógico, pon 'pacman -S python-cairo' en Archlinux")
     sys.exit()
@@ -100,14 +77,16 @@ except:
 #Definiendo un par de cosillas necesarias
 
 maindir, this_filename = os.path.split(__file__)
+GLADEFILE = maindir + "/Interface2.glade"
+from invproy.modules import save
 gtk = Gtk
 config      = configparser.RawConfigParser()
 
 config.read(maindir + "/Config.ini")
 allobjects = []
 
-#Funcion que convierte un numero a una str con [digits] cifras
 def digitsnumber(number, digits):
+    """Funcion que convierte un numero a una str con [digits] cifras"""
     if len(str(number)) == digits:
         return str(number)
     elif len(str(number)) < digits:
@@ -115,20 +94,18 @@ def digitsnumber(number, digits):
     else:
         return "-1"
 
-#Convierte hexadecimal a RGBA tal y como Gdk lo requiere
 def hex_to_rgba(value):
+    """Convierte hexadecimal a RGBA tal y como Gdk lo requiere"""
     value = value.lstrip('#')
     if len(value) == 3:
         value = ''.join([v*2 for v in list(value)])
-    (r1,g1,b1,a1)=tuple(int(value[i:i+2], 16) for i in range(0, 6, 2))+(1,)
-    (r1,g1,b1,a1)=(r1/255.00000,g1/255.00000,b1/255.00000,a1)
+    (r1, g1, b1, a1)=tuple(int(value[i:i+2], 16) for i in range(0, 6, 2))+(1, )
+    (r1, g1, b1, a1)=(r1/255.00000, g1/255.00000, b1/255.00000, a1)
 
-    return (r1,g1,b1,a1)
+    return (r1, g1, b1, a1)
 
-print("#42FF37", hex_to_rgba("#42FF37"))
-
-#Comprueba la integridad del pack de recursos
 def checkres(recurdir):
+    """Comprueba la integridad del pack de recursos"""
     files = ["Cable.png", "Router.png", "Switch.png", "Computer.png", "Hub.png"]
     cnt = 0
     ss = []
@@ -139,55 +116,49 @@ def checkres(recurdir):
             ss.append(i)
 
     if not (cnt == len(files)):
-        lprint("WARNING!!!!!111!!!11!!")
-        lprint("Faltan archivos en "+recurdir)
-        print(os.listdir(recurdir))
-        lprint(ss)
+        logger.error("Faltan archivos en "+recurdir)
         sys.exit()
     else:
-        lprint("Estan todos los archivos")
+        logger.info("No falta ningún archivo")
 
-print(os.listdir( os.path.abspath(os.path.join(maindir, os.pardir ))))
-print(os.listdir(maindir))
-print(os.listdir(maindir + "/resources"))
+logger.info(os.listdir( os.path.abspath(os.path.join(maindir, os.pardir ))))
+logger.info(os.listdir(maindir))
+logger.info(os.listdir(maindir + "/resources"))
 checkres(maindir + "/" + config.get("DIRS", "respack"))
 
-#Envia a la Statusbar informacion.
 contador = 0
 def push_elemento(texto):
+    """Envia a la Statusbar informacion."""
     global contador
     varra1 = builder.get_object("barra1")
     data = varra1.get_context_id("Ejemplocontextid")
     testo = time.strftime("%H:%M:%S") + " | " + texto
     contador = contador + 1
     varra1.push(data, testo)
-    writeonlog(texto)
 
-#Retorna un entero en formato de bin fixed
 def bformat(num, fix):
-    if type(num) == int:
+    """Retorna un entero en formato de bin fixed"""
+    if isinstance(num, int):
         return str(("{0:0" + str(fix) + "b}").format(num))
     else:
         return "ERR0R"
 
-gladefile = maindir + "/Interface2.glade"
 
 try:
     builder = Gtk.Builder()
-    builder.add_from_file(gladefile)
-    writeonlog("Cargando interfaz")
-    lprint("Interfaz cargada\nCargados un total de " + str(len(builder.get_objects())) + " objetos")
-    xmlroot = xmltree.parse(gladefile).getroot()
-    lprint("Necesario Gtk+ "+ xmlroot[0].attrib["version"]+".0", end="")
-    lprint(" | Usando Gtk+ "+str(Gtk.get_major_version())+"."+str(Gtk.get_minor_version())+"."+str(Gtk.get_micro_version()))
+    builder.add_from_file(GLADEFILE)
+    logger.info("Interfaz cargada\n\t>Cargados un total de " + str(len(builder.get_objects())) + " objetos")
+    xmlroot = xmltree.parse(GLADEFILE).getroot()
+    logger.info("Necesario Gtk+ "+ xmlroot[0].attrib["version"]+".0")
+    logger.info(" | Usando Gtk+ "+str(Gtk.get_major_version())+"."+str(Gtk.get_minor_version())+"."+str(Gtk.get_micro_version()))
 except Exception as e:
-    lprint("Error: No se ha podido cargar la interfaz.")
+    logger.error("Error: No se ha podido cargar la interfaz.")
     if "required" in str(e):
-        xmlroot = xmltree.parse(gladefile).getroot()
-        lprint("Necesario Gtk+ "+ xmlroot[0].attrib["version"]+".0", end="\n")
-        lprint(">Estas usando Gtk+"+str(Gtk.get_major_version())+"."+str(Gtk.get_minor_version())+"."+str(Gtk.get_micro_version()))
+        xmlroot = xmltree.parse(GLADEFILE).getroot()
+        logger.error("Necesario Gtk+ "+ xmlroot[0].attrib["version"]+".0", end="\n")
+        logger.error(">Estas usando Gtk+"+str(Gtk.get_major_version())+"."+str(Gtk.get_minor_version())+"."+str(Gtk.get_micro_version()))
     else:
-        lprint("Debug:", e)
+        logger.error("Debug: %s", e)
     sys.exit()
 
 #Intenta crear el archivo del log
@@ -197,29 +168,18 @@ except Exception as e:
 WRES, HRES  = int(config.get("GRAPHICS", "WRES")), int(config.get("GRAPHICS", "HRES"))
 resdir      = maindir + "/" + config.get("DIRS", "respack")
 
-lprint(resdir)
+logger.info("Resdir: %r", resdir)
 
 #CLASSES
 
 allkeys = set()
 cables = []
-clickedobjects = set() #Creamos una cosa para meter los ultimos 10 objetos clickados. (EN DESUSO)
 clicked = 0
 bttnclicked = 0
 areweputtingcable = 0
 
-#Función a medias, esto añadirá un objeto a la cola de ultimos objetos clickados, por si luego queremos deshacerlo o algo.
-def appendtoclicked(objeto):
-    clickedobjects.insert(0, objeto)
-    try:
-        clickedobjects.remove(9)
-    except:
-        pass
-
 class MainClase(Gtk.Window):
     def __init__(self):
-        global resdir
-
         self.ventana = builder.get_object("window1")
         self.ventana.connect("key-press-event", self.on_key_press_event)
         self.ventana.connect("key-release-event", self.on_key_release_event)
@@ -237,13 +197,10 @@ class MainClase(Gtk.Window):
         for j in range(start, end):
             objtmp = builder.get_object("toolbutton" + str(j))
             objtmp.connect("clicked", self.toolbutton_clicked)
-            objtmp.set_icon_widget(Gtk.Image.new_from_pixbuf(Gtk.Image.new_from_file(resdir + jlist[j-start]).get_pixbuf().scale_simple(i, i, GdkPixbuf.InterpType.BILINEAR)))
+            objtmp.set_icon_widget(Gtk.Image.new_from_pixbuf(
+                Gtk.Image.new_from_file(resdir + jlist[j-start]).get_pixbuf().scale_simple(i, i, GdkPixbuf.InterpType.BILINEAR)))
             objtmp.set_tooltip_text(jlist[j - start].replace(".png", ""))
 
-        global configWindow
-        #configWindow = cfgWindow()
-
-        builder.get_object("imagemenuitem1").connect("activate", self.new)
         builder.get_object("imagemenuitem9").connect("activate", self.showcfgwindow)
         builder.get_object("imagemenuitem1").connect("activate", self.new)
         builder.get_object("imagemenuitem3").connect("activate", self.save)
@@ -258,7 +215,7 @@ class MainClase(Gtk.Window):
         "onDeleteWindow":             exiting,
         "onExitPress":                exiting,
         "onRestartPress":             restart,
-        
+
         }
         builder.connect_signals(handlers)
 
@@ -269,7 +226,7 @@ class MainClase(Gtk.Window):
     class ObjLst():
         def __init__(self):
             self.view = builder.get_object("objetos_treeview")
-            self.tree = Gtk.TreeStore(str,str)
+            self.tree = Gtk.TreeStore(str, str)
             renderer = Gtk.CellRendererText()
             column = Gtk.TreeViewColumn("Objetos", renderer, text=0)
             self.view.append_column(column)
@@ -283,14 +240,15 @@ class MainClase(Gtk.Window):
             self.view.show_all()
 
             self.revealer = builder.get_object("Revealer1")
-            print("Revealer:",self.revealer.get_reveal_child())
             self.panpos = 100
 
-        def append(self, obj, otherdata=[]):
-            #SI OBJ YA ESTÄ, QUE AÑADA ATRIBUTOS A LA LISTA.
+        def append(self, obj, otherdata=None):
+            '''SI OBJ YA ESTÁ, QUE AÑADA ATRIBUTOS A LA LISTA.'''
+            if otherdata == None: otherdata = []
             it1 = self.tree.append(None, row=[obj.name, obj.objectype])
             it2 = self.tree.append(it1, row=["MAC", str(obj.macdir)])
-            itc = self.tree.append(it1, row=["Conexiones", "{}/{}".format(len(obj.connections), obj.max_connections)])
+            itc = self.tree.append(it1, row=["Conexiones", "{}/{}".format(
+                len(obj.connections), obj.max_connections)])
             for i in otherdata:
                 self.tree.append(it1, row=i)
 
@@ -309,9 +267,9 @@ class MainClase(Gtk.Window):
             if not hasattr(obj, "trcondic"):
                 obj.trcondic = {}
             #objlst.tree.append(self.trdic["Connections"], row=[self.name, self.objectype])
-            self.tree.set_value(obj.trdic["Connections"], 1, "{}/{}".format(len(obj.connections), obj.max_connections))
+            self.tree.set_value(obj.trdic["Connections"], 1, "{}/{}".format(
+                len(obj.connections), obj.max_connections))
             for i in obj.connections:
-                print(i.__repr__(), obj.trcondic)
                 if i in obj.trcondic.keys():
                     self.tree.set_value(obj.trcondic[i], 0, i.name)
                 else:
@@ -326,28 +284,23 @@ class MainClase(Gtk.Window):
             builder.get_object("paned1").set_position(-1)
             self.revealer.set_reveal_child(not self.revealer.get_reveal_child())
 
-            if not rev:
-                pass
-
-        def set_value(self,*args):
+        def set_value(self, *args):
             self.tree.set_value(*args)
 
         def delete(self, obj):
             self.tree.remove(obj.trlst)
 
     def showcfgwindow(self, *args):
-        global configWindow
-        try:
-            configWindow.show()
-        except:
-            configWindow = cfgWindow()
-            configWindow.show()
+        if not hasattr(self, "configWindow"):
+            self.configWindow = cfgWindow()
+        self.configWindow.show()
 
     #24/06 Eliminada startCable(), incluida en toolbutton_clicked
 
-    def togglegrid(self, *widget):
+    @staticmethod
+    def togglegrid(*widget):
         widget = widget[0]
-        global TheGrid
+        #global TheGrid #There is no need to use global
         obj = TheGrid.backgr_lay
         if widget.get_active() != True and obj.is_visible():
             obj.hide()
@@ -355,7 +308,8 @@ class MainClase(Gtk.Window):
             obj.show()
 
     #Una función para gobernarlos a todos.
-    def toolbutton_clicked(self, objeto):
+    @staticmethod
+    def toolbutton_clicked(objeto):
         global clicked
         global bttnclicked
         global areweputtingcable
@@ -364,7 +318,7 @@ class MainClase(Gtk.Window):
             push_elemento("Cancelada acción de poner un cable")
 
         if objeto.props.label == "toolbutton5":
-            lprint("Y ahora deberiamos poner un cable")
+            logger.debug("Y ahora deberiamos poner un cable")
             push_elemento("Ahora pulsa en dos objetos")
             areweputtingcable = "True"
 
@@ -372,13 +326,12 @@ class MainClase(Gtk.Window):
         clicked = True
         bttnclicked = object_name
 
-    #Al pulsar una tecla registrada por la ventana, hace todo esto.
     def on_key_press_event(self, widget, event):
+        """ Lo que hace al pulsar una tecla """
         keyname = Gdk.keyval_name(event.keyval).upper() #El upper es por si está BLOQ MAYUS activado.
-        global allkeys #Esta es una lista que almacena todas las teclas que están siendo pulsadas
         if config.getboolean("BOOLEANS", "print-key-pressed") == True:
-            lprint("Key %s (%d) pulsada" % (keyname, event.keyval))
-            lprint("Todas las teclas: ", allkeys)
+            logger.debug("Key %s (%d) pulsada", keyname, event.keyval)
+            logger.debug("Todas las teclas: %s", allkeys)
         if not keyname in allkeys:
             allkeys.add(keyname)
         if ("CONTROL_L" in allkeys) and ("Q" in allkeys):
@@ -386,20 +339,18 @@ class MainClase(Gtk.Window):
         if ("CONTROL_L" in allkeys) and ("R" in allkeys):
             restart()
         if ("CONTROL_L" in allkeys) and ("U" in allkeys):
-            global allobjects
-            print("HARD UPDATE")
-            print(allobjects)
+            logger.warning("HARD UPDATE")
+            logger.info(allobjects)
             for obj in allobjects:
                 obj.update()
 
         if ("CONTROL_L" in allkeys) and ("S" in allkeys):
-            global allobjects
             MainClase.save()
         if ("CONTROL_L" in allkeys) and ("L" in allkeys):
             MainClase.load()
             allkeys.discard("CONTROL_L")
             allkeys.discard("L")
-            
+
         #Para no tener que hacer click continuamente
         if ("Q" in allkeys):
             self.toolbutton_clicked(builder.get_object("toolbutton3"))
@@ -413,66 +364,57 @@ class MainClase(Gtk.Window):
             self.toolbutton_clicked(builder.get_object("toolbutton7"))
         return keyname
 
-    #Al dejar de pulsar la tecla deshace lo anterior.
-    def on_key_release_event(self, widget, event):
+    @staticmethod
+    def on_key_release_event(widget, event):
+        """Al dejar de pulsar la tecla deshace lo anterior."""
         keynameb = Gdk.keyval_name(event.keyval).upper()
         if config.getboolean("BOOLEANS", "print-key-pressed") == True:
-            lprint("Key %s (%d) released" % (keynameb, event.keyval))
-        global allkeys
+            logger.debug("Key %s (%d) released", keynameb, event.keyval)
         allkeys.discard(keynameb)
 
-    def drag_drop(widget, context, x, y, time):
-        push_elemento( "Drag drop at " + str(x) +"," + str(y) )
+    @staticmethod
+    def has_ip(objeto):
+        """Comprueba si el objeto tiene una ip asignada"""
+        return bool(objeto.IP != None)
 
-    #Comprueba si el objeto tiene una ip asignada
-    def has_ip(self):
-        try:
-            if self.IP != None:
-                return True
-            else:
-                return False
-        except:
-            return False
-
-    def save(*args):
-        global cables
-        global allobjects
-        lscl = 0
-        try:
-            if args[1].get_label() == "gtk-save-as":
-                print("Guardando como")
-                lscl = 1
-        except:
-            pass
-        save.save(allobjects,cables, aslc=lscl)
+    @staticmethod
+    def save(widget=None):
+        #global cables #There is no need to globalize it if you are only
+        #global allobjects #reading it
+        if widget == None:
+            lscl = 0
+        elif widget.get_label() == "gtk-save-as":
+            logger.info("Guardando como")
+            lscl = 1
+        save.save(allobjects, cables, aslc=lscl)
         push_elemento("Guardando...")
-    def load(*args):
-        global cables
-        global allobjects
-        save.load(allobjects,cables)
+
+    @staticmethod
+    def load(*_):
         push_elemento("Cargando...")
-    def new(*args):
-        global allobjects
-        global cables
+        save.load(allobjects, cables)
+        push_elemento("Cargado")
+
+    @staticmethod
+    def new(*_):
         save.last = 0
         while len(allobjects) > 0:
             allobjects[0].delete(pr=0)
         while len(cables) > 0:
             cables[0].delete()
 
-    def new(*args):
-        global cables
-        global allobjects
-        while len(allobjects) > 0:
-            allobjects[0].delete(pr=0)
+    #def new(*args):
+    #    global cables
+    #    global allobjects
+    #    while len(allobjects) > 0:
+    #        allobjects[0].delete(pr=0)
 
-#Esta clase no es mas que un prompt que pide 'Si' o 'No'.
-#La función run() retorna 1 cuando se clicka sí y 0 cuando se clicka no, así sirven como enteros y booleans.
 class YesOrNoWindow(Gtk.Dialog):
+    """ Esta clase no es mas que un prompt que pide 'Si' o 'No' """
     def __init__(self, text, *args, Yest="Sí", Not="No"):
 
         self.builder = Gtk.Builder()
-        self.builder.add_from_file(gladefile)
+        self.builder.add_from_file(GLADEFILE)
 
         self.yesornowindow = self.builder.get_object("YesOrNoWindow")
         self.labeldialog = self.builder.get_object("YoN_label")
@@ -489,19 +431,17 @@ class YesOrNoWindow(Gtk.Dialog):
         self = self.yesornowindow
 
     def on_button_clicked(self, widget):
-        dialog = self
+        pass
 
     def run(self):
         return self.yesornowindow.run()
-        self.yesornowindow.hide()
 
     def destroy(self):
         self.yesornowindow.destroy()
 
-objetocable1 = None
 
-#Esto es el Grid donde van las cosicas. A partir de aqui es donde esta lo divertido.
 class Grid():
+    """ Donde se visualizan los objetos """
     def __init__(self):
         #16/06/16 MAINPORT PASA A SER VARIAS LAYERS
         self.overlay    = builder.get_object("overlay1")
@@ -528,7 +468,7 @@ class Grid():
 
         #Modifica el color de fondo del viewport
         clr = hex_to_rgba(config.get("GRAPHICS", "viewport-background-color"))
-        print("CLR:", clr)
+        logger.info("CLR: %s", clr)
         self.viewport.override_background_color(Gtk.StateFlags.NORMAL, Gdk.RGBA(*clr))
 
         #13/07/16 Ahora esto va por cairo, mejooor.
@@ -538,7 +478,7 @@ class Grid():
         surface = cairo.ImageSurface(cairo.FORMAT_ARGB32, width, height)
         ctx = cairo.Context(surface)
         ctx.close_path ()
-        ctx.set_source_rgba(0,0,0,1)
+        ctx.set_source_rgba(0, 0,0, 1)
         ctx.set_line_width(1)
 
         for i in range(self.wres):
@@ -556,12 +496,12 @@ class Grid():
         self.backgr_lay.put(self.image, 0, 0)
 
         def subshow(widget):
-            #Para que no aparezca arriba a la izquierda:
+            """Para que la posición inicial no sea arriba a la izquierda"""
             scrolled = builder.get_object("scrolledwindow1")
             scrolled.get_vadjustment().set_value(height/3)
             scrolled.get_hadjustment().set_value(width/3)
 
-        if config.getboolean("GRAPHICS","start-centered"):
+        if config.getboolean("GRAPHICS", "start-centered"):
             builder.get_object("window1").connect("show", subshow)
         self.overlay.show_all()
         self.contadorback = 0
@@ -573,57 +513,63 @@ class Grid():
             elif str(layout.__class__.__name__) == "Layout":
                 layout = layout
             else:
-                print("layout.__class__.__name__", layout.__class__.__name__)
+                logger.info("layout.__class__.__name__ %s", layout.__class__.__name__)
             if image in layout.get_children():
                 layout.move(image, x*self.sqres, y*self.sqres)
             else:
                 layout.put(image, x*self.sqres, y*self.sqres)
         else:
-            print("\033[31mError: Las coordenadas se salen del grid\033[00m")
+            logger.debug("\033[31mError: Las coordenadas se salen del grid\033[00m")
 
     def clicked_on_grid(self, widget, event, *args):
         global clicked
         global bttnclicked
-        global allobjects
         global areweputtingcable
         self.contadorback += 1
 
-        push_elemento("Clicked on grid @" + str(self.gridparser(event.x, self.wres)) + "," + str(self.gridparser(event.y, self.hres)))
+        push_elemento("Clicked on grid @" + str(self.gridparser(event.x,
+            self.wres)) + ", " + str(self.gridparser(event.y, self.hres)))
 
-        if self.searchforobject(self.gridparser(event.x, self.wres), self.gridparser(event.y, self.hres)) == False:
+        if self.searchforobject(self.gridparser(event.x, self.wres),
+            self.gridparser(event.y, self.hres)) == False:
             if clicked == 1:
-                push_elemento("Clicked: " + str(clicked) + " bttnclicked: " + str(bttnclicked))
+                push_elemento(" ".join(["Clicked:", str(clicked), "bttnclicked:", str(bttnclicked)]))
                 if bttnclicked == "Router":
-                    Router(self.gridparser(event.x, self.wres), self.gridparser(event.y, self.hres))
+                    Router(self.gridparser(event.x, self.wres),
+                        self.gridparser(event.y, self.hres))
                     push_elemento("Creado objeto router")
                 elif bttnclicked == "toolbutton4":
-                    Switch(self.gridparser(event.x, self.wres), self.gridparser(event.y, self.hres))
+                    Switch(self.gridparser(event.x, self.wres),
+                        self.gridparser(event.y, self.hres))
                     push_elemento("Creado objeto switch")
                 elif bttnclicked == "toolbutton6":
-                    Computador(self.gridparser(event.x, self.wres), self.gridparser(event.y, self.hres))
+                    Computador(self.gridparser(event.x, self.wres),
+                        self.gridparser(event.y, self.hres))
                     push_elemento("Creado objeto Computador")
                 elif bttnclicked == "toolbutton7":
-                    Hub(self.gridparser(event.x, self.wres), self.gridparser(event.y, self.hres))
+                    Hub(self.gridparser(event.x, self.wres),
+                        self.gridparser(event.y, self.hres))
                     push_elemento("Creado objeto Hub")
 
-        elif self.searchforobject(self.gridparser(event.x, self.wres), self.gridparser(event.y, self.hres)) != False:
+        elif self.searchforobject(self.gridparser(event.x, self.wres),
+            self.gridparser(event.y, self.hres)) != False:
             push_elemento("Ahí ya hay un objeto, por favor selecciona otro sitio")
         else:
-            lprint("pls rebisa l codigo")
+            logger.error("Error inesperado en la función searchforobject")
         clicked = 0
         bttnclicked = 0
 
         #Button: 1== Lclick, 2== Mclick
         #Para comprobar si es doble o triple click: if event.type == gtk.gdk.BUTTON_PRESS, o gtk.gdk_2_BUTTON_PRESS
         if event.button == 3:
-            rclick_Object = self.searchforobject(self.gridparser(event.x, self.wres), self.gridparser(event.y, self.hres))
+            rclick_Object = self.searchforobject(self.gridparser(event.x,
+                self.wres), self.gridparser(event.y, self.hres))
             if rclick_Object != False:
                 rclick_Object.rclick(event)
-            else:
-                print("Agua")
 
         if areweputtingcable != 0:
-            objeto = self.searchforobject(self.gridparser(event.x, self.wres), self.gridparser(event.y, self.hres))
+            objeto = self.searchforobject(self.gridparser(event.x, self.wres),
+                self.gridparser(event.y, self.hres))
             if objeto == False:
                 push_elemento("Selecciona un objeto por favor")
             elif objeto != False:
@@ -631,54 +577,40 @@ class Grid():
                     if areweputtingcable == "True":
                         push_elemento("Ahora selecciona otro más")
                         areweputtingcable = "Secondstep"
-                        global objetocable1
-                        objetocable1 = objeto
+                        self.objetocable1 = objeto
                     elif areweputtingcable == "Secondstep":
                         push_elemento("Poniendo cable")
                         areweputtingcable = 0
-                        global objetocable1
-                        cable = Cable(objetocable1, objeto)
-                        objeto.connect(objetocable1, cable)
-                        objetocable1 = 0
+                        cable = Cable(self.objetocable1, objeto)
+                        objeto.connect(self.objetocable1, cable)
+                        self.objetocable1 = 0
 
                 else:
                     push_elemento("Número máximo de conexiones alcanzado")
 
-    #Te pasa las cordenadas int que retorna Gtk a coordenadas del Grid, bastante sencillito. Tienes que llamarlo 2 veces, una por coordenada
     def gridparser(self, coord, cuadrados, mode=0):
+        """ Convertir coordenadas en pixeles a cuadrados """
+        #TODO: Que no sea necesario llamarlo dos veces
         if mode == 0:
             partcoord = coord / self.sqres
             for i in range(cuadrados + 1):
-                if partcoord < i:
-                    return i
-                else:
-                    pass
+                if partcoord < i: return i
         if mode == 1:
             return coord * self.sqres
 
     def resizetogrid(self, image):
         #Image debe ser una imagen gtk del tipo gtk.Image
         pixbuf = image.get_pixbuf()
-        pixbuf = pixbuf.scale_simple(self.sqres, self.sqres, GdkPixbuf.InterpType.BILINEAR)
+        pixbuf = pixbuf.scale_simple(self.sqres, self.sqres,
+            GdkPixbuf.InterpType.BILINEAR)
         image.set_from_pixbuf(pixbuf)
 
     #Una función para encontrarlos,
-    def searchforobject(self, x, y):
-        global allobjects
-        localvar = False
-        for i in range(len(allobjects)):
-            if allobjects[i].x == x:
-                if allobjects[i].y == y:
-                    localvar = True
-                    objeto = allobjects[i]
-                    break
-        if localvar == True:
-            return objeto
-        else:
-            return False
-
-    def __str__(self):
-        lprint("No se que es esto")
+    @staticmethod #Actualizado 16/12/30
+    def searchforobject(x, y): #Estoy llorando de lo bello que es ahora
+        for i in allobjects:
+            if i.x == x and i.y == y: return i
+        return False
 
 TheGrid = Grid()
 
@@ -696,21 +628,12 @@ class ObjetoBase():
     #Una función para atraerlos a todos y atarlos en las tinieblas
     def __init__(self, x, y, objtype, *args, name="Default", maxconnections=4, ip=None):
         global cnt_objects
-        global cnt_rows
-        global allobjects
-        global gladefile
 
         #IMPORTANTE: GENERAR UUID PARA CADA OBJETO
         #La v4 crea un UUID de forma aleatoria
         self.uuid = uuid.uuid4()
-        print("\033[96mUUID:\033[00m", self.uuid)
-
-        self.builder = Gtk.Builder()
-        self.builder.add_from_file(gladefile)
-        self.menuemergente = self.builder.get_object("grid_rclick")
-        self.builder.get_object("grid_rclick-disconnect_all").connect("activate", self.disconnect)
-        self.builder.get_object("grid_rclick-delete").connect("activate", self.delete)
-        self.builder.get_object("grid_rclick-debug").connect("activate", self.debug)
+        logger.info("\033[96mUUID:\033[00m %s", self.uuid)
+        self.build()
 
         allobjects.append(self)
 
@@ -724,7 +647,6 @@ class ObjetoBase():
 
         #Algún día pasaré todos los algoritmos a algoritmos de busqueda binaria
         for f in os.listdir(resdir):
-            lprint(f, f.startswith(objtype))
             if f.startswith(objtype) and ( f.endswith(".jpg") or f.endswith(".png") ):
                 self.imgdir = resdir + f
                 break
@@ -743,32 +665,35 @@ class ObjetoBase():
 
         self.macdir = mac()
 
-        print("MAC:", self.macdir, int(self.macdir), bin(self.macdir))
+        logger.debug("MAC: %s, %s, %s", str(self.macdir), int(self.macdir), "{0:b}".format(int(self.macdir)))
         if ip == None:
-            print("No ip definida")
+            logger.debug("No ip definida")
             self.ipstr = "None"
 
         #Ahora vamos con lo de aparecer en la lista de la izquierda,
         #aunque en realidad es un grid
         lista = objlst
         self.trlst = lista.append(self)
-        self.image.set_tooltip_text(self.name + " (" + str(len(self.connections)) + "/" + str(self.max_connections) + ")\n" + self.ipstr)
+        self.image.set_tooltip_text("".join([self.name, " (", str(len(self.connections)),
+            "/", str(self.max_connections), ")\n", self.ipstr]))
 
         self.window_changethings = w_changethings(self)
-        self.builder.get_object("grid_rclick-name").connect("activate", self.window_changethings.show)
+        self.builder.get_object("grid_rclick-name").connect("activate",
+            self.window_changethings.show)
 
         self.cnt = 0 #Se me olvido que hace esta cosa
 
-    def load(self):
-        global cnt_objects
-        global cnt_rows
-        global allobjects
+    def build(self):
         self.builder = Gtk.Builder()
-        self.builder.add_from_file(gladefile)
+        self.builder.add_from_file(GLADEFILE)
         self.menuemergente = self.builder.get_object("grid_rclick")
         self.builder.get_object("grid_rclick-disconnect_all").connect("activate", self.disconnect)
         self.builder.get_object("grid_rclick-delete").connect("activate", self.delete)
         self.builder.get_object("grid_rclick-debug").connect("activate", self.debug)
+
+    def load(self):
+        global cnt_objects
+        self.build()
         self.connections = []
         self.cables = []
         cnt_objects += 1
@@ -781,27 +706,25 @@ class ObjetoBase():
 
         self.trlst = objlst.append(self)
 
-        self.image.set_tooltip_text(self.name + " (" + str(len(self.connections)) + "/" + str(self.max_connections) + ")\n" + self.ipstr)
+        self.image.set_tooltip_text("".join([str(x) for x in [self.name, " (", len(self.connections),
+            "/", self.max_connections, ")\n", self.ipstr]]))
         self.window_changethings = w_changethings(self)
         self.builder.get_object("grid_rclick-name").connect("activate", self.window_changethings.show)
 
-        print("CABLES",self.cables)
+        logger.debug("CABLES %s", self.cables)
 
     #Esta funcion retorna una str cuando se usa el objeto. En lugar de <0xXXXXXXXX object>
     def __str__(self):
-        return  "<Tipo: " + self.objectype +" | Name: " + self.name + " | Pos: " + str(self.x) + ", " + str(self.y) + ">"
+        return "".join(["<Tipo: ", self.objectype, " | Name: ", self.name, " | Pos: ", str(self.x), ", ", str(self.y), ">"])
 
     def debug(self, *args):
-        print("DEBUG")
-        print("MAC:", self.macdir, int(self.macdir))
+        logger.debug("DEBUG")
+        logger.debug("MAC: %s, %s", self.macdir, int(self.macdir))
 
     def rclick(self, event):
-        global rclick_Object
-        rclick_Object = self
 
-        print(self)
-        lprint("rclick en", self.x, self.y, self.objectype, "\nConnections: ", end="")
-        lprint(self.connections)
+        logger.debug("rclick en %s, %s, %s\n\t>Connections: %s",
+            self.objectype, self.x, self.y, self.connections)
         self.rmenu = self.menuemergente
         if self.objectype == "Computer" and len(self.compcon()) > 0:
             self.builder.get_object("grid_rclick-sendpkg").show()
@@ -813,13 +736,13 @@ class ObjetoBase():
             self.builder.get_object("grid_rclick-disconnect").hide()
         self.rmenu.popup(None, None, None, None, event.button, event.time)
 
-    def resizetogrid(self, image, *args):
+    @staticmethod
+    def resizetogrid(image, *args):
         #Ver resizetogrid en Grid (clase)
-        lprint(*args)
         TheGrid.resizetogrid(image)
 
     def clickado(self, widget, event):
-        lprint("Clickado en objeto " + str(self) + " @ " + str(self.x) + ", " + str(self.y))
+        logger.debug("Clickado en objeto %s@%s, %s", self, self.x, self.y)
 
     #Esta fucnión se encarga de comprobar a que ordenador(es) está conectado
     #en total, pasando por routers, hubs y switches.
@@ -836,71 +759,58 @@ class ObjetoBase():
             subcomps = []
 
             iterc = notself.connections
-            #print(notself, "connections:", iterc)
+            #logger.debug(notself, "connections:", iterc)
             #next(iterc)
 
             for con in iterc:
                 if con.uuid != reself.uuid and con.uuid not in [obj.uuid for obj in passedyet]:
                     passedyet.append(con)
-                    #print(con)
+                    #logger.debug(con)
                     if con.objectype == "Computer":
                         subcomps.append(con)
                     elif con.objectype == "Switch" or con.objectype == "Hub":
                         subcomps.extend(subcompcon(con))
                     else:
-                        print("Saltado", con)
-                        pass
+                        logger.debug("Saltado %s", con)
                 #passedyet.append(con)
 
-            #print("passedyet", passedyet)
+            #logger.debug("passedyet", passedyet)
             return subcomps
 
         comps.extend(subcompcon(self))
 
-        try:
-            #comps.remove(self)
-            pass
-        except:
-            pass
-
         if args == 1 or "Gtk" in str(args):
-            print("Comps:", comps)
-            print("\nCompsname:", [x.name for x in comps])
+            logger.debug("Comps: %s", comps)
+            logger.debug("\nCompsname: %s", [x.name for x in comps])
 
         return comps
 
-    #Comprueba si un objeto está conectado a otro.
     def isconnected(self, objeto):
-        cons = compcon(self)
-        if objeto in cons:
-            return True
-        else:
-            return False
+        """Comprueba si un objeto está conectado a otro."""
+        return bool(objeto in compcon(self))
 
     #TODO: Para no tener que actualizar todo, que compruebe el que cambió
     #TODO: !! Hacer que modifique el menu_emergente (Hecho a medias xds)
-    #Nota !!: No puedes buscar un objeto en una lista, debes buscar sus atr.
     def update(self):
-        print("\033[95m>>Updating\033[00m", self)
-        print(self.builder.get_object("grid_rclick-disconnect"))
+        logger.debug("\033[95m>>Updating\033[00m %s", self)
+        logger.debug(self.builder.get_object("grid_rclick-disconnect"))
         self.image.set_tooltip_text(self.name + " (" + str(len(self.connections)) + "/" + str(self.max_connections) + ")")
         objlst.set_value(self.trlst, 0, self.name)
 
-        objlst.update(self,"MAC", str(self.macdir))
+        objlst.update(self, "MAC", str(self.macdir))
         for child in self.builder.get_object("grid_rclick-disconnect").get_submenu().get_children():
             if child.props.label.upper() != "TODOS":
                 if child.link.uuid not in [x.uuid for x in self.connections]:
-                    #print("Object", child.link.__repr__(), "in connections", self.connections)
+                    #logger.debug("Object", child.link.__repr__(), "in connections", self.connections)
                     child.hide()
                     child.destroy()
                 else:
-                    #print("Object", child.link.__repr__(), "in self.connections", self.connections)
+                    #logger.debug("Object", child.link.__repr__(), "in self.connections", self.connections)
                     pass
-            pass
 
         objlst.upcon(self)
 
-        print("\033[95m<<\033[00m")
+        logger.debug("\033[95m<<\033[00m")
 
     def connect(self, objeto, cable):
         tmp = Gtk.MenuItem.new_with_label(objeto.name)
@@ -910,7 +820,7 @@ class ObjetoBase():
         #link es un objeto vinculado al widget, luego es útil.
         tmp.link = objeto
         tmp2 = Gtk.MenuItem.new_with_label(objeto.name)
-        
+
         if self.__class__.__name__ != "Switch" and self.__class__.__name__ != "Hub":
             tmp2.connect("activate", self.send_pck)
             tmp2.show()
@@ -922,7 +832,7 @@ class ObjetoBase():
         tmp.connect("activate", objeto.disconnect)
         tmp.link = self
         tmp2 = Gtk.MenuItem.new_with_label(self.name)
-        
+
         if objeto.__class__.__name__ != "Switch" and objeto.__class__.__name__ != "Hub":
             tmp2.show()
             tmp2.connect("activate", objeto.send_pck)
@@ -940,27 +850,24 @@ class ObjetoBase():
         objeto.update()
 
         if objeto.__class__.__name__ == "Switch":
-            print("Connecting {} to {}".format(objeto, self))
+            logger.debug("Connecting {} to {}".format(objeto, self))
             objeto.connectport(self)
         if self.__class__.__name__ == "Switch":
-            print("Connecting {} to {}".format(objeto, self))
+            logger.debug("Connecting {} to {}".format(objeto, self))
             self.connectport(objeto)
 
     def disconnect(self, widget, *args, de=None):
-        print("Cables:", self.cables)
+        logger.debug("Cables: %s", self.cables)
         #QUICKFIX
         try:
             if widget.props.label.upper() == "TODOS" and de == None:
                 de = "All"
             elif de == None:
                 de = widget.link
-        except:
-            print("NO WIDGET AT DISCONNECT()")
+        except AttributeError:
+            logger.error("NO WIDGET AT DISCONNECT()")
 
         if de == "All":
-            ###NO FUNCIONA DEL TODO BIEN, NO USAR###
-            #Bug, el ultimo cable no se borra
-            print("Ahora a desconectar de todos")
             while len(self.connections) > 0:
                 self.disconnect(widget, de=self.connections[0])
 
@@ -975,10 +882,7 @@ class ObjetoBase():
 
             iterc = iter(self.builder.get_object("grid_rclick-disconnect").get_submenu().get_children())
             next(iterc)
-            print("\033[91mLinks\033[00m", [x.link for x in iterc])
-
-            if de in [x.link for x in iterc]:
-                print("\033[91mSelf in\033[00m", self)
+            logger.debug("\033[91mLinks\033[00m %s", [x.link for x in iterc])
 
             for cable in self.cables:
                 if cable.fromobj == self or cable.toobj == self:
@@ -994,56 +898,53 @@ class ObjetoBase():
 
         self.update()
 
-    def delete(self, *widget, conf=1, pr=1):
+    def delete(self, *widget, pr=1):
         if pr == 1:
             yonW = YesOrNoWindow("¿Estás seguro de que quieres eliminar " + self.name + " definitivamente? El objeto será imposible de recuperar y te hechará de menos.")
             yonR = yonW.run()
             yonW.destroy()
         else:
             yonR = 1
-        if yonR == 1:
+        if yonR:
             self.disconnect(0, de="All")
             objlst.delete(self)
             self.image.destroy()
-            global allobjects
             allobjects.remove(self)
-        elif yonR == 0:
-            print("Piénsatelo dos veces")
-        else:
-            raise
 
     def packet_received(self, pck, *args, port=None):
-        print("Hola, soy {} y he recibido un paquete, pero no sé que hacer con él".format(self.name))
+        """ La variable port será útil algún día """
+        logger.debug("Hola, soy {} y he recibido un paquete, pero no sé que hacer con él".format(self.name))
         if config.getboolean("DEBUG", "packet-received"):
-            print(">Pck:",pck)
+            logger.debug(">Pck: %s", pck)
             if pck.frame != None:
-                print("\033[91m>>Atributos del paquete\033[00m")
+                logger.debug("\033[91m>>Atributos del paquete\033[00m")
                 totalen = pck.lenght + 14*8
                 wfr = bformat(pck.frame, (totalen+14)*8)
-                print(">Wfr:",wfr)
+                logger.debug(">Wfr: %s", wfr)
                 mac1 = "{0:0111b}".format(pck.frame)[0:6*8]
-                print(">Mac:", int(mac1,2))
-                readmac = str(hex(int(mac1,2))).strip("0x")
-                print(":".join([readmac[i * 2:i * 2 + 2] for i,bl in enumerate(readmac[::2])]).upper())
+                logger.debug(">Mac: %s", int(mac1, 2))
+                readmac = str(hex(int(mac1, 2))).strip("0x")
+                logger.debug(":".join([readmac[i * 2:i * 2 + 2] for i, bl in enumerate(readmac[::2])]).upper())
 
-                print("<<Fin de los atributos")
+                logger.debug("<<Fin de los atributos")
 
 class mac():
-    def __init__(self, *macaddr, bits=48):
-        print("macaddr:", *macaddr)
-        if macaddr == None or True:
+    def __init__(self, *args, macaddr=None, bits=48):
+        #ToDo: Check that the MAC doesn't exist alredy
+        if macaddr == None:
             tmp = self.genmac(bits=bits)
 
             self.int = tmp[0]
             self.str = tmp[1]
             self.bin = ("{0:0"+str(bits)+"b}").format(self.int)
 
-    def genmac(*self, bits=48, mode=None):
-        #Por defecto se usa mac 48, o lo que es lo mismo, la de toa la vida
+    @staticmethod
+    def genmac(bits=48, mode=None):
+        """Por defecto se usa mac 48, o lo que es lo mismo, la de toa la vida"""
         #Nota, falta un comprobador de que la mac no se repita
-        realmac = int("11" + str("{0:0"+ str(bits-2) +"b}").format(random.getrandbits(bits-2)),2)
+        realmac = int("11" + str("{0:0"+ str(bits-2) +"b}").format(random.getrandbits(bits-2)), 2)
         readmac = str(hex(realmac)).upper().replace("0X", "")
-        readmac = ":".join([readmac[i * 2:i * 2 + 2] for i,bl in enumerate(readmac[::2])])
+        readmac = ":".join([readmac[i * 2:i * 2 + 2] for i, bl in enumerate(readmac[::2])])
         if mode == 0:
             return realmac
         if mode == 1:
@@ -1053,7 +954,7 @@ class mac():
 
     def __str__(self):
         readmac = str(hex(self.int)).upper().replace("0X", "")
-        return ":".join([readmac[i * 2:i * 2 + 2] for i,bl in enumerate(readmac[::2])])
+        return ":".join([readmac[i * 2:i * 2 + 2] for i, bl in enumerate(readmac[::2])])
 
     def __bytes__(self):
         return Object.__bytes__(self)
@@ -1070,7 +971,6 @@ npack = 0
 class Router(ObjetoBase):
     cnt = 1
     def __init__(self, x, y, *args, name="Default"):
-        global cnt_objects
         self.objectype = "Router"
         push_elemento("Creado Objeto Router")
 
@@ -1089,7 +989,6 @@ class Port():
         self.id = switch.portid
         self.dic = switch.pdic
         self.all = switch.pall
-        switch.portid += 1
         self.switch = switch
         self.connection = None
         self.all[self.id] = self
@@ -1111,8 +1010,8 @@ class w_switch_table(Gtk.ApplicationWindow):
         builder = switch.builder
         builder.get_object("window_switch-table_button").connect("clicked", self.hide)
         builder.get_object("window_switch-table").connect("delete-event", self.hide)
-        self.store = Gtk.ListStore(str,int,int,int)
-        
+        self.store = Gtk.ListStore(str, int, int, int)
+
         self.view = builder.get_object("window_switch-table-TreeView")
         self.view.set_model(self.store)
         for i, column_title in enumerate(["MAC", "Puerto", "TTL (s)"]):
@@ -1138,9 +1037,9 @@ class w_switch_table(Gtk.ApplicationWindow):
         lst.append(lst[2])
         for row in self.store:
             row[2] = row[3] - time.time()
-        print(lst)                
+        logger.debug(lst)
         row = self.store.append(lst)
-        print(self.view.get_property("visible"))
+        logger.debug(self.view.get_property("visible"))
         if self.view.get_property("visible") == True:
             self.ticking = True
             GObject.timeout_add(1001, self.tick)
@@ -1161,9 +1060,8 @@ class w_switch_table(Gtk.ApplicationWindow):
         for row in self.store:
             if row == lst:
                 self.store.remove(row.iter)
-                self.link.table
+                #self.link.table #<--- ???
                 break
-        pass
 
 class Switch(ObjetoBase):
     cnt = 1
@@ -1182,9 +1080,9 @@ class Switch(ObjetoBase):
         self.y = y
         self.timeout = config.getint("SWITCH", "routing-ttl") #Segundos
 
-        for p in range(self.max_connections):
+        while self.portid < self.max_connections:
+            self.portid += 1
             Port(self)
-        print(self.pall)
 
         self.table = [
         #[MAC, port, expiration]
@@ -1210,7 +1108,6 @@ class Switch(ObjetoBase):
         child.show()
 
         self.ch = child
-        print("Slfto:", self.timeout)
 
     def update(self):
         ObjetoBase.update(self)
@@ -1222,38 +1119,38 @@ class Switch(ObjetoBase):
             if self.pall[port].is_available():
                 self.pall[port].connect(objeto)
                 break
-        print(self.pdic)
+        logger.debug("Port dic: %s", self.pdic)
 
     def disconnectport(self, objeto):
         for p in self.pdic:
-            print("i: {}, idx: {}".format(p,self.pdic[p]))
+            logger.debug("i: {}, idx: {}".format(p, self.pdic[p]))
             if objeto == self.pdic[p]:
                 self.pall[p].disconnect()
                 break
-        print(self.pdic)
+        logger.debug(self.pdic)
 
-    def packet_received(self, pck, port=None):
+    def packet_received(self, pck, *args, port=None):
         macd = "{0:0112b}".format(pck.frame)[0:6*8]
         macs = "{0:0112b}".format(pck.frame)[6*8+1:6*16+1]
 
         #LO PRIMERO: AÑADIRLO A LA TABLA
-        readmac = str(hex(int(macs,2))).upper().replace("0X", "")
-        readmac = ":".join([readmac[i * 2:i * 2 + 2] for i,bl in enumerate(readmac[::2])])
+        readmac = str(hex(int(macs, 2))).upper().replace("0X", "")
+        readmac = ":".join([readmac[i * 2:i * 2 + 2] for i, bl in enumerate(readmac[::2])])
 
         for tab in self.table:
             if tab[2] <= time.time():
-                print("Ha llegado tu hora")
+                logger.debug("Ha llegado tu hora")
                 self.table.remove(tab)
                 self.wtable.remove(tab)
-            if tab[0] == int(macd,2):
-                print("TAB[0] == mcd")
+            if tab[0] == int(macd, 2):
+                logger.debug("TAB[0] == mcd")
                 tab[2] = int(time.time()+self.timeout)
                 for row in self.wtable.store:
-                    print(row[0], tab[0])
-                    if int(row[0].replace(":",""),16) == tab[0]:
+                    logger.debug("%s, %s", row[0], tab[0])
+                    if int(row[0].replace(":", ""), 16) == tab[0]:
                         row[3] = int(time.time()+self.timeout)
-        if int(macs,2) not in [x[0] for x in self.table]:
-            tmp = [int(macs,2), port, int(time.time()+self.timeout)]            
+        if int(macs, 2) not in [x[0] for x in self.table]:
+            tmp = [int(macs, 2), port, int(time.time()+self.timeout)]
             self.table.append(tmp)
             tmp = [readmac, port, int(time.time()+self.timeout)]
             self.wtable.append(tmp)
@@ -1261,79 +1158,76 @@ class Switch(ObjetoBase):
         ################################
 
         #ObjetoBase.packet_received(self, pck)
-        
-        ttl  = int(pck.str[64:72],2)
+
+        ttl  = int(pck.str[64:72], 2)
         ttlnew = "{0:08b}".format(ttl-1)
         pck.str = "".join(( pck.str[:64], ttlnew, pck.str[72:] ))
 
-        print("self.macdir",int(self.macdir), int("{0:0112b}".format(pck.frame)[6*8+1:6*16+1],2))
-        print("TTL:", int(pck.str[64:72],2), pck.str[64:72])
 
-        print("Soy {} y mi deber es entregar el paquete a {}".format(self.name,int(macd,2)))
-        print("El paquete llegó por el puerto  {}".format(port))
+        logger.debug("Soy {} y mi deber es entregar el paquete a {}".format(self.name, int(macd, 2)))
+        logger.debug("El paquete llegó por el puerto  {}".format(port))
         dic = {}
         for i in self.connections:
             dic[int(i.macdir)] = i
-        print("Connections MAC's:", dic)
+        logger.debug("Connections MAC's: %s", dic)
 
         #Cambiamos los bits de macs
         #Si macd en conn, enviarle el paquete
         #Si existe una tabla de enrutamiento que contiene una ruta para macd, enviar por ahi
         #Si no, enviar al siguiente, y así
-        print(">MAAAC:",int(macd,2), "DIIIC:")
-        if int(macd,2) in dic and ttl > 0:
-            pck.animate(self, dic[int(macd,2)])
+        logger.debug(">MAAAC: %s", int(macd, 2))
+        connections_compare = [x.objectype for x in self.connections]
+        if int(macd, 2) in dic and ttl > 0:
+            pck.animate(self, dic[int(macd, 2)])
 
-        elif int(macd,2) in [x[0] for x in self.table] and ttl >= 0:
+        elif int(macd, 2) in [x[0] for x in self.table] and ttl >= 0:
             for x in self.table:
-                if x[0] == int(macd,2):
+                if x[0] == int(macd, 2):
                     pck.animate(self, self.pdic[x[1]])
 
-        elif "Switch" in [x.objectype for x in self.connections] and ttl >= 0:
-            print("Ahora lo enviamos al siguiente router")
-            print(int(macd,2), dic)
+        elif "Hub" or "Switch" in connections_compare and ttl >= 0:
+            logger.debug("Ahora lo enviamos al siguiente router")
             tmplst = self.connections[:] #Crea una nueva copia de la lista
-            print(tmplst)
+            logger.debug(tmplst)
             for i in tmplst:
-                if int(macs,2) == int(i.macdir):
-                    print("REMOVING", i)
+                if int(macs, 2) == int(i.macdir):
+                    logger.debug("REMOVING %s", i)
                     tmplst.remove(i)
             try:
                 tmplst.remove(*[x for x in tmplst if x.objectype == "Computer"])
             except TypeError:
                 pass
-            print("Tmplst:", tmplst)
+            logger.debug("Tmplst: %s", tmplst)
             obj = choice(tmplst)
-            print("Sending to:", obj)
+            logger.debug("Sending to: {}".format( obj))
             pck.animate(self, obj)
 
     def debug(self, *args):
-        print(self.pdic)
-        print("MyMac:", self.macdir)
+        logger.debug(self.pdic)
+        logger.debug("MyMac: {}".format( self.macdir))
         row_format ="{:>20}" * 3
-        print(row_format.format("MAC", "NXT", "EXP s"))
+        logger.debug(row_format.format("MAC", "NXT", "EXP s"))
         for row in self.table:
             if row[1] == None:
                 row[1] = "None"
             if int(row[2]-time.time()) <= 0:
                 self.table.remove(row)
-            print(row_format.format(row[0], row[1], int(row[2]-int(time.time()))))
+            logger.debug(row_format.format(row[0], row[1], int(row[2]-int(time.time()))))
 
-#¿Tengo permisos de escritura?, no se si tendré permisos
-#Update: Si los tenía
 class Hub(ObjetoBase):
     cnt = 1
-    def __init__(self, x, y, *args, name="Default", maxconnections=4, ip=None):
+    def __init__(self, x, y, *args, name="Default", maxconnections=5, ip=None):
         self.objectype = "Hub"
         push_elemento("Creado objeto Hub")
         self.imgdir = resdir + "Hub.*"
-        ObjetoBase.__init__(self, x, y, self.objectype, name=name)
+        ObjetoBase.__init__(self, x, y, self.objectype, name=name,
+            maxconnections=maxconnections, ip=ip)
         self.x = x
         self.y = y
 
-    def packet_received(self,pck,port=None):
-        ttl  = int(pck.str[64:72],2)
-        macs = "{0:0112b}".format(pck.frame)[6*8+1:6*16+1]
+    def packet_received(self, pck, *args, port=None):
+        ttl  = int(pck.str[64:72], 2)
+        #macs = "{0:0112b}".format(pck.frame)[6*8+1:6*16+1]
         ttlnew = "{0:08b}".format(ttl-1)
         pck.str = "".join(( pck.str[:64], ttlnew, pck.str[72:] ))
         if ttl >= 0:
@@ -1351,7 +1245,7 @@ class Computador(ObjetoBase):
         self.x = x
         self.y = y
         self.max_connections = maxconnections
-        self.IP = None
+        self.IP = ip
 
         self.pingwin = PingWin(self)
         self.builder.get_object("grid_rclick-sendpkg").connect("activate", self.pingwin.show)
@@ -1370,21 +1264,18 @@ class Computador(ObjetoBase):
         def __str__(self):
             return self.str
 
-        def set_str(self, str):
-            self.str = str
-            self.parser(str, 0)
+        def set_str(self, string):
+            self.str = string
+            self.parser(string, 0)
 
         def set_bin(self, binar):
             t = binar
-            print(bin(t))
             if "0b" not in str(t) and "." in str(t):
-                print("Type is str")
                 self.bins = t
             elif "0b" in str(bin(t)) and "." not in str(bin(t)):
-                print("Type is binar")
                 self.bin = t
             else:
-                print("Error:", t)
+                logger.debug("Error: {}".format( t))
             self.parser(t, 1)
 
         #ip2p stands 4 'ip to parse'
@@ -1406,25 +1297,21 @@ class Computador(ObjetoBase):
                     self.bin = bin(int(ip2p.replace(".", ""), base=2))
                     self.str = ".".join([str(int(i, base=2)) for i in ip2p.split(".")])
                 elif "0b" in str(ip2p):
-                    print("La ip", ip2p, "es bin")
+                    logger.debug("La ip %s es bin", ip2p)
                     tmp = str(ip2p).replace("0b", "")
                     n = 8
-                    self.bins = ".".join([tmp[i * n:i * n+n] for i,blah in enumerate(tmp[::n])])
-                    self.str = ".".join([str(int(tmp[i * n:i * n+n], base=2)) for i,blah in enumerate(tmp[::n])])
-                else:
-                    raise
+                    self.bins = ".".join([tmp[i * n:i * n+n] for i, blah in enumerate(tmp[::n])])
+                    self.str = ".".join([str(int(tmp[i * n:i * n+n], base=2)) for i, blah in enumerate(tmp[::n])])
             else:
-                print("Debug:", mode)
-                raise NameError('No mode defined')
+                logger.debug("Debug: {}".format( mode))
 
     def update(self):
         ObjetoBase.update(self)
         self.image.set_tooltip_text(self.name + " (" + str(len(self.connections)) + "/" + str(self.max_connections) + ")\n" + str(self.IP))
-        submenu1 = self.builder.get_object("grid_rclick-sendpkg").get_submenu()
-        print("Compcon: ", [x.name for x in self.compcon()])
+        #submenu1 = self.builder.get_object("grid_rclick-sendpkg").get_submenu() #If you need to update the submenu
 
         if self.IP != None:
-            objlst.update(self,"IP", str(self.IP))
+            objlst.update(self, "IP", str(self.IP))
 
     #Ahora es cuando viene la parte de haber estudiado.
     #SÓLO ENVÍA PINGS, (ICMP)
@@ -1433,34 +1320,34 @@ class Computador(ObjetoBase):
         global npack
         Sub_N = Computador.sub_N
         #nonlocal sub_N
-        de = self
-        print(widget)
+        #de = self #Not used
+        logger.debug("Widget: %s", widget)
         if to == None:
             to = widget[0].link
 
-        print("fnc send_pck from {} to {}".format(self.name, to.name))
+        logger.debug("fnc send_pck from {} to {}".format(self.name, to.name))
 
         if MainClase.has_ip(self) and MainClase.has_ip(to):
-            print("Continuando")
+            pass
         else:
-            print("Un objeto no tiene IP")
+            logger.warning("Un objeto no tiene IP")
             yonW = YesOrNoWindow("Uno o los dos objetos no tienen dirección IP", Yest="OK", Not="Ok también")
-            yonR = yonW.run()
+            yonW.run()
             yonW.destroy()
-            raise Exception("Un objeto no tiene IP")
+            raise Exception("Un objeto no tiene IP") #Raise sólo para que no continúe con la función
         #Ambos deben tener direccion ip
         #def __init__(self, header, payload, trailer, cabel=None):
         ping = Ping.create(0, self.IP, to.IP)
         Sub_N += 1
         npack += 1
 
-        print("PCK ICMP HEADER:", "{0:064b}".format(ping.icmp_header))
-        print("PCK IPHEADER:", "{0:0160b}".format(ping.ip_header))
+        logger.debug("PCK ICMP HEADER: {}".format( "{0:064b}".format(ping.icmp_header)))
+        logger.debug("PCK IPHEADER: {}".format( "{0:0160b}".format(ping.ip_header)))
 
-        print("MAC's:", self.macdir, to.macdir)
+        logger.debug("MAC's: from: {}, to: {}".format( self.macdir, to.macdir))
         frame = eth(int(to.macdir), int(self.macdir), ping)
         frame.applytopack(ping)
-        print("Pck frame:", ping.frame)
+        logger.debug("Pck frame: {}".format( ping.frame))
 
         ping.animate(self, self.connections[0])
 
@@ -1469,48 +1356,48 @@ class Computador(ObjetoBase):
 
     #Ver routing: https://en.wikipedia.org/wiki/IP_forwarding
     def packet_received(self, pck, *args, port=None):
-        print("Hola, soy {} y he recibido un paquete, tal vez tenga que responder".format(self.name))
+        logger.debug("Hola, soy {} y he recibido un paquete en {}, tal vez tenga que responder".format( self.name, port ))
         #Si el tipo de ping es x, responder, si es y imprimir info
         if config.getboolean("DEBUG", "packet-received"):
-            print(">Pck:",pck)
+            logger.debug(">Pck: {}".format(pck))
             if pck.frame != None:
                 frame="{0:0111b}".format(pck.frame)
-                print("\033[91m>>Atributos del paquete\033[00m")
-                totalen = pck.lenght + 14*8
-                print("Frame:", bin(pck.frame))
+                logger.debug("\033[91m>>Atributos del paquete\033[00m")
+                #totalen = pck.lenght + 14*8
+                logger.debug("Frame: {}".format( bin(pck.frame)))
                 mac1 = "{0:0111b}".format(pck.frame)[0:6*8]
-                readmac = str(hex(int(mac1,2))).strip("0x")
-                print(">Mac1:", ":".join([readmac[i * 2:i * 2 + 2] for i,bl in enumerate(readmac[::2])]).upper())
+                readmac = str(hex(int(mac1, 2))).strip("0x")
+                logger.debug(">Mac1: {}".format( ":".join([readmac[i * 2:i * 2 + 2] for i, bl in enumerate(readmac[::2])]).upper()))
                 readmac = str(hex(int( "{0:011b}".format(pck.frame)[6*8+1:6*16+1] ,2))).strip("0x")
-                print(">Mac2:", ":".join([readmac[i * 2:i * 2 + 2] for i,bl in enumerate(readmac[::2])]).upper())
-                print("EtherType:", int(frame[12*8+1:8*14+1],2))
-                print("Resto==Bits:", int(frame[8*14+1::],2)==pck.bits)
-                print(pck.str)
-                
-                n, tmp = 8, pck.str[96:128]
-                print("IPs:", ".".join([str(int(tmp[i * n:i * n+n], base=2)) for i,blah in enumerate(tmp[::n])]))
-                tmp = pck.str[128:160]
-                print("IPd:", ".".join([str(int(tmp[i * n:i * n+n], base=2)) for i,blah in enumerate(tmp[::n])]))
+                logger.debug(">Mac2: {}".format( ":".join([readmac[i * 2:i * 2 + 2] for i, bl in enumerate(readmac[::2])]).upper()))
+                logger.debug("EtherType: {}".format( int(frame[12*8+1:8*14+1], 2)))
+                logger.debug("Resto==Bits: {}".format( int(frame[8*14+1::], 2)==pck.bits))
+                logger.debug(pck.str)
 
-                print("<<Fin de los atributos")
-        n,tmp = 8, pck.str[128:160]
+                n, tmp = 8, pck.str[96:128]
+                logger.debug("IPs: {}".format( ".".join([str(int(tmp[i * n:i * n+n], base=2)) for i, blah in enumerate(tmp[::n])])))
+                tmp = pck.str[128:160]
+                logger.debug("IPd: {}".format( ".".join([str(int(tmp[i * n:i * n+n], base=2)) for i, blah in enumerate(tmp[::n])])))
+
+                logger.debug("<<Fin de los atributos")
+        n, tmp = 8, pck.str[128:160]
         tmp = pck.str[128:160]
-        print(int(tmp,2), int(self.IP))
-        if int(tmp,2) == int(self.IP):
-            ty = int("{0:064b}".format(pck.icmp_header)[:8],2)
+        #logger.debug(int(tmp, 2), int(self.IP))
+        if int(tmp, 2) == int(self.IP):
+            ty = int("{0:064b}".format(pck.icmp_header)[:8], 2)
             if ty == 8:
-                print("El paquete era para mí, voy a responder un gracias :D")
-                ping = Ping.create(1, self.IP, int(pck.str[96:128],2))
-                frame = eth(int("{0:0112b}".format(pck.frame)[6*8+1:6*16+1],2), int(self.macdir), ping)
+                logger.info("El paquete era para mí, voy a responder un gracias :D")
+                ping = Ping.create(1, self.IP, int(pck.str[96:128], 2))
+                frame = eth(int("{0:0112b}".format(pck.frame)[6*8+1:6*16+1], 2), int(self.macdir), ping)
                 frame.applytopack(ping)
 
                 ping.animate(self, self.connections[0])
             elif ty == 0:
-                print("De nada")
+                logger.info("De nada")
             else:
-                print("ty es:", ty)
+                logger.debug("ty es: {}".format( ty))
 
-            msg = "{} >Recibido ping de {}".format(time.strftime("%H:%M:%S"), ".".join([str(int(tmp[i * n:i * n+n], base=2)) for i,blah in enumerate(tmp[::n])]))
+            msg = "{} >Recibido ping de {}".format(time.strftime("%H:%M:%S"), ".".join([str(int(tmp[i * n:i * n+n], base=2)) for i, blah in enumerate(tmp[::n])]))
             self.pingwin.statusbar.push(self.pingwin.statusbar.get_context_id(msg), msg)
 
 class Servidor(Computador):
@@ -1519,41 +1406,38 @@ class Servidor(Computador):
 
         push_elemento("Creado objeto {}".format(self.objectype))
         self.img = resdir + "Server.*"
-        ObjetoBase.__init__(self, x, y, self.objectype, name=name)
+        Computador.__init__(self, x, y, self.objectype, name=name, maxconnections=maxconnections, ip=ip)
         self.x = x
         self.y = y
         self.max_connections = maxconnections
         self.IP = self.ip()
 
-#La clase para los objetos cable
 class Cable():
+    """La clase para los objetos cable"""
     def __init__(self, fromo, to, *color):
-        lprint("Argumentos sobrantes: ", *color)
         self.objectype = "Wire"
         self.fromobj = fromo
         self.toobj = to
-        self.fromx = TheGrid.gridparser(fromo.x, TheGrid.wres,1)
-        self.fromy = TheGrid.gridparser(fromo.y, TheGrid.hres,1)
-        self.tox = TheGrid.gridparser(to.x, TheGrid.wres,1)
-        self.toy = TheGrid.gridparser(to.y, TheGrid.hres,1)
-        self.w   = max(abs(fromo.realx - to.realx),3)
-        self.h   = max(abs(fromo.realy - to.realy),3)
+        self.fromx = TheGrid.gridparser(fromo.x, TheGrid.wres, 1)
+        self.fromy = TheGrid.gridparser(fromo.y, TheGrid.hres, 1)
+        self.tox = TheGrid.gridparser(to.x, TheGrid.wres, 1)
+        self.toy = TheGrid.gridparser(to.y, TheGrid.hres, 1)
+        self.w   = max(abs(fromo.realx - to.realx), 3)
+        self.h   = max(abs(fromo.realy - to.realy), 3)
 
         self.cair()
 
         self.x, self.y = min(fromo.x, to.x)-0.5, min(fromo.y, to.y)-0.5
-        
+
         TheGrid.moveto(self.image, self.x, self.y, layout=TheGrid.cables_lay)
-        lprint("Puesto cable en: ", self.x, "; ", self.y)
+        logger.debug("Puesto cable en: %s;%s", self.x, self.y)
 
         self.image.show()
 
-        global cables
         cables.append(self)
-        lprint("Todos los cables: ", cables)
+        logger.debug("Todos los cables: %s", cables)
 
     def load(self):
-        global cables
         self.cair()
         self.image.show()
         cables.append(self)
@@ -1563,7 +1447,7 @@ class Cable():
     def cair(self):
         fromo = self.fromobj
         to    = self.toobj
-        width, height = max(abs(self.fromobj.realx - self.toobj.realx),3), max(abs(self.fromobj.realy - self.toobj.realy),3)
+        width, height = max(abs(self.fromobj.realx - self.toobj.realx), 3), max(abs(self.fromobj.realy - self.toobj.realy), 3)
         surface = cairo.ImageSurface(cairo.FORMAT_ARGB32, width, height)
         ctx = cairo.Context(surface)
 
@@ -1573,12 +1457,12 @@ class Cable():
 
         if config.getboolean("DEBUG", "show-cable-rectangle"):
             ctx.set_source_rgba(0, 0, 1, 0.1) # Solid color
-            ctx.rectangle(0,0,width,height)
+            ctx.rectangle(0, 0,width, height)
             ctx.fill()
-        
+
 
         ctx.set_line_width(1.5)
-        ctx.set_source_rgb(1,0,0)
+        ctx.set_source_rgb(1, 0,0)
         if (fromo.x < to.x and fromo.y < to.y) or (fromo.x > to.x and fromo.y > to.y):
             ctx.move_to(0, 0)
             ctx.line_to(width, height)
@@ -1596,18 +1480,17 @@ class Cable():
 
         self.image = gtk.Image.new_from_surface(surface)
         self.x, self.y = min(fromo.x, to.x)-0.5, min(fromo.y, to.y)-0.5
-        
+
         TheGrid.moveto(self.image, self.x, self.y, layout=TheGrid.cables_lay)
 
     def delete(self):
-        global cables
         cables.remove(self)
 
         self.fromobj.cables.remove(self)
         self.toobj.cables.remove(self)
 
         self.image.hide()
-        print("\033[96mCable\033[00m", self, "\033[96mdeleted\033[00m")
+        logger.debug("\033[96mCable\033[00m %s\033[96mdeleted\033[00m", self)
         del self
 
 save.classes = [ObjetoBase, Switch, Hub, Computador, Servidor, Cable]
@@ -1615,19 +1498,19 @@ save.classes = [ObjetoBase, Switch, Hub, Computador, Servidor, Cable]
 #De momento sólo soportará el protocolo IPv4
 class packet():
     def __init__(self, header, trailer, payload, cabel=None):
-        lprint("Creado paquete de res")
+        logger.debug("Creado paquete de red")
         self.header = header
         self.payload = payload
         self.trailer = trailer
         #self.packet = header + payload + trailer
 
     def new_from_total(self, bits):
-        print("Length (bits):", int(bin(bits)[18:33],2)*8)
-        print("Real length:", int(len(bin(bits))-2 ))
+        logger.debug("Length (bits): {}".format( int(bin(bits)[18:33], 2)*8))
+        logger.debug("Real length: {}".format( int(len(bin(bits))-2 )))
         self.bits = bits
-        self.lenght = int(bin(bits)[18:33],2)
-        self.str = str("{0:0"+str(int(int(bin(bits)[18:33],2)*8 ))+"b}").format(self.bits)
-        print(self.str)
+        self.lenght = int(bin(bits)[18:33], 2)
+        self.str = str("{0:0"+str(int(int(bin(bits)[18:33], 2)*8 ))+"b}").format(self.bits)
+        logger.debug(self.str)
 
     def send(self, de):
         ##SIN TERMINAR##
@@ -1652,7 +1535,6 @@ class packet():
         w, h = cable.w + TheGrid.sqres, cable.h + TheGrid.sqres
         x, y = cable.x*TheGrid.sqres-TheGrid.sqres/2, cable.y*TheGrid.sqres-TheGrid.sqres/2
         xi, yi = (start.x-0.5)*TheGrid.sqres-x, (start.y-0.5)*TheGrid.sqres-y
-        xf, yf = end.x, end.y
         r = sqrt(cable.w**2+cable.h**2) #Pixeles totales
         t=r/v #Tiempo en segundos que durara la animacion
         tf = int(fps*t) #Fotogramas totales
@@ -1662,20 +1544,19 @@ class packet():
         surface = cairo.ImageSurface(cairo.FORMAT_ARGB32, w, h)
         ctx = cairo.Context(surface)
         ctx.close_path()
-        ctx.set_source_rgba(0,1,1,1)
-        ctx.arc(-sq/2,-sq/2,sq/2,0,2*pi)
+        ctx.set_source_rgba(0, 1,1, 1)
+        ctx.arc(-sq/2, -sq/2, sq/2, 0,2*pi)
         ctx.fill()
         ctx.stroke()
         ctx.close_path()
 
         image = gtk.Image.new_from_surface(surface)
-        TheGrid.animat_lay.put(image,x,y)
+        TheGrid.animat_lay.put(image, x,y)
         TheGrid.animat_lay.show_all()
 
-        #print("x: {}, y: {}, tf:{}, spf*m:{}, t: {}".format(x/TheGrid.sqres,y/TheGrid.sqres,tf,int(spf*1000), t))
         f = 0
-        x,y = xi,yi
-        sx,sy = (w-TheGrid.sqres)/tf,(h-TheGrid.sqres)/tf
+        x, y = xi, yi
+        sx, sy = (w-TheGrid.sqres)/tf, (h-TheGrid.sqres)/tf
         if start.x > end.x:
             sx = -sx
         if start.y > end.y:
@@ -1690,7 +1571,6 @@ class packet():
             nonlocal port
             if f <= tf:
                 #Do things
-                #print("Current f: {}; x,y: {}, {}".format(f, x,y))
                 x += sx
                 y += sy
 
@@ -1698,7 +1578,7 @@ class packet():
                 surface = cairo.ImageSurface(cairo.FORMAT_ARGB32, w, h)
                 ctx=cairo.Context(surface)
                 ctx.set_source_rgba(*hex_to_rgba(color))
-                ctx.arc(x,y,sq/2,0,2*pi)
+                ctx.arc(x, y,sq/2, 0,2*pi)
                 ctx.fill()
                 image.set_from_surface(surface)
 
@@ -1708,23 +1588,22 @@ class packet():
                 del ctx
                 image.destroy()
                 del surface
-                #print("Paquete enviado a {}".format(end))
                 if end.__class__.__name__ == "Switch":
                     for p in end.pall:
                         if end.pall[p].connection == start:
                             port = p
                             break
-                    print("PORT:", port)
-                    end.packet_received(self,port=port)
+                    logger.debug("PORT: {}".format( port))
+                    end.packet_received(self, port=port)
                     return False
                 end.packet_received(self, port=port)
                 return False
 
         GObject.timeout_add(spf*1000, iteration)
 
-        
+
         return True
-        
+
     def __str__(self):
         return "<" + str(packet) + ">"
 
@@ -1736,50 +1615,50 @@ class eth(packet):
     #Se crea el header
     def __init__(self, destmac, sourcemac, *pack, EtherType=0x0800):
         def corrector(mac):
-            if type(mac) == str:
+            if isinstance(mac, str):
                 mac2 = 0
                 for x in mac.split(":"):
                     mac2 = mac2 << 8 | int(x, 16)
                 return mac2
-            elif type(mac) == int:
+            elif isinstance(mac, int):
                 return mac
             else:
                 raise Exception("MAC ERROR")
 
         destmac = corrector(destmac)
         sourcemac = corrector(sourcemac)
-        print("Destmac", "{0:048b}".format(destmac))
+        logger.debug("Destmac {0:048b}".format(destmac))
 
         self.macheader = (destmac << (6*8+1) | sourcemac) << 16 | EtherType
-        print(int("{0:0111b}".format(self.macheader)[0:6*8],2))
+        logger.debug(int("{0:0111b}".format(self.macheader)[0:6*8], 2))
 
     #Se le añade la payload al frame
     def applytopack(self, pack):
         self.pack = pack
-        print(">Mach:", bin(self.macheader).replace("0b", ""))
-        print(">Pck:", pack)
-        print(pack.lenght)
+        logger.debug(">Mach: {}".format( bin(self.macheader).replace("0b", "")))
+        logger.debug(">Pck: {}".format( pack))
+        logger.debug("Pack.lenght: %s", pack.lenght)
         ret = (self.macheader << pack.lenght*8) | pack.bits
         pack.frame = ret
         pack.framesrt = None
-        print("pack.len: {}, bits len: {}".format(pack.lenght*8, len(bin(pack.bits).strip("0b"))))
-        print(">Ret:", bin(ret).replace("0b",""))
-        print(int("{0:0111b}".format(self.macheader)[0:6*8],2))
+        logger.debug("pack.len: {}, bits len: {}".format(pack.lenght*8, len(bin(pack.bits).strip("0b"))))
+        logger.debug(">Ret: {}".format( bin(ret).replace("0b", "")))
+        logger.debug(int("{0:0111b}".format(self.macheader)[0:6*8], 2))
         return ret
 
     def __str__(self):
         return str( bin(self.macheader) )
-    
+
 #Internet Layer
 class icmp(packet):
     def __init__(self, ipheader, icmpheader, payload):
-        print("Len:", int(bin(ipheader)[18:33],2)-28)
-        self.bits = (ipheader << 8*8 | icmpheader) << ( (int(bin(ipheader)[18:33],2) -28) * 8) | payload #BITS 16a31 - 28
+        logger.debug("Len: {}".format( int(bin(ipheader)[18:33], 2)-28))
+        self.bits = (ipheader << 8*8 | icmpheader) << ( (int(bin(ipheader)[18:33], 2) -28) * 8) | payload #BITS 16a31 - 28
         packet.new_from_total(self, self.bits)
-        
+
     def __str__(self):
         return self.str
-        
+
 
 ### Application layer ###
 
@@ -1819,7 +1698,6 @@ class Ping(icmp):
 
         identifier = 1*2**15 + 42 * 2**8 + 42
         Code = 0
-        icmp_header_checksum = random.getrandbits(16)
         self.icmp_header = ((((((((Type << 8) | Code)<< 16) | checksum) << 16) | identifier) << 16) | identific)
         self.pck = icmp(self.ip_header, self.icmp_header, self.payload)
 
@@ -1829,14 +1707,12 @@ class Ping(icmp):
 
         return self
 
-
-
 #Ventana para configurar las variables de Config.ini
 #Nota: Por terminar
 class cfgWindow(MainClase):#MainClase):
     def __init__(self, *args):
         push_elemento("Invocada ventana de configuracion")
-        writeonlog("Has invocado a la GRAN VENTANA DE CONFIGURACION <--- Boss")
+        logger.debug("Has invocado a la GRAN VENTANA DE CONFIGURACION <--- Boss")
         self.cfgventana = builder.get_object("cfgwindow")
         self.cfgventana.connect("key-press-event", self.on_key_press_event)
         self.cfgventana.connect("key-release-event", self.on_key_release_event)
@@ -1854,9 +1730,7 @@ class cfgWindow(MainClase):#MainClase):
         else:
             self.cfgbttn1.set_active(False)
 
-        booleans = {"print-key-pressed": "print-key-pressed"}
-
-        #TODO ESTO ES PARA LOS SPINNERS
+        #booleans = {"print-key-pressed": "print-key-pressed"}
 
         #Todos los spinbuttons necesarios
         self.spinbuttons = [
@@ -1871,7 +1745,7 @@ class cfgWindow(MainClase):#MainClase):
         self.createdspinbuttons = []
 
         self.spinnergrid = builder.get_object("graph")
-        
+
         def forspin(spinner):
             spinbutton = Gtk.SpinButton.new(None, 0, 0)
             tmplst = spinner
@@ -1893,7 +1767,7 @@ class cfgWindow(MainClase):#MainClase):
 
         for spinner in self.spinbuttons:
             forspin(spinner)
-            
+
         #self.cfgventana.show_all()
 
     def show(self, *args):
@@ -1901,17 +1775,18 @@ class cfgWindow(MainClase):#MainClase):
 
     def on_key_press_event(self, widget, event):
         #global allkeys
-        MainClase.on_key_press_event(self,widget,event)
+        MainClase.on_key_press_event(self, widget, event)
         if "ESCAPE" in allkeys:
             push_elemento("Cerrada ventana de Configuracion")
             self.cfgventana.hide()
 
         if ("CONTROL_L" in allkeys) and ("S" in allkeys):
             self.save()
-        lprint(MainClase.on_key_press_event(self,widget,event))
+        logger.debug(MainClase.on_key_press_event(self, widget, event))
 
-    def on_key_release_event(self, widget, event):
-        MainClase.on_key_release_event(self, widget, event)
+    @staticmethod
+    def on_key_release_event(widget, event):
+        MainClase.on_key_release_event(widget, event)
 
     def bttntoggled(self, *args):
         if self.cfgbttn1.get_active() == True:
@@ -1921,7 +1796,8 @@ class cfgWindow(MainClase):#MainClase):
             push_elemento("print-key-pressed set False")
             config.set("BOOLEANS", "print-key-pressed", "False")
 
-    def borrarlogs(self, *lala):
+    @staticmethod
+    def borrarlogs(*lala):
         #prompt = YesOrNoWindow("Seguro que quieres borrar los logs?")
         #if prompt.on_button_clicked(0) == True:
         push_elemento("Borrando logs")
@@ -1931,24 +1807,25 @@ class cfgWindow(MainClase):#MainClase):
                 if os.path.isfile(file_path):
                     os.unlink(file_path)
             except e:
-                lprint(e)
+                logger.debug(e)
 
     def save(self, *args):
         #[label, cfgsect, cfgkey, rangef, ranget, incrementf, increment],
-        lprint(self.createdspinbuttons)
+        logger.debug(self.createdspinbuttons)
         for i in range(len(self.createdspinbuttons)):
             tmplst = self.spinbuttons[i]
             config.set(tmplst[1], tmplst[2], int(self.createdspinbuttons[i].get_value()))
 
         push_elemento("Configuracion guardada")
         with open(configdir, 'w') as cfgfile:
-            lprint("Guardando archivo de configuracion")
+            logger.debug("Guardando archivo de configuracion")
             try:
                 config.write(cfgfile)
             except:
-                lprint("Error al guardar la configuracion")
+                logger.debug("Error al guardar la configuracion")
 
-    def hidewindow(self, window, *event):
+    @staticmethod
+    def hidewindow(window, *event):
         window.hide()
         return True
 
@@ -1967,13 +1844,13 @@ class w_changethings(): #Oie tú, pedazo de subnormal, que cada objeto debe tene
         self.window.connect("key-press-event", self.on_key_press_event)
         self.window.connect("key-release-event", self.on_key_release_event)
         objeto.builder.get_object("chg_MAC-regen").connect("clicked", self.regenclicked)
-        print(objeto.builder.get_object("chg_MAC-regen").set_image(gtk.Image.new_from_stock("gtk-refresh", 1)))
+        objeto.builder.get_object("chg_MAC-regen").set_image(gtk.Image.new_from_stock("gtk-refresh", 1))
 
         self.link = objeto
         self.image = Gtk.Image.new_from_pixbuf(objeto.image.get_pixbuf())
 
         def filter_ip(entry):
-            PingWin.filter_ip(0, entry)
+            PingWin.filter_ip(entry)
 
         def filter_numshex(widget):
             text = widget.get_text().strip()
@@ -1981,7 +1858,7 @@ class w_changethings(): #Oie tú, pedazo de subnormal, que cada objeto debe tene
 
         objeto.builder.get_object("changethings_entry-IP").connect("changed", filter_ip)
 
-        for i in ["chg_MAC-entry" + str(x) for x in range(0,5)]:
+        for i in ["chg_MAC-entry" + str(x) for x in range(0, 5)]:
             objeto.builder.get_object(i).connect("changed", filter_numshex)
 
         if objeto.objectype != "Computer":
@@ -1994,7 +1871,7 @@ class w_changethings(): #Oie tú, pedazo de subnormal, que cada objeto debe tene
         #self.cancelbutton.connect("clicked", self.cancel)
 
     def show(self, *widget):
-        print("widget:", self.link)
+        logger.debug("widget: {}".format( self.link))
         self.window.show_all()
         self.imagebutton.set_image(self.image)
         self.name_entry.set_text(self.link.name)
@@ -2009,10 +1886,8 @@ class w_changethings(): #Oie tú, pedazo de subnormal, que cada objeto debe tene
                 self.link.builder.get_object("changethings_entry-IP").set_text(str(self.link.IP))
             except AttributeError: #Cuando no tiene una str definida
                 raise
-                pass
             except TypeError:
                 raise
-                pass
             except:
                 raise
         else:
@@ -2022,16 +1897,15 @@ class w_changethings(): #Oie tú, pedazo de subnormal, que cada objeto debe tene
             self.portspinner.set_range(self.pall, 128)
 
 
-    def apply(self, *npi):
-        #acuerdate tambien de terminar esto
-        #Nota: Hacer que compruebe nombres de una banlist, por ejemplo "TODOS"
+    def apply(self, *_):
+        #acuerdate tambien de terminar esto <<< ???
+        #ToDo: Hacer que compruebe nombres de una banlist, por ejemplo "TODOS"
         yonR = None
-        lprint(npi)
-        
+
         self.link.name = self.name_entry.get_text()
-        lprint([ self.link.builder.get_object(y).get_text() for y in ["chg_MAC-entry" + str(x) for x in range(0,6)] ])
+        logger.debug("MAC lst to apply: %s", [ self.link.builder.get_object(y).get_text() for y in ["chg_MAC-entry" + str(x) for x in range(0, 6)] ])
         self.link.macdir.str = ":".join( [ self.link.builder.get_object(y).get_text() for y in ["chg_MAC-entry" + str(x) for x in range(6)] ])
-        self.link.macdir.int = int(self.link.macdir.str.replace(":",""), 16)
+        self.link.macdir.int = int(self.link.macdir.str.replace(":", ""), 16)
         self.link.macdir.bin = "{0:048b}".format(self.link.macdir.int)
         if self.link.objectype == "Computer":
             try:
@@ -2045,39 +1919,40 @@ class w_changethings(): #Oie tú, pedazo de subnormal, que cada objeto debe tene
                     yonR = yonW.run()
                     yonW.destroy()
             except:
-                print(Exception)
+                logger.error(Exception)
                 raise
         if self.link.objectype == "Hub" or self.link.objectype == "Switch":
             portspinner.set_range(len(self.link.objectype.connections), 128)
 
-        lprint("self.link.name", self.link.name)
+        logger.debug("self.link.name: %s", self.link.name)
 
         #self.link.image.set_tooltip_text(self.link.name + " (" + str(self.link.connections) + "/" + str(self.link.max_connections) + ")")
         self.link.update()
         self.window.hide()
-        if yonR!=None:
+        if yonR != None:
             self.show()
 
-    def cancel(self, *npi):
-        lprint(npi)
+    def cancel(self):
         self.window.hide()
 
-    def hidewindow(self, window, *event):
+    @staticmethod
+    def hidewindow(window, *event):
         window.hide()
         return True
 
     def on_key_press_event(self, widget, event):
         #global allkeys
-        MainClase.on_key_press_event(self,widget,event)
+        MainClase.on_key_press_event(self, widget, event)
         if "ESCAPE" in allkeys:
             push_elemento("Cerrada ventana de Configuracion")
             self.window.hide()
 
-    def on_key_release_event(self, widget, event):
-        MainClase.on_key_release_event(self, widget, event)
+    @staticmethod
+    def on_key_release_event(widget, event):
+        MainClase.on_key_release_event(widget, event)
 
     def regenclicked(self, widget):
-        t = ObjetoBase.mac.genmac()[1].split(":")
+        t = mac.genmac()[1].split(":")
         for i in t:
             tmpentry = self.link.builder.get_object("chg_MAC-entry" + str(t.index(i)))
             tmpentry.set_text(i)
@@ -2092,13 +1967,14 @@ class PingWin(Gtk.ApplicationWindow):
         self.entry = builder.get_object("PingWin_entry")
         self.entry.set_placeholder_text("192.168.1.XXX")
         self.ping = builder.get_object("PingWin_Button")
-        
+
         self.ping.connect("clicked", self.do_ping)
 
         self.entry.connect("changed", self.filter_ip)
         self.win.connect("delete-event", self.destroy)
 
-    def filter_ip(self, entry):
+    @staticmethod
+    def filter_ip(entry):
         if entry.get_text().strip("") == "":
             entry.override_background_color(Gtk.StateFlags.NORMAL, Gdk.RGBA(*hex_to_rgba("#E57373")))
         else:
@@ -2106,18 +1982,15 @@ class PingWin(Gtk.ApplicationWindow):
             text = entry.get_text().strip()
             entry.set_text("".join([i for i in text if i in "0123456789."]))
             if max( [len(x) for x in entry.get_text().split(".") ] ) > 3:
-                print("IP NO VÁLIDA")
                 entry.tmp = 1
             try:
                 if max( [int(x) for x in entry.get_text().split(".") if x != ""]) > 254:
-                    print("IP NO VÁLIDA")
                     entry.tmp = 1
             except ValueError:
                 pass
             except:
                 raise
             if len([x for x in entry.get_text().split(".") if x != ""]) == 4 and entry.tmp==0:
-                print("IP ACABADA")
                 entry.tmp = 2
                 entry.override_background_color(Gtk.StateFlags.NORMAL, Gdk.RGBA(*hex_to_rgba("#9CCC65")))
 
@@ -2125,31 +1998,32 @@ class PingWin(Gtk.ApplicationWindow):
                 entry.override_background_color(Gtk.StateFlags.NORMAL, Gdk.RGBA(*hex_to_rgba("#E57373")))
             elif entry.tmp == 0:
                 entry.override_background_color(Gtk.StateFlags.NORMAL, Gdk.RGBA(*hex_to_rgba("#FFA726")))
-    
+
     def do_ping(self, widget):
         ip = self.entry.get_text()
         if self.entry.tmp == 2:
-            print(self.link.compcon())
+            logger.debug("Compcon: %s", self.link.compcon())
             to = None
             for x in self.link.compcon():
                 if ip == str(x.IP):
                     to = x
-                    print("IP: {} from {} in compcon {}".format(ip, to, self.link.compcon()))
+                    logger.debug("IP: {} from {} in compcon {}".format(ip, to, self.link.compcon()))
                     Computador.send_pck(self.link, to=to)
                     break
             if to == None:
                 yonW = YesOrNoWindow("La IP {} no se ha encontrado".format(ip), Yest="OK", Not="Ok también")
-                yonR = yonW.run()
+                yonW.run()
                 yonW.destroy()
-                
+
         else:
             yonW = YesOrNoWindow("{} no es una IP válida, por favor, introduzca una IP válida".format(ip), Yest="OK", Not="Ok también")
-            yonR = yonW.run()
+            yonW.run()
             yonW.destroy()
 
     def show(self, widget):
         self.win.show()
-    def destroy(self, window, event):
+    @staticmethod
+    def destroy(window, event):
         window.hide()
         return True
 
@@ -2160,9 +2034,7 @@ class about(Gtk.AboutDialog):
         self.win.connect("response", self.destroy)
         self.win.add_credit_section("Tutores", ["Julio Sánchez"])
         #self.win.add_credit_section("Contribuidores", [""])
-        self = self.win
     def show(self, *args):
-        print("Showing")
         self.win.show()
     def destroy(self, *args):
         self.win.hide()
@@ -2177,30 +2049,23 @@ class Undo():
 #Esta la pongo fuera porque lo mismo la necesito en otra clase
 
 def exiting(self, *ahfjah):
-    global log
-    savelog()
-    lprint("End time: " + time.strftime("%H:%M:%S"))
-    print ("Window closed, exiting program")
+    logger.debug("End time: " + time.strftime("%H:%M:%S"))
+    logger.debug("Window closed, exiting program")
     Gtk.main_quit()
 
 def restart(*args):
-    global log
-    savelog()
-    lprint("End time: " + time.strftime("%H:%M%S"))
-    lprint("Restarting program")
-    print("\033[92m##############################\033[00m")
-    os.chdir(startcwd)
+    logger.info("End time: " + time.strftime("%H:%M%S"))
+    logger.info("Restarting program")
+    logger.info("\033[92m##############################\033[00m")
     os.execl(sys.executable, sys.executable, *sys.argv)
 
 def leppard():
-    lprint("Gunter glieben glauchen globen")
+    print("Gunter glieben glauchen globen")
 
-writeonlog("Esto ha llegado al final del codigo al parecer sin errores")
-writeonlog("O no")
 MainClase()
 
-lprint("Actual time: " + time.strftime("%H:%M:%S"))
-lprint("Complete load time: " + str(datetime.now() - startTime))
+logger.info("Actual time: " + time.strftime("%H:%M:%S"))
+logger.info("Complete load time: " + str(datetime.now() - startTime))
 push_elemento("Parece que esta cosa ha arrancado en tan solo " + str(datetime.now() - startTime))
 Gtk.main()
 
