@@ -1,0 +1,2 @@
+language: python3
+script: python3 invproy/core.py

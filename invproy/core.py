@@ -31,13 +31,16 @@
 import os
 from datetime import datetime
 startTime = datetime.now()
+import utils.config
 from utils import logging
 logger = logging.getLogger(__name__)
 
+logger.info(os.path.split(__file__))
 logger.debug("this is a debugging message")
 logger.info("this is an informational message")
 logger.warn("this is a warning message")
 logger.error("this is an error message")
 logger.critical("this is a critical message")
+logger.info(dir(utils))
 
 logger.info("Complete load time: %s", datetime.now() - startTime)
