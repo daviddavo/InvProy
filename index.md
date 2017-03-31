@@ -6,17 +6,20 @@ Por favor, documentar bugs e incidencias en issues.
 
 ## Sobre el programa ##
 
-### USO DEL PROGRAMA ###
+### Uso del programa ###
 
-1. Descargar las dependencias
-2. Ejecutar `Main.py`, puedes usar `python3 Main.py`
+> Nota: Esperate a la fase Beta para usar el programa
 
-### DEPENDENCIAS: ###
+1. Descargar el programa
+2. Instalarlo al ejecutar setup.py
+3. Usar
+
+### Dependencias: ###
 * python3-gobject
 * python3
 * pycairo
 
-## SOBRE EL PROYECTO ##
+## Sobre el proyecto ##
 
 El proyecto comenzó con la mera idea de construir algo, de hacer algo y así aprender a programar. Mi tutor de proyecto me recomendó hacer algo que se pudiese usar después de un par de años en clase: Un simuldor de redes.
 
