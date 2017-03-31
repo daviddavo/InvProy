@@ -20,6 +20,7 @@ except ModuleNotFoundError:
     pass
 
 def getLogger(*args): return logging.getLogger(*args)
+def return_true(): return True
 
 logger = getLogger(__name__)
 logger.debug("Logfile: %s", logfile)
