@@ -1,8 +1,10 @@
-#InvProy#
+# InvProy #
 
-Mi proyecto de investigación de 1º de Bachillerato de Excelencia, aún WIP y sin licencia.
+Proyecto de Investigación de Bachillerato de Excelencia. Desde 2015.
 
 Por favor, documentar bugs e incidencias en issues.
+
+## Sobre el programa ##
 
 ### USO DEL PROGRAMA ###
 
@@ -14,34 +16,21 @@ Por favor, documentar bugs e incidencias en issues.
 * python3
 * pycairo
 
-### TESTADO EN ###
-- [x] Arch Linux LTS
+## SOBRE EL PROYECTO ##
 
-### COSAS POR HACER ###
-- [x] Subirlo a GitHub
-- [ ] Conseguir una licencia
-- [ ] Terminarlo
-- [ ] Crear `branches` de Git
-- [ ] Instalador pip
-- [ ] Crear paquetes de distribución para AUR
-- [ ] También para Ubuntu/MAX/Debian
-- [ ] Guardar/Abrir configs de red
-- [ ] Modo aprendizaje
-- [ ] Compatibilidad con MUCHOS más protocolos
-- [ ] Editor de paquetes
-- [ ] Visor de paquetes
-- [ ] Port a Windows
-- [ ] Simulador de tarjeta de red
-- [ ] WiFi
-- [ ] Simulador de red física (Comunicacion con Arduino/RPi)
+El proyecto comenzó con la mera idea de construir algo, de hacer algo y así aprender a programar. Mi tutor de proyecto me recomendó hacer algo que se pudiese usar después de un par de años en clase: Un simuldor de redes.
 
-#### Más cercanas ####
+Una vez acabada la primera versión, con muchos fallos de principiante, dará comienzo el desarrollo de la nueva versión, InvProy β, que debería funcionar completamente en Linux y Windows, y Android si es posible.
 
-- [x] Añadir los ethernet frames
-- [ ] Arreglar lo de la MAC
-- [ ] Enrutamiento de paquetes
-- [ ] Regenerar dirección MAC en las opciones
-- [ ] Comprobar duplicados (de ip, mac) en la ventana de las opciones y avisar al usuario
+### No sólo un simulador de redes ###
+
+La idea principal no es crear el programa, sino que el programa sirva para otros. No tan sólo para el uso didáctico en las clases, también para aprender a programar. Al ser software libre, cualquier alumno podría ver el código o colaborar en el proyecto. Para ello necesitamos una buena documentación y una buena cobertura.
+
+### ¿Por qué se está tardando en empezar el desarrollo de la fase Beta ? ###
+
+El desarrollador principal es un estudiante de SEGUNDO de BACHILLERATO. Además, hay bastantes cambios importantes que requieren de bastante tiempo para diseñar, pero también para aprender (e.g: Se cambiará la interfaz de Gtk+ a Qt, pero para ello es necesario aprender sobre Qt).
+
+También la parte de la cobertura: crear un board en Trello, una página web con Jekyll, dar formato a los documentos... Son todo pequeñas tareas que en suma son muchas horas.
 
 >¿Ha probado a apagar y volver a encender? 
 > — The IT Crowd
