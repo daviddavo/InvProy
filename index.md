@@ -1,3 +1,7 @@
+---
+Title: InvProy
+---
+
 # InvProy #
 
 Proyecto de Investigación de Bachillerato de Excelencia. Desde 2015.
@@ -72,4 +76,4 @@ También la parte de la cobertura: crear un board en Trello, una página web con
 
 Actualmente sólo hay una persona trabajando en el proyecto.
 
-* David Davó Laviña <[david@ddavo.me](david@ddavo.me)>
+* David Davó Laviña (Founder) <[david@ddavo.me](david@ddavo.me)>
