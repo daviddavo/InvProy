@@ -2,7 +2,7 @@
 
 Proyecto de Investigación de Bachillerato de Excelencia. Desde 2015.
 
-Por favor, documentar bugs e incidencias en issues.
+Por favor, documentad bugs e incidencias en issues.
 
 ## Sobre el programa ##
 
@@ -12,8 +12,18 @@ Una red es una conexión entre dispositivos.
 
 Si tenemos en cuenta ambas cosas, un simulador de redes no es más que un programa educativo para aprender sobre el funcionamiento de estas.
 
+### Capturas de pantalla ###
+> Las capturas de pantalla son de InvProy α, el "prototipo"
+> La interfaz será cambiada del motor Gtk+ a Qt
+
+![](http://invproy.ddavo.me/screenshots/2016-09-12-230644_1000x700_scrot.png)
+<center> Captura de pantalla del programa </center>
+
 ### Funcionalidades ###
-> WIP
+* Crear dispositivos, modificar sus propiedades (IP, MAC y Nombre)
+* Conectar dispositivos mediante cables
+* Ordenador, Switch y Hub
+* Enviar Ping's entre dispositivos
 
 ### Uso del programa ###
 > Recomendable esperarse a la fase Beta
@@ -29,9 +39,11 @@ Si tenemos en cuenta ambas cosas, un simulador de redes no es más que un progra
 
 ### Tecnologías usadas ###
 
+* Python 3 (Última versión)
 * Toda la suite de Gtk+
 * Jekyll (GitHub pages) para la página web
 * Travis (Autotest builds)
+* Codacy (Para encontrar errores programáticos)
 
 ## Sobre el proyecto ##
 
@@ -48,3 +60,16 @@ La idea principal no es crear el programa, sino que el programa sirva para otros
 El desarrollador principal es un estudiante de SEGUNDO de BACHILLERATO. Además, hay bastantes cambios importantes que requieren de bastante tiempo para diseñar, pero también para aprender (e.g: Se cambiará la interfaz de Gtk+ a Qt, pero para ello es necesario aprender sobre Qt).
 
 También la parte de la cobertura: crear un board en Trello, una página web con Jekyll, dar formato a los documentos, traducir páginas al inglés y redactar readmes... Son todo pequeñas tareas que en suma son muchas horas.
+
+### Memorias del proyecto ###
+
+| Fecha   | Título                                               | Presentado en... | Comentario | Enlace |
+|---------|---------|---------|---------|---------|
+| Oct2016 | Invproy α: Un simulador de redes por y para alumnos  | Proyecto de Investigación bachillerato de Excelencia | Primera versión. 50 páginas máximo + anexos | [GitHub](https://github.com/daviddavo/InvProy-tex/raw/master/InvProy.pdf) |
+| Jan2017 | Invproy α.zip: Un simulador de redes por y para alumnos | [II Encuentro Preuniversitario de Jóvenes Investigadores UCM](https://www.ucm.es/jovenesinvestigadores) | Máximo 10 folios | [GitHub](https://github.com/daviddavo/InvProy-tex/raw/EPCJI/InvProy.pdf) |
+
+## Contacto ##
+
+Actualmente sólo hay una persona trabajando en el proyecto.
+
+* David Davó Laviña <[david@ddavo.me](david@ddavo.me)>
