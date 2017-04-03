@@ -1,7 +1,6 @@
 ---
 Title: InvProy
 ---
-
 # InvProy #
 
 Proyecto de Investigación de Bachillerato de Excelencia. Desde 2015.
