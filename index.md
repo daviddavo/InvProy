@@ -62,14 +62,18 @@ La idea principal no es crear el programa, sino que el programa sirva para otros
 
 El desarrollador principal es un estudiante de SEGUNDO de BACHILLERATO. Además, hay bastantes cambios importantes que requieren de bastante tiempo para diseñar, pero también para aprender (e.g: Se cambiará la interfaz de Gtk+ a Qt, pero para ello es necesario aprender sobre Qt).
 
-También la parte de la cobertura: crear un board en Trello, una página web con Jekyll, dar formato a los documentos, traducir páginas al inglés y redactar readmes... Son todo pequeñas tareas que en suma son muchas horas.
+También requiere mucho tiempo la parte de la cobertura: crear un board en Trello, una página web con Jekyll, dar formato a los documentos, traducir páginas al inglés y redactar readmes... Son todo pequeñas tareas que en suma son muchas horas.
 
 ### Memorias del proyecto ###
 
-| Fecha   | Título                                               | Presentado en... | Comentario | Enlace |
-|---------|---------|---------|---------|---------|
-| Oct2016 | Invproy α: Un simulador de redes por y para alumnos  | Proyecto de Investigación bachillerato de Excelencia | Primera versión. 50 páginas máximo + anexos | [GitHub](https://github.com/daviddavo/InvProy-tex/raw/master/InvProy.pdf) |
-| Jan2017 | Invproy α.zip: Un simulador de redes por y para alumnos | [II Encuentro Preuniversitario de Jóvenes Investigadores UCM](https://www.ucm.es/jovenesinvestigadores) | Máximo 10 folios | [GitHub](https://github.com/daviddavo/InvProy-tex/raw/EPCJI/InvProy.pdf) |
+* Octubre 2016: [Invproy α: Un simulador de redes por y para alumnos](https://github.com/daviddavo/InvProy-tex/raw/master/InvProy.pdf) 
+    Presentado como Proyecto de Investigación de Bachillerato de Excelencia. 
+> Primera versión. 50 páginas máximo + anexos
+
+* Enero 2017:  [Invproy α.zip: Un simulador de redes por y para alumnos](https://github.com/daviddavo/InvProy-tex/raw/EPCJI/InvProy.pdf), ganador del tercer accésit del [II Encuentro Preuniversitario de Jóvenes Investigadores UCM](https://www.ucm.es/jovenesinvestigadores)  
+> Máximo 10 folios
+* Próximamente: 
+  * Certámen Jóvenes Investigadores [Injuve](http://www.injuve.es/formacion/noticia/certamen-jovenes-investigadores-2016)
 
 ## Contacto ##
 
