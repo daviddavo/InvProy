@@ -1,7 +1,7 @@
 ---
 Title: InvProy
 ---
-# InvProy #
+![Logo](images/invproy_logo.png)
 
 Proyecto de Investigación de Bachillerato de Excelencia. Desde 2015.
 
@@ -43,10 +43,23 @@ Si tenemos en cuenta ambas cosas, un simulador de redes no es más que un progra
 ### Tecnologías usadas ###
 
 * Python 3 (Última versión)
-* Toda la suite de Gtk+
+* Git
+* Atom (Text Editor) / gVIM
+* LaTeX (Memorias del proyecto)
+* Toda la suite de Gtk+ (Interfaz Gráfica de Usuario)
+* Rotuladores y pizarras blancas
+* Gimp (Editor de Imágenes)
 * Jekyll (GitHub pages) para la página web
 * Travis (Autotest builds)
+* Libros de referencia en papel
 * Codacy (Para encontrar errores programáticos)
+* Raspberry Pi (Siempre he querido tener una)
+* Arch Linux (Distro)
+* Ubuntu (Distro)
+* [MaX](http://www.educa2.madrid.org/educamadrid/madrid-linux) (Madrid LinuX)
+* Bolígrafo
+* Sphinx (Documentación del proyecto)
+
 
 ## Sobre el proyecto ##
 
