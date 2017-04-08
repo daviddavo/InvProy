@@ -88,6 +88,17 @@ También requiere mucho tiempo la parte de la cobertura: crear un board en Trell
 * Próximamente: 
   * Certámen Jóvenes Investigadores [Injuve](http://www.injuve.es/formacion/noticia/certamen-jovenes-investigadores-2016)
 
+## Otras páginas de interés ##
+* [The Linux Club Guide](https://sites.google.com/site/startlinuxclub/): Comienza un Linux Club en tu escuela
+* [Codecademy](https://www.codecademy.com): Aprende a programar
+* Quantum Fracture - [¿Por qué el sistema educativo no funciona?](https://www.youtube.com/watch?v=iEb9L2CMjr0)
+
+## Colaboración ##
+El proyecto está pausado hasta Junio después de los exámenes de la EvAU. Aun así, ya existe un board en Trello y un chat en Slack.
+* [Trello](https://trello.com/b/oIyQZ0hR)
+* Slack: [invproy.slack.com](https://invproy.slack.com/signup)
+* GitHub: [InvProy](https://github.com/daviddavo/InvProy)
+
 ## Contacto ##
 
 Actualmente sólo hay una persona trabajando en el proyecto.
