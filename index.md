@@ -43,7 +43,7 @@ Si tenemos en cuenta ambas cosas, un simulador de redes no es más que un progra
 ### Tecnologías usadas ###
 
 * Python 3 (Última versión)
-* Git
+* Git y GitHub (Control de versiones)
 * Atom (Text Editor) / gVIM
 * LaTeX (Memorias del proyecto)
 * Toda la suite de Gtk+ (Interfaz Gráfica de Usuario)
@@ -59,6 +59,8 @@ Si tenemos en cuenta ambas cosas, un simulador de redes no es más que un progra
 * [MaX](http://www.educa2.madrid.org/educamadrid/madrid-linux) (Madrid LinuX)
 * Bolígrafo
 * Sphinx (Documentación del proyecto)
+* Slack (Comunicación interna del equipo)
+* Trello (Seguimiento de tareas)
 
 
 ## Sobre el proyecto ##
@@ -87,6 +89,7 @@ También requiere mucho tiempo la parte de la cobertura: crear un board en Trell
 > Máximo 10 folios
 * Próximamente: 
   * Certámen Jóvenes Investigadores [Injuve](http://www.injuve.es/formacion/noticia/certamen-jovenes-investigadores-2016)
+  * [Ruta Quetzal](http://www.mecd.gob.es/eeuu/convocatorias-programas/convocatorias-eeuu/ruta-quetzal.html) 2018
 
 ## Otras páginas de interés ##
 * [The Linux Club Guide](https://sites.google.com/site/startlinuxclub/): Comienza un Linux Club en tu escuela
