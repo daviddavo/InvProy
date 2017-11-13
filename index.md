@@ -79,7 +79,7 @@ El desarrollador principal es un estudiante de SEGUNDO de BACHILLERATO. Además,
 
 También requiere mucho tiempo la parte de la cobertura: crear un board en Trello, una página web con Jekyll, dar formato a los documentos, traducir páginas al inglés y redactar readmes... Son todo pequeñas tareas que en suma son muchas horas.
 
-### Memorias del proyecto ###
+## Memorias del proyecto ##
 
 * Octubre 2016: [Invproy α: Un simulador de redes por y para alumnos](https://github.com/daviddavo/InvProy-tex/raw/master/InvProy.pdf) 
     Presentado como Proyecto de Investigación de Bachillerato de Excelencia. 
