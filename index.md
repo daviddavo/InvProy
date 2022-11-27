@@ -106,4 +106,4 @@ El proyecto está pausado hasta Junio después de los exámenes de la EvAU. Aun 
 
 Actualmente sólo hay una persona trabajando en el proyecto.
 
-* David Davó Laviña (Founder) <[mailto:david@ddavo.me](david@ddavo.me)>
+* David Davó Laviña (Founder) <[david@ddavo.me](mailto:david@ddavo.me)>
